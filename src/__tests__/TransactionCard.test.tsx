@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import TransactionCard from '../components/TransactionCard';
-import { Transaction } from '../utils/transactionStorage';
+import type { Transaction } from '../utils/transactionStorage';
 
 // Mock getJarDetails
 vi.mock('../utils/constants', () => ({
@@ -23,38 +23,55 @@ describe('TransactionCard', () => {
         type: 'expense'
     };
 
-    it('renders Jar Name as the main title', () => {
+    it('renders Note as the main title', () => {
         render(<TransactionCard transaction={mockTransaction} />);
 
-        // The title should be the Jar Name ("Necessities")
-        // We look for a heading level 4 with the jar name
+        // The title should be the Note ("Grocery Shopping")
         const title = screen.getByRole('heading', { level: 4 });
-        expect(title.textContent).toBe('Necessities');
+        expect(title.textContent).toBe('Grocery Shopping');
     });
 
-    it('renders Note as the subtitle', () => {
+    it('renders Jar Name as the subtitle when note exists', () => {
         render(<TransactionCard transaction={mockTransaction} />);
 
-        // The note should be visible
-        expect(screen.getByText('Grocery Shopping')).toBeInTheDocument();
-
-        // Ensure Note is NOT the title
+        // The Jar Name should be visible but NOT as the title
+        expect(screen.getByText('Necessities')).toBeInTheDocument();
         const title = screen.getByRole('heading', { level: 4 });
-        expect(title.textContent).not.toBe('Grocery Shopping');
+        expect(title.textContent).not.toBe('Necessities');
     });
 
-    it('handles empty note gracefully', () => {
+    it('renders Jar Name as title if note is empty', () => {
         const noNoteTransaction = { ...mockTransaction, note: '' };
         render(<TransactionCard transaction={noNoteTransaction} />);
 
-        // Title should still be Jar Name
+        // Title should fallback to Jar Name
         const title = screen.getByRole('heading', { level: 4 });
         expect(title.textContent).toBe('Necessities');
+    });
 
-        // Should not render empty note space or duplicate jar name in subtitle
-        // checks that we don't see "Necessities" twice (once as title, once as subtitle)
-        // strict check might be hard if "Necessities" is in the DOM for other reasons (e.g. icon alt?), 
-        // but based on current UI it likely appears once as title.
-        // Let's just check that we don't reject layout.
+    it('renders expense amount without - sign and in red', () => {
+        const expenseTx = { ...mockTransaction, type: 'expense' as const, amount: 15.00 };
+        render(<TransactionCard transaction={expenseTx} />);
+
+        // Should display $15.00, NOT -$15.00
+        const amountText = screen.getByText('$15.00');
+        expect(amountText).toBeInTheDocument();
+        expect(screen.queryByText('-$15.00')).not.toBeInTheDocument();
+
+        // Check for red color class
+        expect(amountText).toHaveClass('text-red-400');
+    });
+
+    it('renders income amount without + sign and in green', () => {
+        const incomeTx = { ...mockTransaction, type: 'income' as const, amount: 500.00 };
+        render(<TransactionCard transaction={incomeTx} />);
+
+        // Should display $500.00, NOT +$500.00
+        const amountText = screen.getByText('$500.00');
+        expect(amountText).toBeInTheDocument();
+        expect(screen.queryByText('+$500.00')).not.toBeInTheDocument();
+
+        // Check for green color class
+        expect(amountText).toHaveClass('text-emerald-400');
     });
 });
