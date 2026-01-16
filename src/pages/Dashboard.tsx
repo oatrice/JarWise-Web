@@ -6,7 +6,7 @@ import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, Scan
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 
-type Page = 'dashboard' | 'history';
+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
@@ -127,7 +127,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                         <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors" onClick={() => onNavigate('history')}>
                             <History size={24} />
                         </button>
-                        <button className="relative -top flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 border-4 border-gray-950 hover:scale-105 active:scale-95 transition-all">
+                        <button
+                            onClick={() => onNavigate('add-transaction')}
+                            className="relative -top flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 border-4 border-gray-950 hover:scale-105 active:scale-95 transition-all"
+                        >
                             <Plus size={28} />
                         </button>
                         <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
@@ -197,6 +200,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                                     <p className="text-gray-400 text-sm">Overview of your 6 jars financial freedom system</p>
                                 </div>
                                 <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => onNavigate('add-transaction')}
+                                        className="hidden sm:flex h-10 px-4 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 transition-colors gap-2 text-sm font-semibold shadow-lg shadow-blue-900/20"
+                                    >
+                                        <Plus size={18} />
+                                        <span>Add</span>
+                                    </button>
                                     <button
                                         onClick={() => setShowScanner(true)}
                                         data-testid="scan-btn-desktop"
