@@ -1,6 +1,9 @@
 # 📋 Summary
 <!-- Brief description of changes for the Mobile Web Platform -->
 
+## ✅ Checklist
+- [ ] 🏗️ I have moved the related issue to "In Progress" on the Kanban board
+
 # 🎯 Type
 - [ ] 🐛 Bug fix
 - [ ] ✨ New feature
@@ -15,11 +18,11 @@
 - [ ] Tablet/Desktop View Verified
 - [ ] Cross-browser Check (Chrome, Safari, Firefox)
 
-# � Changes
+# 📝 Changes
 <!-- Describe what changed in detail -->
 
-# �📸 UI/UX Screenshots
-<!-- Mobile & Desktop Comparisons -->
+# 📸 UI/UX Screenshots
+<!-- Mobile & Desktop Comparisons. MUST include screenshots for UI changes. -->
 
 # 🧪 Testing
 - [ ] Start command: `npm run dev` working
@@ -34,10 +37,10 @@
 ```
 
 # 🔗 Related Issues
-<!-- Link to related issues or PRs -->
-- Closes #<!-- issue number -->
-- Related to #<!-- issue number -->
-- Fixes #<!-- issue number -->
+<!-- Link to related issues or PRs using FULL URL e.g. https://github.com/oatrice/JarWise-Root/issues/1 -->
+- Closes #
+- Related to #
+- Fixes #
 
 **Breaking Changes**: <!-- Yes/No -->
 **Migration Required**: <!-- Yes/No -->
