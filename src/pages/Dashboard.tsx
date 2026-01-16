@@ -3,6 +3,8 @@ import { jars, transactions } from '../utils/generatedMockData';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
+import { useState } from 'react';
+import ScanPage from './ScanPage';
 
 type Page = 'dashboard' | 'history';
 
@@ -12,9 +14,22 @@ interface DashboardProps {
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
+    const [showScanner, setShowScanner] = useState(false);
+
+    const handleScan = (data: string) => {
+        console.log("Scanned:", data);
+        alert(`Scanned Code: ${data}`);
+        setShowScanner(false);
+    };
 
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100 selection:bg-blue-500/30">
+            {showScanner && (
+                <ScanPage
+                    onClose={() => setShowScanner(false)}
+                    onScan={handleScan}
+                />
+            )}
 
             {/* =========================================
                 MOBILE VIEW (Reverted to 16804dc)
@@ -35,7 +50,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
+                                <button
+                                    onClick={() => setShowScanner(true)}
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                                >
                                     <ScanBarcode size={20} />
                                 </button>
                                 <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
@@ -178,7 +196,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                                     <p className="text-gray-400 text-sm">Overview of your 6 jars financial freedom system</p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
+                                    <button
+                                        onClick={() => setShowScanner(true)}
+                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                                    >
                                         <ScanBarcode size={20} />
                                     </button>
                                     <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
