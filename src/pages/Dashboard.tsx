@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { jars, transactions } from '../utils/generatedMockData';
+import type { Transaction as SavedTransaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
@@ -10,11 +11,17 @@ type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
+    transactions?: SavedTransaction[];
 }
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
+export default function Dashboard({ onNavigate, transactions: savedTransactions = [] }: DashboardProps) {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
+
+    // Log saved transactions for debugging (uses mock data for display)
+    if (savedTransactions.length > 0) {
+        console.log('📊 Saved transactions:', savedTransactions);
+    }
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
