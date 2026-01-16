@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Wallet } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Save, Wallet, AlertCircle, Loader2 } from 'lucide-react';
+import { validateTransaction } from '../utils/validation';
+import type { ValidationResult } from '../utils/validation';
 
 interface AddTransactionProps {
     onBack: () => void;
@@ -19,10 +21,54 @@ const JARS = [
 export default function AddTransaction({ onBack, onSave }: AddTransactionProps) {
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
-    const [selectedJar, setSelectedJar] = useState(JARS[0].id);
+    const [selectedJar, setSelectedJar] = useState<string | null>(null);
+    const [errors, setErrors] = useState<ValidationResult['errors']>({});
+    const [touched, setTouched] = useState({ amount: false, jar: false });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSave = () => {
-        if (!amount || parseFloat(amount) <= 0) return;
+    // Real-time validation when user has touched the field
+    const validate = useCallback(() => {
+        const result = validateTransaction({
+            amount,
+            jarId: selectedJar,
+            note,
+        });
+        setErrors(result.errors);
+        return result.isValid;
+    }, [amount, selectedJar, note]);
+
+    const handleAmountChange = (value: string) => {
+        setAmount(value);
+        if (touched.amount) {
+            const result = validateTransaction({ amount: value, jarId: selectedJar, note });
+            setErrors(prev => ({ ...prev, amount: result.errors.amount }));
+        }
+    };
+
+    const handleAmountBlur = () => {
+        setTouched(prev => ({ ...prev, amount: true }));
+        const result = validateTransaction({ amount, jarId: selectedJar, note });
+        setErrors(prev => ({ ...prev, amount: result.errors.amount }));
+    };
+
+    const handleJarSelect = (jarId: string) => {
+        setSelectedJar(jarId);
+        setTouched(prev => ({ ...prev, jar: true }));
+        // Clear jar error when selected
+        setErrors(prev => ({ ...prev, jar: undefined }));
+    };
+
+    const handleSave = async () => {
+        // Mark all fields as touched
+        setTouched({ amount: true, jar: true });
+
+        // Validate all fields
+        if (!validate()) return;
+
+        setIsSubmitting(true);
+
+        // Simulate save delay for UX
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         onSave({
             id: Date.now().toString(),
@@ -32,8 +78,12 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
             date: new Date(),
             type: 'expense' // Default to expense for now
         });
+
+        setIsSubmitting(false);
         onBack();
     };
+
+    const isFormValid = amount && parseFloat(amount) > 0 && selectedJar;
 
     return (
         <div className="min-h-screen bg-gray-900 text-white pb-24">
@@ -56,16 +106,34 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                 <section className="space-y-2">
                     <label className="text-sm font-medium text-gray-400">Amount</label>
                     <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-500">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-500">฿</span>
                         <input
                             type="number"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => handleAmountChange(e.target.value)}
+                            onBlur={handleAmountBlur}
                             placeholder="0.00"
                             autoFocus
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-2xl py-6 pl-10 pr-4 text-3xl font-bold text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
+                            className={`w-full bg-gray-800/50 border rounded-2xl py-6 pl-10 pr-4 text-3xl font-bold text-white placeholder-gray-600 focus:outline-none focus:ring-2 transition-all font-mono ${touched.amount && errors.amount
+                                    ? 'border-red-500 focus:ring-red-500/50'
+                                    : 'border-gray-700 focus:ring-blue-500/50'
+                                }`}
                         />
                     </div>
+                    {/* Amount Error Message */}
+                    <AnimatePresence>
+                        {touched.amount && errors.amount && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="flex items-center gap-2 text-red-400 text-sm"
+                            >
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.amount}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </section>
 
                 {/* Jar Selector */}
@@ -76,10 +144,12 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                             <motion.button
                                 key={jar.id}
                                 whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedJar(jar.id)}
+                                onClick={() => handleJarSelect(jar.id)}
                                 className={`p-4 rounded-xl border transition-all relative overflow-hidden ${selectedJar === jar.id
                                     ? 'bg-gray-800 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                                    : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
+                                    : touched.jar && errors.jar
+                                        ? 'bg-gray-800/30 border-red-500/50 hover:bg-gray-800/50'
+                                        : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
                                     }`}
                             >
                                 <div className="flex items-center gap-3 relative z-10">
@@ -96,6 +166,20 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                             </motion.button>
                         ))}
                     </div>
+                    {/* Jar Error Message */}
+                    <AnimatePresence>
+                        {touched.jar && errors.jar && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="flex items-center gap-2 text-red-400 text-sm"
+                            >
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.jar}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </section>
 
                 {/* Note Input */}
@@ -119,17 +203,26 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
             {/* Floating Action Button */}
             <div className="fixed bottom-6 left-0 right-0 px-4">
                 <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={isFormValid && !isSubmitting ? { scale: 1.02 } : {}}
+                    whileTap={isFormValid && !isSubmitting ? { scale: 0.95 } : {}}
                     onClick={handleSave}
-                    disabled={!amount || parseFloat(amount) <= 0}
-                    className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${amount && parseFloat(amount) > 0
+                    disabled={!isFormValid || isSubmitting}
+                    className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${isFormValid && !isSubmitting
                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-blue-900/20'
                         : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                         }`}
                 >
-                    <Save className="w-5 h-5" />
-                    Save Transaction
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        <>
+                            <Save className="w-5 h-5" />
+                            Save Transaction
+                        </>
+                    )}
                 </motion.button>
             </div>
         </div>
