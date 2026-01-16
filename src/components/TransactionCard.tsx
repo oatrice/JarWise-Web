@@ -29,9 +29,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
                         {transaction.note || jar.name}
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className={transaction.type === 'expense' ? 'text-red-400' : 'text-green-400'}>
-                            {transaction.type === 'expense' ? 'Expense' : 'Income'}
-                        </span>
+                        <span className="font-medium text-gray-400">{jar.name}</span>
                         <span className="h-1 w-1 rounded-full bg-gray-700" />
                         <span>{dateStr}</span>
                     </div>
@@ -39,7 +37,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
             </div>
 
             <div className="flex items-center gap-3">
-                <span className={`font-semibold ${transaction.type === 'expense' ? 'text-gray-200' : 'text-green-400'}`}>
+                <span className={`font-semibold ${transaction.type === 'expense' ? 'text-red-400' : 'text-green-400'}`}>
                     {transaction.type === 'expense' ? '-' : '+'}${transaction.amount.toFixed(2)}
                 </span>
                 <ArrowRight size={16} className="text-gray-600 group-hover:text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
