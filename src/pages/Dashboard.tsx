@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { jars, transactions } from '../utils/mockData';
+import { jars, transactions } from '../utils/generatedMockData';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
