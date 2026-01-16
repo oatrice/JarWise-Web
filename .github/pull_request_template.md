@@ -1,28 +1,33 @@
 # 📋 Summary
-<!-- Brief description of changes -->
+<!-- Brief description of changes for the Mobile Web Platform -->
 
 # 🎯 Type
 - [ ] 🐛 Bug fix
 - [ ] ✨ New feature
 - [ ] ⚡ Performance improvement
 - [ ] 🔧 Refactoring
+- [ ] 💄 UI/UX Update (Web/Responsive)
 - [ ] 📝 Documentation
-- [ ] 🎨 UI/Style
 - [ ] 💥 Breaking change
 
-# 📝 Changes
-<!-- Describe what changed -->
+# 📱 Responsive Design Checks
+- [ ] Mobile View Verified
+- [ ] Tablet/Desktop View Verified
+- [ ] Cross-browser Check (Chrome, Safari, Firefox)
 
-# 📸 Screenshots
-<!-- Add screenshots or recordings if applicable -->
+# � Changes
+<!-- Describe what changed in detail -->
+
+# �📸 UI/UX Screenshots
+<!-- Mobile & Desktop Comparisons -->
 
 # 🧪 Testing
-- [ ] Manual testing completed
+- [ ] Start command: `npm run dev` working
+- [ ] Build command: `npm run build` passing
 
 # 🚀 Migration/Deployment
-- [ ] Database migration required
 - [ ] Environment variables updated
-- [ ] Dependencies installed(Dep1, Dep2, ...)
+- [ ] Dependencies installed
 
 ```bash
 # Migration commands if applicable
@@ -36,4 +41,3 @@
 
 **Breaking Changes**: <!-- Yes/No -->
 **Migration Required**: <!-- Yes/No -->
-
