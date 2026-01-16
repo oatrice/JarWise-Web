@@ -46,9 +46,9 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
     };
 
     const handleAmountBlur = () => {
-        setTouched(prev => ({ ...prev, amount: true }));
+        setTouched(prev => ({ ...prev, amount: true, jar: true })); // Also mark jar as touched
         const result = validateTransaction({ amount, jarId: selectedJar, note });
-        setErrors(prev => ({ ...prev, amount: result.errors.amount }));
+        setErrors(result.errors); // Update all errors
     };
 
     const handleJarSelect = (jarId: string) => {
@@ -115,8 +115,8 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                             placeholder="0.00"
                             autoFocus
                             className={`w-full bg-gray-800/50 border rounded-2xl py-6 pl-10 pr-4 text-3xl font-bold text-white placeholder-gray-600 focus:outline-none focus:ring-2 transition-all font-mono ${touched.amount && errors.amount
-                                    ? 'border-red-500 focus:ring-red-500/50'
-                                    : 'border-gray-700 focus:ring-blue-500/50'
+                                ? 'border-red-500 focus:ring-red-500/50'
+                                : 'border-gray-700 focus:ring-blue-500/50'
                                 }`}
                         />
                     </div>

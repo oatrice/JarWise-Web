@@ -4,7 +4,7 @@ import type { Transaction as SavedTransaction } from '../utils/transactionStorag
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ScanPage from './ScanPage';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
@@ -18,10 +18,12 @@ export default function Dashboard({ onNavigate, transactions: savedTransactions 
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
 
-    // Log saved transactions for debugging (uses mock data for display)
-    if (savedTransactions.length > 0) {
-        console.log('📊 Saved transactions:', savedTransactions);
-    }
+    // Log saved transactions for debugging (only once per change)
+    useEffect(() => {
+        if (savedTransactions.length > 0) {
+            console.log('📊 Saved transactions:', savedTransactions);
+        }
+    }, [savedTransactions]);
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
