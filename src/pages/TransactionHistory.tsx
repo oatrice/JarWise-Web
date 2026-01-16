@@ -1,19 +1,41 @@
 import { motion } from 'framer-motion';
-import { transactions } from '../utils/generatedMockData';
 import TransactionCard from '../components/TransactionCard';
+import type { Transaction } from '../utils/transactionStorage';
 import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
 
 interface TransactionHistoryProps {
     onBack: () => void;
+    transactions: Transaction[];
 }
 
-export default function TransactionHistory({ onBack }: TransactionHistoryProps) {
-    // Group transactions by date (for demo, we'll show all)
-    const groupedTransactions = {
-        'Today': transactions.filter(t => t.date.includes('Today')),
-        'Yesterday': transactions.filter(t => t.date.includes('Yesterday')),
-        'Older': transactions.filter(t => !t.date.includes('Today') && !t.date.includes('Yesterday')),
+export default function TransactionHistory({ onBack, transactions }: TransactionHistoryProps) {
+    const isToday = (dateString: string) => {
+        const date = new Date(dateString);
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
     };
+
+    const isYesterday = (dateString: string) => {
+        const date = new Date(dateString);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return date.getDate() === yesterday.getDate() &&
+            date.getMonth() === yesterday.getMonth() &&
+            date.getFullYear() === yesterday.getFullYear();
+    };
+
+    // Group transactions by date
+    const groupedTransactions = {
+        'Today': transactions.filter(t => isToday(t.date)),
+        'Yesterday': transactions.filter(t => isYesterday(t.date)),
+        'Older': transactions.filter(t => !isToday(t.date) && !isYesterday(t.date)),
+    };
+
+    const totalSpent = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((acc, t) => acc + t.amount, 0);
 
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100">
@@ -62,7 +84,7 @@ export default function TransactionHistory({ onBack }: TransactionHistoryProps) 
                         <div>
                             <p className="text-xs text-gray-500 mb-1">Total Spent</p>
                             <p className="text-xl font-bold text-red-400">
-                                -${Math.abs(transactions.reduce((acc, t) => acc + t.amount, 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                -${totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </p>
                         </div>
                         <div>
