@@ -53,11 +53,11 @@ export default function Dashboard() {
 
             {/* Main Content */}
             <div className="flex-1 w-full relative">
-                {/* Mobile/Tablet Header */}
+                {/* Header - Adaptive: Compact on Mobile, Transparent on Desktop */}
                 <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800 lg:static lg:bg-transparent lg:border-b-0">
-                    <div className="mx-auto max-w-7xl px-6 py-4 lg:py-6 lg:px-8 pointer-events-auto">
-                        <div className="flex items-center justify-between mb-6 lg:mb-8">
-                            {/* Mobile User Profile */}
+                    <div className="mx-auto max-w-7xl px-6 py-4 lg:py-6 lg:px-8">
+                        <div className="flex items-center justify-between mb-6 lg:mb-0">
+                            {/* Mobile: Compact User Info */}
                             <div className="flex items-center gap-3 lg:hidden">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px]">
                                     <img src="https://ui-avatars.com/api/?name=User&background=0D0D0D&color=fff" alt="User" className="h-full w-full rounded-full border-2 border-gray-950" />
@@ -68,12 +68,13 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-                            {/* Desktop Title (replaces mobile profile) */}
+                            {/* Desktop: Title */}
                             <div className="hidden lg:block">
                                 <h1 className="text-2xl font-bold text-white">Dashboard</h1>
                                 <p className="text-gray-400 text-sm">Overview of your 6 jars financial freedom system</p>
                             </div>
 
+                            {/* Actions (Shared) */}
                             <div className="flex items-center gap-3">
                                 <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
                                     <ScanBarcode size={20} />
@@ -88,28 +89,20 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Balance Card - Shared but adapted */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[2rem] bg-gradient-to-br from-blue-600/20 via-indigo-900/20 to-gray-900/50 border border-blue-500/20 relative overflow-hidden group">
-                            {/* Background FX */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/30 transition-all duration-700" />
-
-                            <div className="relative z-10">
-                                <p className="mb-2 text-sm font-medium text-blue-200/60">Total Balance</p>
+                        {/* Mobile Only: Integrated Balance & Streak (Restored Original Layout) */}
+                        <div className="flex lg:hidden items-end justify-between">
+                            <div>
+                                <p className="mb-1 text-sm font-medium text-gray-400">Total Balance</p>
                                 <motion.h1
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-2"
+                                    className="text-4xl font-bold tracking-tight text-white"
                                 >
                                     ${totalBalance.toLocaleString()}
                                 </motion.h1>
-                                <div className="flex items-center gap-2 text-sm text-blue-200/40">
-                                    <span className="text-green-400 font-medium">+$1,293.00 (8.2%)</span>
-                                    <span>vs last month</span>
-                                </div>
                             </div>
-
-                            <div className="relative z-10 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-4 py-2 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)] backdrop-blur-md">
-                                <Flame size={18} className="text-orange-500 fill-orange-500 animate-[pulse_3s_ease-in-out_infinite]" />
+                            <div className="mb-1 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
+                                <Flame size={16} className="text-orange-500 fill-orange-500 animate-[pulse_3s_ease-in-out_infinite]" />
                                 <span className="text-sm font-bold text-orange-400">5 Day Streak!</span>
                             </div>
                         </div>
@@ -117,17 +110,45 @@ export default function Dashboard() {
                 </header>
 
                 <main className="mx-auto max-w-7xl px-6 py-8 space-y-8 lg:px-8 pb-28">
+
+                    {/* Desktop Only: Fancy Balance Card */}
+                    <div className="hidden lg:flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[2rem] bg-gradient-to-br from-blue-600/20 via-indigo-900/20 to-gray-900/50 border border-blue-500/20 relative overflow-hidden group">
+                        {/* Background FX */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/30 transition-all duration-700" />
+
+                        <div className="relative z-10">
+                            <p className="mb-2 text-sm font-medium text-blue-200/60">Total Balance</p>
+                            <motion.h1
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-2"
+                            >
+                                ${totalBalance.toLocaleString()}
+                            </motion.h1>
+                            <div className="flex items-center gap-2 text-sm text-blue-200/40">
+                                <span className="text-green-400 font-medium">+$1,293.00 (8.2%)</span>
+                                <span>vs last month</span>
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-4 py-2 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)] backdrop-blur-md">
+                            <Flame size={18} className="text-orange-500 fill-orange-500 animate-[pulse_3s_ease-in-out_infinite]" />
+                            <span className="text-sm font-bold text-orange-400">5 Day Streak!</span>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                         {/* Left Column: Jars */}
                         <div className="lg:col-span-8 flex flex-col gap-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                                    <LayoutGrid size={20} className="text-blue-500" />
+                                <h3 className="text-lg lg:text-xl font-bold text-gray-100 flex items-center gap-2">
+                                    <LayoutGrid size={20} className="text-blue-500 hidden lg:block" />
                                     Your Jars
                                 </h3>
                                 <button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">View All Analysis</button>
                             </div>
 
+                            {/* Mobile: Stack (gap-4), Desktop: Grid (cols-2/3) */}
                             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                 {jars.map((jar, index) => (
                                     <JarCard key={jar.id} jar={jar} index={index} />
@@ -141,16 +162,16 @@ export default function Dashboard() {
                                 <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
                                 <button className="text-xs text-gray-500 hover:text-white transition-colors">See all</button>
                             </div>
-                            <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
+                            <div className="space-y-3 lg:bg-gray-900/20 lg:p-4 lg:rounded-3xl lg:border lg:border-gray-800/50 lg:backdrop-blur-sm">
                                 {transactions.map((t) => (
                                     <TransactionCard key={t.id} transaction={t} />
                                 ))}
-                                <button className="w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700">
+                                <button className="hidden lg:block w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700">
                                     View Full History
                                 </button>
                             </div>
 
-                            {/* Quick Actions (Desktop only usually) */}
+                            {/* Quick Actions (Desktop only) */}
                             <div className="hidden lg:block p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden text-center">
                                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                                 <h4 className="relative z-10 text-white font-bold text-lg mb-2">Upgrade to Pro</h4>
