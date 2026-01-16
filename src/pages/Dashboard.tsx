@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { jars, transactions } from '../utils/mockData';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode } from 'lucide-react';
+import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
 
 export default function Dashboard() {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
@@ -88,16 +88,30 @@ export default function Dashboard() {
                     </section>
                 </main>
 
-                {/* FAB */}
+                {/* Floating Bottom Nav (Mobile) */}
                 <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 1, type: "spring" }}
-                    className="fixed bottom-6 right-6 z-50"
+                    initial={{ y: 100 }}
+                    animate={{ y: 0 }}
+                    transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
+                    className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90%] sm:max-w-md lg:hidden"
                 >
-                    <button className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 shadow-lg shadow-blue-600/40 text-white hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all">
-                        <Plus size={28} />
-                    </button>
+                    <div className="flex items-center justify-between px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-xl border border-gray-800 shadow-2xl ring-1 ring-white/10">
+                        <button className="flex flex-col items-center gap-1 text-blue-400">
+                            <LayoutGrid size={24} className="fill-blue-400/20" />
+                        </button>
+                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
+                            <History size={24} />
+                        </button>
+                        <button className="relative -top flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 border-4 border-gray-950 hover:scale-105 active:scale-95 transition-all">
+                            <Plus size={28} />
+                        </button>
+                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
+                            <Wallet size={24} />
+                        </button>
+                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
+                            <User size={24} />
+                        </button>
+                    </div>
                 </motion.div>
             </div>
 
