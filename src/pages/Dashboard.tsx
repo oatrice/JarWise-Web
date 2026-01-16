@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { jars, transactions } from '../utils/mockData';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut } from 'lucide-react';
+import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode } from 'lucide-react';
 
 export default function Dashboard() {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
@@ -54,7 +54,7 @@ export default function Dashboard() {
             {/* Main Content */}
             <div className="flex-1 w-full relative">
                 {/* Mobile/Tablet Header */}
-                <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800 lg:bg-transparent lg:border-b-0 lg:absolute lg:w-full lg:pointer-events-none">
+                <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800 lg:static lg:bg-transparent lg:border-b-0">
                     <div className="mx-auto max-w-7xl px-6 py-4 lg:py-6 lg:px-8 pointer-events-auto">
                         <div className="flex items-center justify-between mb-6 lg:mb-8">
                             {/* Mobile User Profile */}
@@ -75,6 +75,9 @@ export default function Dashboard() {
                             </div>
 
                             <div className="flex items-center gap-3">
+                                <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
+                                    <ScanBarcode size={20} />
+                                </button>
                                 <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
                                     <Search size={20} />
                                 </button>
