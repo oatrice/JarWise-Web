@@ -17,7 +17,7 @@ Resolves oatrice/JarWise-Root#16
 ## Screenshots
 | Dashboard (Mobile) | Add Transaction (Mobile) |
 |:---:|:---:|
-| <img src="screenshots/dashboard_mobile.png" width="300" /> | <img src="screenshots/add_transaction_mobile.png" width="300" /> |
+| <img src="https://github.com/oatrice/JarWise-Web/blob/feat/16-add-transaction-web/screenshots/dashboard_mobile.png?raw=true" width="300" /> | <img src="https://github.com/oatrice/JarWise-Web/blob/feat/16-add-transaction-web/screenshots/add_transaction_mobile.png?raw=true" width="300" /> |
 
 ## Verification
 - [x] Unit Tests passed (`npm test`)
