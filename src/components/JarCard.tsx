@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import type { Jar } from '../utils/mockData';
+import type { Jar } from '../utils/generatedMockData';
 import { Sparkles, ArrowUpRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';

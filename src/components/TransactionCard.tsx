@@ -1,4 +1,4 @@
-import type { Transaction } from '../utils/mockData';
+import type { Transaction } from '../utils/generatedMockData';
 import { ArrowRight } from 'lucide-react';
 
 interface TransactionCardProps {
