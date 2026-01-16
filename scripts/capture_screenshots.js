@@ -14,32 +14,50 @@ async function capture() {
         headless: "new",
         args: ['--no-sandbox', '--disable-setuid-sandbox'] // optimization
     });
-    const page = await browser.newPage();
-
-    // Set Mobile Viewport (iPhone 13 Pro dimensions)
-    await page.setViewport({ width: 390, height: 844, isMobile: true });
+    // --- Mobile Capture ---
+    const pageMobile = await browser.newPage();
+    await pageMobile.setViewport({ width: 390, height: 844, isMobile: true });
 
     try {
-        // 1. Dashboard
-        console.log('Navigating to Dashboard...');
-        await page.goto('http://localhost:5173', { waitUntil: 'networkidle0' });
-        // Wait for a bit (animations, etc)
+        console.log('Capturing Mobile...');
+        await pageMobile.goto('http://localhost:5173', { waitUntil: 'networkidle0' });
         await new Promise(r => setTimeout(r, 1000));
-        await page.screenshot({ path: path.join(dir, 'dashboard-mobile.png') });
-        console.log('Captured dashboard-mobile.png');
+        await pageMobile.screenshot({ path: path.join(dir, 'dashboard-mobile.png') });
 
-        // 2. Transaction History
-        console.log('Navigating to Transaction History...');
-        await page.goto('http://localhost:5173/history', { waitUntil: 'networkidle0' });
-        await new Promise(r => setTimeout(r, 1000));
-        await page.screenshot({ path: path.join(dir, 'history-mobile.png') });
-        console.log('Captured history-mobile.png');
-
+        // Scan Page
+        await pageMobile.click('[data-testid="scan-btn-mobile"]');
+        await new Promise(r => setTimeout(r, 2000));
+        await pageMobile.screenshot({ path: path.join(dir, 'scan-page-mobile.png') });
+        console.log('Mobile captured.');
     } catch (e) {
-        console.error('Error capturing screenshots:', e);
+        console.error('Mobile capture error:', e);
     } finally {
-        await browser.close();
+        await pageMobile.close();
     }
+
+    // --- Desktop Capture ---
+    const pageDesktop = await browser.newPage();
+    await pageDesktop.setViewport({ width: 1920, height: 1080 }); // Desktop 1080p
+
+    try {
+        console.log('Capturing Desktop...');
+        await pageDesktop.goto('http://localhost:5173', { waitUntil: 'networkidle0' });
+        await new Promise(r => setTimeout(r, 1000));
+        await pageDesktop.screenshot({ path: path.join(dir, 'dashboard-desktop.png') });
+
+        // Scan Page
+        await pageDesktop.waitForSelector('[data-testid="scan-btn-desktop"]');
+        await pageDesktop.click('[data-testid="scan-btn-desktop"]');
+        await new Promise(r => setTimeout(r, 2000));
+        await pageDesktop.screenshot({ path: path.join(dir, 'scan-page-desktop.png') });
+        console.log('Desktop captured.');
+    } catch (e) {
+        console.error('Desktop capture error:', e);
+    } finally {
+        await pageDesktop.close();
+    }
+
+    await browser.close();
 }
 
 capture();
