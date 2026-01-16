@@ -1,4 +1,4 @@
-import { Gamepad2, Heart, Home, Plane, Zap, ShoppingBag, Coffee, Smartphone, GraduationCap, DollarSign } from 'lucide-react';
+import { Gamepad2, Heart, Home, Plane, Zap, ShoppingBag, Coffee, Smartphone, GraduationCap, DollarSign, type LucideIcon } from 'lucide-react';
 
 export type Jar = {
     id: string;
@@ -8,7 +8,7 @@ export type Jar = {
     level: number;
     color: string;
     bgGlow: string;
-    icon: any;
+    icon: LucideIcon;
     barColor: string;
     shadowColor: string;
 }
@@ -21,7 +21,7 @@ export type Transaction = {
     date: string;
     isTaxDeductible: boolean;
     color: string;
-    icon: any;
+    icon: LucideIcon;
 }
 
 export const jars: Jar[] = [
