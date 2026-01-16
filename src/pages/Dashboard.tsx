@@ -18,7 +18,7 @@ export default function Dashboard() {
                 {/* Header */}
                 <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800">
                     <div className="mx-auto max-w-md px-6 py-4">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px]">
                                     <img src="https://ui-avatars.com/api/?name=User&background=0D0D0D&color=fff" alt="User" className="h-full w-full rounded-full border-2 border-gray-950" />
@@ -41,27 +41,27 @@ export default function Dashboard() {
                                 </button>
                             </div>
                         </div>
-
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <p className="mb-1 text-sm font-medium text-gray-400">Total Balance</p>
-                                <motion.h1
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="text-4xl font-bold tracking-tight text-white"
-                                >
-                                    ${totalBalance.toLocaleString()}
-                                </motion.h1>
-                            </div>
-                            <div className="mb-1 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
-                                <Flame size={16} className="text-orange-500 fill-orange-500 animate-[pulse_3s_ease-in-out_infinite]" />
-                                <span className="text-sm font-bold text-orange-400">5 Day Streak!</span>
-                            </div>
-                        </div>
                     </div>
                 </header>
 
                 <main className="mx-auto max-w-md px-6 py-8 space-y-8">
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <p className="mb-1 text-sm font-medium text-gray-400">Total Balance</p>
+                            <motion.h1
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-4xl font-bold tracking-tight text-white"
+                            >
+                                ${totalBalance.toLocaleString()}
+                            </motion.h1>
+                        </div>
+                        <div className="mb-1 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
+                            <Flame size={16} className="text-orange-500 fill-orange-500 animate-[pulse_3s_ease-in-out_infinite]" />
+                            <span className="text-sm font-bold text-orange-400">5 Day Streak!</span>
+                        </div>
+                    </div>
+
                     {/* Jars Grid */}
                     <section>
                         <div className="flex items-center justify-between mb-4">
