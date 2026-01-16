@@ -9,7 +9,7 @@ export interface Transaction {
     amount: number;
     jarId: string;
     note?: string;
-    createdAt: string;
+    date: string;
     type: 'income' | 'expense';
 }
 

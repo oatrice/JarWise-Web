@@ -36,7 +36,7 @@ describe('Transaction Storage Service', () => {
                 amount: 100,
                 jarId: 'necessities',
                 note: 'Test',
-                createdAt: '2026-01-16T12:00:00Z',
+                date: '2026-01-16T12:00:00Z',
                 type: 'expense',
             };
             localStorage.setItem('jarwise_transactions', JSON.stringify([mockTx]));
@@ -65,7 +65,7 @@ describe('Transaction Storage Service', () => {
                 amount: 500,
                 jarId: 'education',
                 note: 'Course fee',
-                createdAt: '2026-01-16T12:00:00Z',
+                date: '2026-01-16T12:00:00Z',
                 type: 'expense',
             };
 
@@ -81,7 +81,7 @@ describe('Transaction Storage Service', () => {
                 id: '1',
                 amount: 100,
                 jarId: 'necessities',
-                createdAt: '2026-01-16T10:00:00Z',
+                date: '2026-01-16T10:00:00Z',
                 type: 'expense',
             };
             localStorage.setItem('jarwise_transactions', JSON.stringify([existingTx]));
@@ -90,7 +90,7 @@ describe('Transaction Storage Service', () => {
                 id: '2',
                 amount: 200,
                 jarId: 'savings',
-                createdAt: '2026-01-16T12:00:00Z',
+                date: '2026-01-16T12:00:00Z',
                 type: 'expense',
             };
 
@@ -114,7 +114,7 @@ describe('Transaction Storage Service', () => {
                 id: '2',
                 amount: 200,
                 jarId: 'savings',
-                createdAt: '2026-01-16T12:00:00Z',
+                date: '2026-01-16T12:00:00Z',
                 type: 'expense',
             };
 
@@ -131,7 +131,7 @@ describe('Transaction Storage Service', () => {
                 id: String(i),
                 amount: 100,
                 jarId: 'necessities',
-                createdAt: `2026-01-${String(i + 1).padStart(2, '0')}T12:00:00Z`,
+                date: `2026-01-${String(i + 1).padStart(2, '0')}T12:00:00Z`,
                 type: 'expense' as const,
             }));
             localStorage.setItem('jarwise_transactions', JSON.stringify(existingTxs));
@@ -140,7 +140,7 @@ describe('Transaction Storage Service', () => {
                 id: '101',
                 amount: 999,
                 jarId: 'play',
-                createdAt: '2026-02-01T12:00:00Z',
+                date: '2026-02-01T12:00:00Z',
                 type: 'expense',
             };
 
@@ -158,7 +158,7 @@ describe('Transaction Storage Service', () => {
                 id: '1',
                 amount: 100,
                 jarId: 'necessities',
-                createdAt: '2026-01-16T12:00:00Z',
+                date: '2026-01-16T12:00:00Z',
                 type: 'expense',
             };
             localStorage.setItem('jarwise_transactions', JSON.stringify([mockTx]));
