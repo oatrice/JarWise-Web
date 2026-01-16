@@ -35,6 +35,16 @@ async function capture() {
         await page.screenshot({ path: path.join(dir, 'history-mobile.png') });
         console.log('Captured history-mobile.png');
 
+        // 3. Scan Page (Mobile)
+        console.log('Opening Scan Page...');
+        await page.goto('http://localhost:5173', { waitUntil: 'networkidle0' });
+        await page.waitForSelector('[data-testid="scan-btn-mobile"]');
+        await page.click('[data-testid="scan-btn-mobile"]');
+        // Wait for modal and potential camera permission error (which is expected in headless)
+        await new Promise(r => setTimeout(r, 2000));
+        await page.screenshot({ path: path.join(dir, 'scan-page-mobile.png') });
+        console.log('Captured scan-page-mobile.png');
+
     } catch (e) {
         console.error('Error capturing screenshots:', e);
     } finally {

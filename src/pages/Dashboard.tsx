@@ -52,6 +52,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setShowScanner(true)}
+                                    data-testid="scan-btn-mobile"
                                     className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
                                 >
                                     <ScanBarcode size={20} />
@@ -198,6 +199,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => setShowScanner(true)}
+                                        data-testid="scan-btn-desktop"
                                         className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
                                     >
                                         <ScanBarcode size={20} />
