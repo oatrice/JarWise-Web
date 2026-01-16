@@ -4,7 +4,13 @@ import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
 
-export default function Dashboard() {
+type Page = 'dashboard' | 'history';
+
+interface DashboardProps {
+    onNavigate: (page: Page) => void;
+}
+
+export default function Dashboard({ onNavigate }: DashboardProps) {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
 
     return (
@@ -99,7 +105,7 @@ export default function Dashboard() {
                         <button className="flex flex-col items-center gap-1 text-blue-400">
                             <LayoutGrid size={24} className="fill-blue-400/20" />
                         </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
+                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors" onClick={() => onNavigate('history')}>
                             <History size={24} />
                         </button>
                         <button className="relative -top flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 border-4 border-gray-950 hover:scale-105 active:scale-95 transition-all">
