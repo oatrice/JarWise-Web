@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { jars, transactions } from '../utils/generatedMockData';
+import { jars } from '../utils/generatedMockData';
+import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet } from 'lucide-react';
+import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 
@@ -10,9 +11,10 @@ type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
+    transactions?: Transaction[];
 }
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
+export default function Dashboard({ onNavigate, transactions = [] }: DashboardProps) {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
 
@@ -106,9 +108,24 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                             <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
                         </div>
                         <div className="space-y-3">
-                            {transactions.map((t) => (
-                                <TransactionCard key={t.id} transaction={t} />
-                            ))}
+                            {transactions.length > 0 ? (
+                                transactions.map((t) => (
+                                    <TransactionCard key={t.id} transaction={t} />
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-gray-900/20 border border-gray-800/50 text-gray-500">
+                                    <div className="p-4 rounded-full bg-gray-800/50 mb-3">
+                                        <Inbox className="w-8 h-8 opacity-50" />
+                                    </div>
+                                    <p className="font-medium">No transactions yet</p>
+                                    <button
+                                        onClick={() => onNavigate('add-transaction')}
+                                        className="mt-2 text-xs text-blue-400 hover:text-blue-300"
+                                    >
+                                        Add your first transaction
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </section>
                 </main>
@@ -275,9 +292,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                                     <button className="text-xs text-gray-500 hover:text-white transition-colors">See all</button>
                                 </div>
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
-                                    {transactions.map((t) => (
-                                        <TransactionCard key={t.id} transaction={t} />
-                                    ))}
+                                    {transactions.length > 0 ? (
+                                        transactions.slice(0, 3).map((t) => (
+                                            <TransactionCard key={t.id} transaction={t} />
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>
+                                    )}
                                     <button className="w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700">
                                         View Full History
                                     </button>
