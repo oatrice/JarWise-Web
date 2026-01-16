@@ -38,20 +38,22 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
     return (
         <div className="min-h-screen bg-gray-900 text-white pb-24">
             {/* Header */}
-            <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-4 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
-                <button
-                    onClick={onBack}
-                    className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-                >
-                    <ArrowLeft className="w-6 h-6 text-gray-400" />
-                </button>
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Add Transaction
-                </h1>
-                <div className="w-10" /> {/* Spacer */}
+            <header className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+                <div className="max-w-xl mx-auto flex items-center justify-between px-4 py-4">
+                    <button
+                        onClick={onBack}
+                        className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+                    >
+                        <ArrowLeft className="w-6 h-6 text-gray-400" />
+                    </button>
+                    <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        Add Transaction
+                    </h1>
+                    <div className="w-10" /> {/* Spacer */}
+                </div>
             </header>
 
-            <main className="px-4 py-6 space-y-8">
+            <main className="px-4 py-6 space-y-8 max-w-xl mx-auto">
                 {/* Amount Input */}
                 <section className="space-y-2">
                     <label className="text-sm font-medium text-gray-400">Amount</label>
@@ -78,8 +80,8 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => setSelectedJar(jar.id)}
                                 className={`p-4 rounded-xl border transition-all relative overflow-hidden ${selectedJar === jar.id
-                                        ? 'bg-gray-800 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                                        : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
+                                    ? 'bg-gray-800 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                                    : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
                                     }`}
                             >
                                 <div className="flex items-center gap-3 relative z-10">
@@ -116,21 +118,22 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                 </section>
             </main>
 
-            {/* Floating Action Button */}
-            <div className="fixed bottom-6 left-0 right-0 px-4">
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleSave}
-                    disabled={!amount || parseFloat(amount) <= 0}
-                    className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${amount && parseFloat(amount) > 0
+            <div className="fixed bottom-6 left-0 right-0 px-4 pointer-events-none">
+                <div className="max-w-xl mx-auto pointer-events-auto">
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleSave}
+                        disabled={!amount || parseFloat(amount) <= 0}
+                        className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${amount && parseFloat(amount) > 0
                             ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-blue-900/20'
                             : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                        }`}
-                >
-                    <Save className="w-5 h-5" />
-                    Save Transaction
-                </motion.button>
+                            }`}
+                    >
+                        <Save className="w-5 h-5" />
+                        Save Transaction
+                    </motion.button>
+                </div>
             </div>
         </div>
     );
