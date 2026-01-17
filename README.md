@@ -22,9 +22,10 @@ This project uses a shared design token system managed in the **[JarWise-Root](h
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 
-- React
-- Vite
-- Tailwind CSS (with shared tokens)
+- **React**: `19.2.0`
+- **Vite**: `7.2.4`
+- **Tailwind CSS**: `4.1.18`
+- **TypeScript**: `5.9.3`
 - Framer Motion
 
 ## 🚀 Getting Started
