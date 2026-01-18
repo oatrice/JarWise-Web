@@ -5,10 +5,11 @@ import { ChevronLeft, RefreshCcw } from 'lucide-react';
 
 interface ScanPageProps {
     onClose: () => void;
+    onBack?: () => void; // Optional back handler
     onScan: (data: string) => void;
 }
 
-export default function ScanPage({ onClose, onScan }: ScanPageProps) {
+export default function ScanPage({ onClose, onBack, onScan }: ScanPageProps) {
     const webcamRef = useRef<Webcam>(null);
     const [facingMode, setFacingMode] = useState<'user' | 'environment'>(() => {
         const checkMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -37,7 +38,7 @@ export default function ScanPage({ onClose, onScan }: ScanPageProps) {
             {/* Header */}
             <div className="absolute top-0 left-0 w-full p-6 z-20 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
                 <button
-                    onClick={onClose}
+                    onClick={onBack || onClose}
                     className="flex items-center justify-center h-12 w-12 text-white bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:bg-white/20 transition-colors"
                 >
                     <ChevronLeft size={28} />

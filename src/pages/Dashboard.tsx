@@ -3,9 +3,10 @@ import { jars } from '../utils/generatedMockData';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox } from 'lucide-react';
+import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox, MoreVertical, CloudUpload } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
+import ImportSlip from './ImportSlip';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
@@ -20,7 +21,9 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const { currency, setCurrency, formatAmount } = useCurrency();
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
+    const [showImportSlip, setShowImportSlip] = useState(false);
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -28,14 +31,16 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
         setShowScanner(false);
     };
 
+    if (showScanner) {
+        return <ScanPage onClose={() => setShowScanner(false)} onScan={handleScan} />;
+    }
+
+    if (showImportSlip) {
+        return <ImportSlip onBack={() => setShowImportSlip(false)} />;
+    }
+
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100 selection:bg-blue-500/30">
-            {showScanner && (
-                <ScanPage
-                    onClose={() => setShowScanner(false)}
-                    onScan={handleScan}
-                />
-            )}
 
             {/* =========================================
                 MOBILE VIEW (Reverted to 16804dc)
@@ -55,7 +60,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                     <h2 className="text-sm font-semibold text-gray-100">Oatrice</h2>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setShowScanner(true)}
                                     data-testid="scan-btn-mobile"
@@ -63,13 +68,42 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 >
                                     <ScanBarcode size={20} />
                                 </button>
-                                <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
-                                    <Search size={20} />
+                                <button
+                                    onClick={() => setShowImportSlip(true)}
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                                >
+                                    <CloudUpload size={20} />
                                 </button>
-                                <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
-                                    <Bell size={20} />
-                                    <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900" />
-                                </button>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                                    >
+                                        <MoreVertical size={20} />
+                                    </button>
+
+                                    {isMobileMenuOpen && (
+                                        <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                                            <div className="p-1">
+                                                <button
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+                                                >
+                                                    <Bell size={18} />
+                                                    <span>Notifications</span>
+                                                    <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+                                                >
+                                                    <Settings size={18} />
+                                                    <span>Settings</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
