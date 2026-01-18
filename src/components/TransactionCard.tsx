@@ -4,9 +4,10 @@ import { getJarDetails } from '../utils/constants';
 
 interface TransactionCardProps {
     transaction: Transaction;
+    currency: string;
 }
 
-export default function TransactionCard({ transaction }: TransactionCardProps) {
+export default function TransactionCard({ transaction, currency }: TransactionCardProps) {
     const jar = getJarDetails(transaction.jarId);
 
     // Format date roughly like "Today, 10:43 AM" or "Jan 16, 2026"
@@ -30,6 +31,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
     // Display Logic: 
     // Title: Note (primary) -> Jar Name (fallback)
     // Subtitle: Jar Name (if Note exists) -> Date
+    // const jar = getJarDetails(transaction.jarId); // Keep jar details for potential future use or if title/subtitle logic changes
     const title = transaction.note || jar.name;
     const subtitle = transaction.note ? jar.name : '';
 
@@ -58,7 +60,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
 
             <div className="flex items-center gap-3">
                 <span className={`font-semibold ${transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400'}`}>
-                    ${transaction.amount.toFixed(2)}
+                    {transaction.type === 'expense' ? '-' : '+'}{new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(transaction.amount)}
                 </span>
                 <ArrowRight size={16} className="text-gray-600 group-hover:text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
             </div>

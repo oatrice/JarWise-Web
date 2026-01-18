@@ -17,6 +17,7 @@ interface DashboardProps {
 export default function Dashboard({ onNavigate, transactions = [] }: DashboardProps) {
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
+    const [currency, setCurrency] = useState('THB'); // Mock state for prototyping
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -97,7 +98,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                         </div>
                         <div className="grid gap-4">
                             {jars.map((jar, index) => (
-                                <JarCard key={jar.id} jar={jar} index={index} />
+                                <JarCard key={jar.id} jar={jar} index={index} currency={currency} />
                             ))}
                         </div>
                     </section>
@@ -110,7 +111,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                         <div className="space-y-3">
                             {transactions.length > 0 ? (
                                 transactions.map((t) => (
-                                    <TransactionCard key={t.id} transaction={t} />
+                                    <TransactionCard key={t.id} transaction={t} currency={currency} />
                                 ))
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-gray-900/20 border border-gray-800/50 text-gray-500">
@@ -249,16 +250,35 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             {/* Background FX */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/30 transition-all duration-700" />
                             <div className="relative z-10">
-                                <p className="mb-2 text-sm font-medium text-blue-200/60">Total Balance</p>
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-sm font-medium text-blue-200/60">Total Balance</p>
+                                    <div className="relative group/currency">
+                                        <button className="flex items-center gap-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/20">
+                                            {currency} <span className="text-blue-400">▼</span>
+                                        </button>
+                                        <div className="absolute right-0 top-full mt-2 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden hidden group-hover/currency:block z-50">
+                                            {['THB', 'USD', 'EUR', 'JPY'].map((c) => (
+                                                <button
+                                                    key={c}
+                                                    onClick={() => setCurrency(c)}
+                                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${currency === c ? 'text-blue-400 font-medium bg-blue-900/10' : 'text-gray-400'}`}
+                                                >
+                                                    {c}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                                 <motion.h1
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
+                                    key={currency} // Animate on change
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
                                     className="text-5xl font-bold tracking-tight text-white mb-2"
                                 >
-                                    ${totalBalance.toLocaleString()}
+                                    {new Intl.NumberFormat(undefined, { style: 'currency', currency: currency }).format(totalBalance)}
                                 </motion.h1>
                                 <div className="flex items-center gap-2 text-sm text-blue-200/40">
-                                    <span className="text-green-400 font-medium">+$1,293.00 (8.2%)</span>
+                                    <span className="text-green-400 font-medium">+{new Intl.NumberFormat(undefined, { style: 'currency', currency: currency }).format(1293)} (8.2%)</span>
                                     <span>vs last month</span>
                                 </div>
                             </div>
@@ -280,7 +300,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 </div>
                                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                     {jars.map((jar, index) => (
-                                        <JarCard key={jar.id} jar={jar} index={index} />
+                                        <JarCard key={jar.id} jar={jar} index={index} currency={currency} />
                                     ))}
                                 </div>
                             </div>
@@ -294,7 +314,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
                                     {transactions.length > 0 ? (
                                         transactions.slice(0, 3).map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} />
+                                            <TransactionCard key={t.id} transaction={t} currency={currency} />
                                         ))
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>

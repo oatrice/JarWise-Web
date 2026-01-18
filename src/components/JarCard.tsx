@@ -7,9 +7,10 @@ import { twMerge } from 'tailwind-merge';
 interface JarCardProps {
     jar: Jar;
     index: number;
+    currency: string;
 }
 
-export default function JarCard({ jar, index }: JarCardProps) {
+export default function JarCard({ jar, index, currency }: JarCardProps) {
     const Icon = jar.icon;
     const progress = Math.min((jar.current / jar.goal) * 100, 100);
 
@@ -53,8 +54,12 @@ export default function JarCard({ jar, index }: JarCardProps) {
                     </div>
 
                     <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-bold text-white tracking-tight">${jar.current.toLocaleString()}</span>
-                        <span className="text-xs font-medium text-gray-500">/ ${jar.goal.toLocaleString()}</span>
+                        <span className="text-2xl font-bold text-white tracking-tight">
+                            {new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(jar.current)}
+                        </span>
+                        <span className="text-xs font-medium text-gray-500">
+                            / {new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(jar.goal)}
+                        </span>
                     </div>
                 </div>
 
