@@ -1,4 +1,8 @@
-# Web Changelog
+# Changelog
+
+## [0.3.0] - 2026-01-18
+### Changed
+- **Mock Data**: Updated and diversified the sample data for Jars and Transactions to improve the initial demonstration experience.
 
 ## [0.2.0] - 2026-01-18
 ### Added
