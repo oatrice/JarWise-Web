@@ -9,15 +9,18 @@ import ScanPage from './ScanPage';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
+import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
+
 interface DashboardProps {
     onNavigate: (page: Page) => void;
     transactions?: Transaction[];
 }
 
 export default function Dashboard({ onNavigate, transactions = [] }: DashboardProps) {
+    const { currency, setCurrency, formatAmount } = useCurrency();
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
-    const [currency, setCurrency] = useState('THB'); // Mock state for prototyping
+    const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -81,7 +84,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="text-4xl font-bold tracking-tight text-white"
                             >
-                                ${totalBalance.toLocaleString()}
+                                {formatAmount(totalBalance)}
                             </motion.h1>
                         </div>
                         <div className="mb-1 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
@@ -98,7 +101,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                         </div>
                         <div className="grid gap-4">
                             {jars.map((jar, index) => (
-                                <JarCard key={jar.id} jar={jar} index={index} currency={currency} />
+                                <JarCard key={jar.id} jar={jar} index={index} />
                             ))}
                         </div>
                     </section>
@@ -111,7 +114,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                         <div className="space-y-3">
                             {transactions.length > 0 ? (
                                 transactions.map((t) => (
-                                    <TransactionCard key={t.id} transaction={t} currency={currency} />
+                                    <TransactionCard key={t.id} transaction={t} />
                                 ))
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-gray-900/20 border border-gray-800/50 text-gray-500">
@@ -252,21 +255,29 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-sm font-medium text-blue-200/60">Total Balance</p>
-                                    <div className="relative group/currency">
-                                        <button className="flex items-center gap-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/20">
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+                                            className="flex items-center gap-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/20"
+                                        >
                                             {currency} <span className="text-blue-400">▼</span>
                                         </button>
-                                        <div className="absolute right-0 top-full mt-2 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden hidden group-hover/currency:block z-50">
-                                            {['THB', 'USD', 'EUR', 'JPY'].map((c) => (
-                                                <button
-                                                    key={c}
-                                                    onClick={() => setCurrency(c)}
-                                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${currency === c ? 'text-blue-400 font-medium bg-blue-900/10' : 'text-gray-400'}`}
-                                                >
-                                                    {c}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {isCurrencyDropdownOpen && (
+                                            <div className="absolute right-0 top-full mt-2 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                                                {['THB', 'USD', 'EUR', 'JPY', 'GBP'].map((c) => (
+                                                    <button
+                                                        key={c}
+                                                        onClick={() => {
+                                                            setCurrency(c as CurrencyCode);
+                                                            setIsCurrencyDropdownOpen(false);
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${currency === c ? 'text-blue-400 font-medium bg-blue-900/10' : 'text-gray-400'}`}
+                                                    >
+                                                        {c}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <motion.h1
@@ -275,10 +286,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                     animate={{ opacity: 1, y: 0 }}
                                     className="text-5xl font-bold tracking-tight text-white mb-2"
                                 >
-                                    {new Intl.NumberFormat(undefined, { style: 'currency', currency: currency }).format(totalBalance)}
+                                    {formatAmount(totalBalance)}
                                 </motion.h1>
                                 <div className="flex items-center gap-2 text-sm text-blue-200/40">
-                                    <span className="text-green-400 font-medium">+{new Intl.NumberFormat(undefined, { style: 'currency', currency: currency }).format(1293)} (8.2%)</span>
+                                    <span className="text-green-400 font-medium">+{formatAmount(1293)} (8.2%)</span>
                                     <span>vs last month</span>
                                 </div>
                             </div>
@@ -300,7 +311,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 </div>
                                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                     {jars.map((jar, index) => (
-                                        <JarCard key={jar.id} jar={jar} index={index} currency={currency} />
+                                        <JarCard key={jar.id} jar={jar} index={index} />
                                     ))}
                                 </div>
                             </div>
@@ -314,7 +325,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
                                     {transactions.length > 0 ? (
                                         transactions.slice(0, 3).map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} currency={currency} />
+                                            <TransactionCard key={t.id} transaction={t} />
                                         ))
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>

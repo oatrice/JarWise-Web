@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { ChevronLeft, RefreshCcw } from 'lucide-react';
 
@@ -10,13 +10,10 @@ interface ScanPageProps {
 
 export default function ScanPage({ onClose, onScan }: ScanPageProps) {
     const webcamRef = useRef<Webcam>(null);
-    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-
-    useEffect(() => {
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>(() => {
         const checkMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        // Default to environment for mobile, user for PC
-        setFacingMode(checkMobile ? 'environment' : 'user');
-    }, []);
+        return checkMobile ? 'environment' : 'user';
+    });
 
     const toggleCamera = () => {
         setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
