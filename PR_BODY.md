@@ -1,24 +1,18 @@
-# Objective
-Implement "Add Transaction" feature for Web.
+# 🚀 Feature: Currency Support & Mobile Parity
 
-# Description
-This PR implements the transaction creation flow, including form validation, local storage persistence, and the Dashboard "Recent Activity" view.
+This PR implements global currency support and enhances the mobile experience to match Android native designs.
 
-## Changes
-- **AddTransaction Page**: Form with Amount, Jar Selection, Note, and Date.
-- **Validation**: Real-time validation for Amount (required, positive number) and Jar (required).
-- **Storage**: localStorage implementation for persisting transactions.
-- **Dashboard**: Updated "Recent Activity" to show real data.
-- **UI**: Responsive design matching the requested dark theme and mobile layout.
+## ✨ Changes
+- **Global Currency**: Implemented `CurrencyContext` and `useCurrency` hook.
+- **Mobile UI**: Added "Import Slip" page (mock) and "Settings" overlay.
+- **Header**: Responsive "Import" and "More" menu buttons for mobile.
+- **Docs**: Updated README and Changelog.
 
-## Linked Issue
-Resolves oatrice/JarWise-Root#16
+## 📸 Screenshots
 
-## Screenshots
-| Dashboard (Mobile) | Add Transaction (Mobile) |
-|:---:|:---:|
-| <img src="https://github.com/oatrice/JarWise-Web/blob/feat/16-add-transaction-web/screenshots/dashboard_mobile.png?raw=true" width="300" /> | <img src="https://github.com/oatrice/JarWise-Web/blob/feat/16-add-transaction-web/screenshots/add_transaction_mobile.png?raw=true" width="300" /> |
+| Dashboard (Mobile) | Import Slip | Settings |
+|:---:|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/oatrice/JarWise-Web/feat/26-currency-support/screenshots/web_dashboard_mobile.png" width="400" /> | <img src="https://raw.githubusercontent.com/oatrice/JarWise-Web/feat/26-currency-support/screenshots/web_import_slip_mobile.png" width="400" /> | <img src="https://raw.githubusercontent.com/oatrice/JarWise-Web/feat/26-currency-support/screenshots/web_settings_overlay_mobile.png" width="400" /> |
 
-## Verification
-- [x] Unit Tests passed (`npm test`)
-- [x] Manual verification on Mobile Viewport (390x844)
+## 🔗 Related Issues
+- Resolves oatrice/JarWise-Root#26
