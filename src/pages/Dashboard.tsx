@@ -7,6 +7,7 @@ import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, Scan
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
+import SettingsOverlay from './SettingsOverlay';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
@@ -22,6 +23,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
     const [showImportSlip, setShowImportSlip] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -37,6 +39,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
 
     if (showImportSlip) {
         return <ImportSlip onBack={() => setShowImportSlip(false)} />;
+    }
+
+    if (showSettings) {
+        return <SettingsOverlay onBack={() => setShowSettings(false)} />;
     }
 
     return (
@@ -85,20 +91,18 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                     {isMobileMenuOpen && (
                                         <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
                                             <div className="p-1">
-                                                <button
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
-                                                >
-                                                    <Bell size={18} />
-                                                    <span>Notifications</span>
-                                                    <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
+                                                <button className="w-full flex items-center justify-between px-4 py-3 text-left bg-gray-800 hover:bg-gray-700 border-b border-gray-700/50">
+                                                    <span className="text-white">Notifications</span>
+                                                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                                                 </button>
                                                 <button
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+                                                    onClick={() => {
+                                                        setIsMobileMenuOpen(false);
+                                                        setShowSettings(true);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-white bg-gray-800 hover:bg-gray-700"
                                                 >
-                                                    <Settings size={18} />
-                                                    <span>Settings</span>
+                                                    Settings
                                                 </button>
                                             </div>
                                         </div>
@@ -107,7 +111,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             </div>
                         </div>
                     </div>
-                </header>
+                </header >
 
                 <main className="mx-auto max-w-md px-6 py-8 space-y-8">
                     <div className="flex items-end justify-between">
@@ -196,16 +200,16 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                         </button>
                     </div>
                 </motion.div>
-            </div>
+            </div >
 
 
             {/* =========================================
                 DESKTOP VIEW (New Implementation)
                 Visible only on screens >= lg
                ========================================= */}
-            <div className="hidden lg:flex flex-1">
+            < div className="hidden lg:flex flex-1" >
                 {/* Desktop Sidebar */}
-                <aside className="flex flex-col w-64 h-screen sticky top-0 border-r border-gray-800 bg-gray-950/50 backdrop-blur-xl p-6">
+                < aside className="flex flex-col w-64 h-screen sticky top-0 border-r border-gray-800 bg-gray-950/50 backdrop-blur-xl p-6" >
                     <div className="flex items-center gap-3 mb-10 px-2">
                         <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold">
                             J
@@ -243,10 +247,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             Sign Out
                         </button>
                     </div>
-                </aside>
+                </aside >
 
                 {/* Main Content Area */}
-                <div className="flex-1 w-full relative">
+                < div className="flex-1 w-full relative" >
                     <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b -0 lg:bg-transparent lg:border-b-0">
                         <div className="mx-auto max-w-7xl px-8 py-6">
                             <div className="flex items-center justify-between">
@@ -379,8 +383,8 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             </div>
                         </div>
                     </main>
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 }
