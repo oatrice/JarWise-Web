@@ -16,6 +16,11 @@ This project uses a shared design token system managed in the **[JarWise-Root](h
 2.  Edit `tokens/colors.json`.
 3.  Run `node scripts/sync_tokens.js` from the root of `JarWise-Root`.
 
+## ✨ Features
+*   **Currency Support**: Multi-currency display (THB, USD, EUR, GBP, JPY) with global context and persistence.
+*   **Mobile Parity**: Responsive Dashboard with mobile-specific header actions (Import Slip, Settings).
+*   **Mock Functionality**: Import Slip UI and Settings Overlay for mobile demonstration.
+
 ## 🛠 Tech Stack
 ![React](https://img.shields.io/badge/React-19.2.0-20232a?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![Vite](https://img.shields.io/badge/Vite-7.2.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)

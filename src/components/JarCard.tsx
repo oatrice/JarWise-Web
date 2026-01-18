@@ -4,12 +4,15 @@ import { Sparkles, ArrowUpRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { useCurrency } from '../context/CurrencyContext';
+
 interface JarCardProps {
     jar: Jar;
     index: number;
 }
 
 export default function JarCard({ jar, index }: JarCardProps) {
+    const { formatAmount } = useCurrency();
     const Icon = jar.icon;
     const progress = Math.min((jar.current / jar.goal) * 100, 100);
 
@@ -53,8 +56,12 @@ export default function JarCard({ jar, index }: JarCardProps) {
                     </div>
 
                     <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-bold text-white tracking-tight">${jar.current.toLocaleString()}</span>
-                        <span className="text-xs font-medium text-gray-500">/ ${jar.goal.toLocaleString()}</span>
+                        <span className="text-2xl font-bold text-white tracking-tight">
+                            {formatAmount(jar.current).split('.')[0]}
+                        </span>
+                        <span className="text-xs font-medium text-gray-500">
+                            / {formatAmount(jar.goal).split('.')[0]}
+                        </span>
                     </div>
                 </div>
 

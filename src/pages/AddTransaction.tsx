@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Save, Wallet, AlertCircle, Loader2 } from 'lucide-react';
 import { validateTransaction } from '../utils/validation';
 import type { ValidationResult } from '../utils/validation';
+import type { Transaction } from '../utils/transactionStorage';
 
 interface AddTransactionProps {
     onBack: () => void;
-    onSave: (transaction: any) => void;
+    onSave: (transaction: Transaction) => void;
 }
 
 import { JARS } from '../utils/constants';
@@ -66,7 +67,7 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
         onSave({
             id: Date.now().toString(),
             amount: parseFloat(amount),
-            jarId: selectedJar,
+            jarId: selectedJar!,
             note,
             date: new Date().toISOString(),
             type: 'expense' // Default to expense for now

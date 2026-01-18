@@ -3,11 +3,15 @@ import { jars } from '../utils/generatedMockData';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox } from 'lucide-react';
+import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox, MoreVertical, CloudUpload } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
+import ImportSlip from './ImportSlip';
+import SettingsOverlay from './SettingsOverlay';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
+
+import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
@@ -15,8 +19,13 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onNavigate, transactions = [] }: DashboardProps) {
+    const { currency, setCurrency, formatAmount } = useCurrency();
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
+    const [showImportSlip, setShowImportSlip] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -24,14 +33,20 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
         setShowScanner(false);
     };
 
+    if (showScanner) {
+        return <ScanPage onClose={() => setShowScanner(false)} onScan={handleScan} />;
+    }
+
+    if (showImportSlip) {
+        return <ImportSlip onBack={() => setShowImportSlip(false)} />;
+    }
+
+    if (showSettings) {
+        return <SettingsOverlay onBack={() => setShowSettings(false)} />;
+    }
+
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100 selection:bg-blue-500/30">
-            {showScanner && (
-                <ScanPage
-                    onClose={() => setShowScanner(false)}
-                    onScan={handleScan}
-                />
-            )}
 
             {/* =========================================
                 MOBILE VIEW (Reverted to 16804dc)
@@ -51,7 +66,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                     <h2 className="text-sm font-semibold text-gray-100">Oatrice</h2>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setShowScanner(true)}
                                     data-testid="scan-btn-mobile"
@@ -59,17 +74,44 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 >
                                     <ScanBarcode size={20} />
                                 </button>
-                                <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
-                                    <Search size={20} />
+                                <button
+                                    onClick={() => setShowImportSlip(true)}
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                                >
+                                    <CloudUpload size={20} />
                                 </button>
-                                <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
-                                    <Bell size={20} />
-                                    <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900" />
-                                </button>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                                    >
+                                        <MoreVertical size={20} />
+                                    </button>
+
+                                    {isMobileMenuOpen && (
+                                        <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                                            <div className="p-1">
+                                                <button className="w-full flex items-center justify-between px-4 py-3 text-left bg-gray-800 hover:bg-gray-700 border-b border-gray-700/50">
+                                                    <span className="text-white">Notifications</span>
+                                                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsMobileMenuOpen(false);
+                                                        setShowSettings(true);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-white bg-gray-800 hover:bg-gray-700"
+                                                >
+                                                    Settings
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </header>
+                </header >
 
                 <main className="mx-auto max-w-md px-6 py-8 space-y-8">
                     <div className="flex items-end justify-between">
@@ -80,7 +122,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="text-4xl font-bold tracking-tight text-white"
                             >
-                                ${totalBalance.toLocaleString()}
+                                {formatAmount(totalBalance)}
                             </motion.h1>
                         </div>
                         <div className="mb-1 flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
@@ -158,16 +200,16 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                         </button>
                     </div>
                 </motion.div>
-            </div>
+            </div >
 
 
             {/* =========================================
                 DESKTOP VIEW (New Implementation)
                 Visible only on screens >= lg
                ========================================= */}
-            <div className="hidden lg:flex flex-1">
+            < div className="hidden lg:flex flex-1" >
                 {/* Desktop Sidebar */}
-                <aside className="flex flex-col w-64 h-screen sticky top-0 border-r border-gray-800 bg-gray-950/50 backdrop-blur-xl p-6">
+                < aside className="flex flex-col w-64 h-screen sticky top-0 border-r border-gray-800 bg-gray-950/50 backdrop-blur-xl p-6" >
                     <div className="flex items-center gap-3 mb-10 px-2">
                         <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold">
                             J
@@ -205,10 +247,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             Sign Out
                         </button>
                     </div>
-                </aside>
+                </aside >
 
                 {/* Main Content Area */}
-                <div className="flex-1 w-full relative">
+                < div className="flex-1 w-full relative" >
                     <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b -0 lg:bg-transparent lg:border-b-0">
                         <div className="mx-auto max-w-7xl px-8 py-6">
                             <div className="flex items-center justify-between">
@@ -249,16 +291,43 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             {/* Background FX */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/30 transition-all duration-700" />
                             <div className="relative z-10">
-                                <p className="mb-2 text-sm font-medium text-blue-200/60">Total Balance</p>
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-sm font-medium text-blue-200/60">Total Balance</p>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+                                            className="flex items-center gap-2 bg-blue-900/30 hover:bg-blue-900/50 text-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-blue-500/20"
+                                        >
+                                            {currency} <span className="text-blue-400">▼</span>
+                                        </button>
+                                        {isCurrencyDropdownOpen && (
+                                            <div className="absolute right-0 top-full mt-2 w-32 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                                                {['THB', 'USD', 'EUR', 'JPY', 'GBP'].map((c) => (
+                                                    <button
+                                                        key={c}
+                                                        onClick={() => {
+                                                            setCurrency(c as CurrencyCode);
+                                                            setIsCurrencyDropdownOpen(false);
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${currency === c ? 'text-blue-400 font-medium bg-blue-900/10' : 'text-gray-400'}`}
+                                                    >
+                                                        {c}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                                 <motion.h1
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
+                                    key={currency} // Animate on change
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
                                     className="text-5xl font-bold tracking-tight text-white mb-2"
                                 >
-                                    ${totalBalance.toLocaleString()}
+                                    {formatAmount(totalBalance)}
                                 </motion.h1>
                                 <div className="flex items-center gap-2 text-sm text-blue-200/40">
-                                    <span className="text-green-400 font-medium">+$1,293.00 (8.2%)</span>
+                                    <span className="text-green-400 font-medium">+{formatAmount(1293)} (8.2%)</span>
                                     <span>vs last month</span>
                                 </div>
                             </div>
@@ -314,8 +383,8 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             </div>
                         </div>
                     </main>
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 }
