@@ -2,36 +2,51 @@ import { motion } from 'framer-motion';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
 import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
+import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface TransactionHistoryProps {
     onBack: () => void;
+    onNavigate: (page: 'dashboard' | 'history' | 'scan' | 'add-transaction') => void;
     transactions: Transaction[];
 }
 
-export default function TransactionHistory({ onBack, transactions }: TransactionHistoryProps) {
-    const isToday = (dateString: string) => {
-        const date = new Date(dateString);
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
-    };
+import BottomNav from '../components/BottomNav';
 
-    const isYesterday = (dateString: string) => {
-        const date = new Date(dateString);
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return date.getDate() === yesterday.getDate() &&
-            date.getMonth() === yesterday.getMonth() &&
-            date.getFullYear() === yesterday.getFullYear();
-    };
+export default function TransactionHistory({ onBack, onNavigate, transactions }: TransactionHistoryProps) {
+    const { formatAmount } = useCurrency();
+    const isVisible = useScrollDirection(); // isVisible call moved here for consistency if needed, though already declared below. I will remove the duplicate declaration in the next step or assume this replacment covers the start of the function.
 
     // Group transactions by date
-    const groupedTransactions = {
-        'Today': transactions.filter(t => isToday(t.date)),
-        'Yesterday': transactions.filter(t => isYesterday(t.date)),
-        'Older': transactions.filter(t => !isToday(t.date) && !isYesterday(t.date)),
-    };
+    const sortedTransactions = [...transactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    interface TransactionGroup {
+        date: string;
+        transactions: Transaction[];
+        income: number;
+        expense: number;
+    }
+
+    const groupedTransactions: TransactionGroup[] = [];
+
+    sortedTransactions.forEach((transaction) => {
+        const date = new Date(transaction.date);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        let lastGroup = groupedTransactions[groupedTransactions.length - 1];
+        if (!lastGroup || lastGroup.date !== dateStr) {
+            lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
+            groupedTransactions.push(lastGroup);
+        }
+        lastGroup.transactions.push(transaction);
+
+        if (transaction.type === 'income') {
+            lastGroup.income += transaction.amount;
+        } else {
+            lastGroup.expense += transaction.amount;
+        }
+    });
 
     const totalSpent = transactions
         .filter(t => t.type === 'expense')
@@ -40,7 +55,11 @@ export default function TransactionHistory({ onBack, transactions }: Transaction
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800">
+            <motion.header
+                animate={{ y: isVisible ? 0 : -100 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800"
+            >
                 <div className="mx-auto max-w-md px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -62,7 +81,7 @@ export default function TransactionHistory({ onBack, transactions }: Transaction
                         </div>
                     </div>
                 </div>
-            </header>
+            </motion.header>
 
             <main className="mx-auto max-w-md px-6 py-6 pb-24 space-y-6">
                 {/* Summary Card */}
@@ -95,22 +114,26 @@ export default function TransactionHistory({ onBack, transactions }: Transaction
                 </motion.div>
 
                 {/* Transaction Groups */}
-                {Object.entries(groupedTransactions).map(([date, txns]) => (
-                    txns.length > 0 && (
-                        <motion.section
-                            key={date}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <h3 className="text-sm font-medium text-gray-500 mb-3">{date}</h3>
-                            <div className="space-y-3">
-                                {txns.map((t) => (
-                                    <TransactionCard key={t.id} transaction={t} />
-                                ))}
+                {groupedTransactions.map((group) => (
+                    <motion.section
+                        key={group.date}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
+                            <div className="flex items-center gap-3 text-xs font-medium">
+                                {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
+                                {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
                             </div>
-                        </motion.section>
-                    )
+                        </div>
+                        <div className="space-y-3">
+                            {group.transactions.map((t) => (
+                                <TransactionCard key={t.id} transaction={t} showDate={false} />
+                            ))}
+                        </div>
+                    </motion.section>
                 ))}
 
                 {/* Empty State */}
@@ -124,6 +147,8 @@ export default function TransactionHistory({ onBack, transactions }: Transaction
                     </div>
                 )}
             </main>
+
+            <BottomNav activePage="history" onNavigate={onNavigate} visible={isVisible} />
         </div>
     );
 }

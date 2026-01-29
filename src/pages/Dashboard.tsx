@@ -1,17 +1,20 @@
 import { motion } from 'framer-motion';
 import { jars } from '../utils/generatedMockData';
+import { getDrafts } from '../utils/transactionStorage';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox, MoreVertical, CloudUpload } from 'lucide-react';
+import { Flame, Bell, Search, Plus, Settings, PieChart, LogOut, ScanBarcode, User, Wallet, Inbox, MoreVertical, CloudUpload, FileText, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
+import BottomNav from '../components/BottomNav';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
@@ -26,6 +29,41 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const [showSettings, setShowSettings] = useState(false);
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const isVisible = useScrollDirection();
+
+    // Get drafts
+    const drafts = getDrafts();
+
+    // Group transactions by date
+    // Sort items by date descending first
+    const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    interface TransactionGroup {
+        date: string;
+        transactions: Transaction[];
+        income: number;
+        expense: number;
+    }
+
+    const groupedTransactions: TransactionGroup[] = [];
+
+    sortedTransactions.forEach((transaction) => {
+        const date = new Date(transaction.date);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        let lastGroup = groupedTransactions[groupedTransactions.length - 1];
+        if (!lastGroup || lastGroup.date !== dateStr) {
+            lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
+            groupedTransactions.push(lastGroup);
+        }
+        lastGroup.transactions.push(transaction);
+
+        if (transaction.type === 'income') {
+            lastGroup.income += transaction.amount;
+        } else {
+            lastGroup.expense += transaction.amount;
+        }
+    });
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -54,7 +92,11 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                ========================================= */}
             <div className="lg:hidden pb-24">
                 {/* Header */}
-                <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800">
+                <motion.header
+                    animate={{ y: isVisible ? 0 : -100 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800"
+                >
                     <div className="mx-auto max-w-md px-6 py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -111,7 +153,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             </div>
                         </div>
                     </div>
-                </header >
+                </motion.header >
 
                 <main className="mx-auto max-w-md px-6 py-8 space-y-8">
                     <div className="flex items-end justify-between">
@@ -146,13 +188,46 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
 
                     {/* Recent Transactions */}
                     <section>
+                        {/* Drafts Section */}
+                        {drafts.length > 0 && (
+                            <div className="mb-6 animate-in slide-in-from-bottom duration-300">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+                                        <FileText className="text-yellow-500" size={20} />
+                                        <span>Drafts to Review</span>
+                                        <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-0.5 rounded-full">{drafts.length}</span>
+                                    </h3>
+                                </div>
+                                <div className="space-y-3">
+                                    {drafts.map((t) => (
+                                        <div key={t.id} onClick={() => setShowImportSlip(true)}>
+                                            <TransactionCard transaction={t} showDate={false} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
                         </div>
                         <div className="space-y-3">
-                            {transactions.length > 0 ? (
-                                transactions.map((t) => (
-                                    <TransactionCard key={t.id} transaction={t} />
+                            {groupedTransactions.length > 0 ? (
+                                groupedTransactions.map((group) => (
+                                    <div key={group.date} className="space-y-3">
+                                        <div className="flex items-center justify-between ml-1 mt-4 mb-2">
+                                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {group.date}
+                                            </h4>
+                                            <div className="flex items-center gap-3 text-xs font-medium">
+                                                <span className="text-blue-400">+{formatAmount(group.income)}</span>
+                                                <span className="text-red-400">-{formatAmount(group.expense)}</span>
+                                            </div>
+                                        </div>
+                                        {group.transactions.map((t) => (
+                                            <TransactionCard key={t.id} transaction={t} showDate={false} />
+                                        ))}
+                                    </div>
                                 ))
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-gray-900/20 border border-gray-800/50 text-gray-500">
@@ -173,34 +248,8 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                 </main>
 
                 {/* Floating Bottom Nav (Mobile) */}
-                <motion.div
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
-                    className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90%] sm:max-w-md lg:hidden"
-                >
-                    <div className="flex items-center justify-between px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-xl border border-gray-800 shadow-2xl ring-1 ring-white/10">
-                        <button className="flex flex-col items-center gap-1 text-blue-400">
-                            <LayoutGrid size={24} className="fill-blue-400/20" />
-                        </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors" onClick={() => onNavigate('history')}>
-                            <History size={24} />
-                        </button>
-                        <button
-                            onClick={() => onNavigate('add-transaction')}
-                            className="relative -top flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 border-4 border-gray-950 hover:scale-105 active:scale-95 transition-all"
-                        >
-                            <Plus size={28} />
-                        </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
-                            <Wallet size={24} />
-                        </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
-                            <User size={24} />
-                        </button>
-                    </div>
-                </motion.div>
-            </div >
+                <BottomNav activePage="dashboard" onNavigate={onNavigate} visible={isVisible} />
+            </div>
 
 
             {/* =========================================

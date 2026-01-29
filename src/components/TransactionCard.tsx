@@ -5,13 +5,13 @@ import { useCurrency } from '../context/CurrencyContext';
 
 interface TransactionCardProps {
     transaction: Transaction;
+    showDate?: boolean;
 }
 
-export default function TransactionCard({ transaction }: TransactionCardProps) {
+export default function TransactionCard({ transaction, showDate = true }: TransactionCardProps) {
     const { formatAmount } = useCurrency();
     const jar = getJarDetails(transaction.jarId);
 
-    // Format date roughly like "Today, 10:43 AM" or "Jan 16, 2026"
     // Format date roughly like "Today, 10:43 AM" or "Jan 16, 2026"
     let dateStr = transaction.date;
     try {
@@ -37,24 +37,25 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
     const subtitle = transaction.note ? jar.name : '';
 
     return (
-        <div className="flex items-center justify-between p-4 rounded-xl bg-gray-900/40 border border-gray-800/50 hover:bg-gray-800/40 transition-colors group cursor-pointer">
+        <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-xl text-xl bg-gray-800/50 flex items-center justify-center`}>
                     {/* Assuming Icon is imported or jar.icon is used */}
                     {jar.icon}
                 </div>
                 <div>
-                    <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
+                    <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors flex items-center gap-2">
                         {title}
+                        {transaction.status === 'draft' && <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Draft</span>}
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                         {subtitle && (
                             <>
                                 <span className="font-medium text-gray-400">{subtitle}</span>
-                                <span className="h-1 w-1 rounded-full bg-gray-700" />
+                                {showDate && <span className="h-1 w-1 rounded-full bg-gray-700" />}
                             </>
                         )}
-                        <span>{dateStr}</span>
+                        {showDate && <span>{dateStr}</span>}
                     </div>
                 </div>
             </div>

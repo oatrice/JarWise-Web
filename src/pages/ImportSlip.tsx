@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, List, X, Check, Calendar, Wallet, Image as ImageIcon, FolderHeart, Smartphone } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
+import { saveTransaction } from '../utils/transactionStorage';
 
 interface ImportSlipProps {
     onBack: () => void;
@@ -88,7 +89,19 @@ const ImportSlip: React.FC<ImportSlipProps> = ({ onBack }) => {
                             <span className="font-semibold text-white">Review Slip</span>
                             <button
                                 onClick={() => {
-                                    alert(`Mock confirmed: Added ${formatAmount(mockParsedData.amount)} to ${mockParsedData.jar}`);
+                                    // Create transaction object
+                                    const newTransaction: any = {
+                                        id: `tx-${Date.now()}`,
+                                        amount: mockParsedData.amount,
+                                        jarId: mockParsedData.jar.toLowerCase(), // simple mock mapping
+                                        date: mockParsedData.date.toISOString(),
+                                        type: 'expense',
+                                        note: mockParsedData.bank,
+                                        status: 'completed'
+                                    };
+
+                                    saveTransaction(newTransaction);
+                                    alert(`Approved and Saved: ${mockParsedData.bank} - ${formatAmount(mockParsedData.amount)}`);
                                     setSelectedImage(null);
                                 }}
                                 className="text-primary-400 hover:text-primary-300"
@@ -147,6 +160,27 @@ const ImportSlip: React.FC<ImportSlipProps> = ({ onBack }) => {
                                         <span className="text-xs text-gray-500">▼</span>
                                     </div>
                                 </div>
+
+                                <button
+                                    onClick={() => {
+                                        const draftTransaction: any = {
+                                            id: `draft-${selectedImage}`,
+                                            amount: mockParsedData.amount,
+                                            jarId: mockParsedData.jar.toLowerCase(),
+                                            date: mockParsedData.date.toISOString(),
+                                            type: 'expense',
+                                            note: mockParsedData.bank,
+                                            status: 'draft'
+                                        };
+
+                                        saveTransaction(draftTransaction);
+                                        alert("Draft Saved to Dashboard!");
+                                        setSelectedImage(null);
+                                    }}
+                                    className="w-full py-3 mt-4 rounded-xl font-medium text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
+                                >
+                                    Save as Draft
+                                </button>
                             </div>
                         </div>
                     </div>

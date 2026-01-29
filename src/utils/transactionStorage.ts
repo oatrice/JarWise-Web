@@ -11,6 +11,7 @@ export interface Transaction {
     note?: string;
     date: string;
     type: 'income' | 'expense';
+    status?: 'draft' | 'completed';
 }
 
 const STORAGE_KEY = 'jarwise_transactions';
@@ -46,13 +47,29 @@ export function getTransactions(): Transaction[] {
 export function saveTransaction(tx: Transaction): void {
     const existing = getTransactions();
 
-    // Add new transaction at beginning (newest first)
-    const updated = [tx, ...existing];
+    // Check if updating an existing transaction
+    const index = existing.findIndex(t => t.id === tx.id);
+
+    let updated;
+    if (index >= 0) {
+        // Update existing
+        updated = [...existing];
+        updated[index] = tx;
+        updated.splice(index, 1);
+        updated = [tx, ...updated];
+    } else {
+        // Add new transaction at beginning (newest first)
+        updated = [tx, ...existing];
+    }
 
     // Limit to max transactions
     const limited = updated.slice(0, MAX_TRANSACTIONS);
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
+}
+
+export function getDrafts(): Transaction[] {
+    return getTransactions().filter(t => t.status === 'draft');
 }
 
 /**

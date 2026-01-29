@@ -26,7 +26,7 @@ function App() {
         <Dashboard onNavigate={navigateTo} transactions={transactions} />
       )}
       {currentPage === 'history' && (
-        <TransactionHistory onBack={() => navigateTo('dashboard')} transactions={transactions} />
+        <TransactionHistory onBack={() => navigateTo('dashboard')} onNavigate={navigateTo} transactions={transactions} />
       )}
       {currentPage === 'add-transaction' && (
         <AddTransaction
