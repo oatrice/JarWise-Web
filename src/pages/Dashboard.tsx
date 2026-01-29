@@ -201,7 +201,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 <div className="space-y-3">
                                     {drafts.map((t) => (
                                         <div key={t.id} onClick={() => setShowImportSlip(true)}>
-                                            <TransactionCard transaction={t} />
+                                            <TransactionCard transaction={t} showDate={false} />
                                         </div>
                                     ))}
                                 </div>
