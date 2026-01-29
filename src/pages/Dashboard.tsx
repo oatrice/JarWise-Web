@@ -35,17 +35,34 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const drafts = getDrafts();
 
     // Group transactions by date
-    const groupedTransactions: { date: string; transactions: Transaction[] }[] = [];
-    transactions.forEach((transaction) => {
+    // Sort items by date descending first
+    const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    interface TransactionGroup {
+        date: string;
+        transactions: Transaction[];
+        income: number;
+        expense: number;
+    }
+
+    const groupedTransactions: TransactionGroup[] = [];
+
+    sortedTransactions.forEach((transaction) => {
         const date = new Date(transaction.date);
         const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
         let lastGroup = groupedTransactions[groupedTransactions.length - 1];
         if (!lastGroup || lastGroup.date !== dateStr) {
-            lastGroup = { date: dateStr, transactions: [] };
+            lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
             groupedTransactions.push(lastGroup);
         }
         lastGroup.transactions.push(transaction);
+
+        if (transaction.type === 'income') {
+            lastGroup.income += transaction.amount;
+        } else {
+            lastGroup.expense += transaction.amount;
+        }
     });
 
     const handleScan = (data: string) => {
@@ -198,9 +215,15 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             {groupedTransactions.length > 0 ? (
                                 groupedTransactions.map((group) => (
                                     <div key={group.date} className="space-y-3">
-                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1 mt-4 mb-2">
-                                            {group.date}
-                                        </h4>
+                                        <div className="flex items-center justify-between ml-1 mt-4 mb-2">
+                                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {group.date}
+                                            </h4>
+                                            <div className="flex items-center gap-3 text-xs font-medium">
+                                                <span className="text-blue-400">+{formatAmount(group.income)}</span>
+                                                <span className="text-red-400">-{formatAmount(group.expense)}</span>
+                                            </div>
+                                        </div>
                                         {group.transactions.map((t) => (
                                             <TransactionCard key={t.id} transaction={t} showDate={false} />
                                         ))}

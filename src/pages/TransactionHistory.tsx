@@ -3,6 +3,7 @@ import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
 import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface TransactionHistoryProps {
     onBack: () => void;
@@ -13,13 +14,21 @@ interface TransactionHistoryProps {
 import BottomNav from '../components/BottomNav';
 
 export default function TransactionHistory({ onBack, onNavigate, transactions }: TransactionHistoryProps) {
-    const isVisible = useScrollDirection();
+    const { formatAmount } = useCurrency();
+    const isVisible = useScrollDirection(); // isVisible call moved here for consistency if needed, though already declared below. I will remove the duplicate declaration in the next step or assume this replacment covers the start of the function.
 
     // Group transactions by date
     const sortedTransactions = [...transactions]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const groupedTransactions: { date: string; transactions: Transaction[] }[] = [];
+    interface TransactionGroup {
+        date: string;
+        transactions: Transaction[];
+        income: number;
+        expense: number;
+    }
+
+    const groupedTransactions: TransactionGroup[] = [];
 
     sortedTransactions.forEach((transaction) => {
         const date = new Date(transaction.date);
@@ -27,10 +36,16 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
 
         let lastGroup = groupedTransactions[groupedTransactions.length - 1];
         if (!lastGroup || lastGroup.date !== dateStr) {
-            lastGroup = { date: dateStr, transactions: [] };
+            lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
             groupedTransactions.push(lastGroup);
         }
         lastGroup.transactions.push(transaction);
+
+        if (transaction.type === 'income') {
+            lastGroup.income += transaction.amount;
+        } else {
+            lastGroup.expense += transaction.amount;
+        }
     });
 
     const totalSpent = transactions
@@ -106,7 +121,13 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
                     >
-                        <h3 className="text-sm font-medium text-gray-500 mb-3">{group.date}</h3>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
+                            <div className="flex items-center gap-3 text-xs font-medium">
+                                {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
+                                {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
+                            </div>
+                        </div>
                         <div className="space-y-3">
                             {group.transactions.map((t) => (
                                 <TransactionCard key={t.id} transaction={t} showDate={false} />
