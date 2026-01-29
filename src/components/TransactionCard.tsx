@@ -5,13 +5,13 @@ import { useCurrency } from '../context/CurrencyContext';
 
 interface TransactionCardProps {
     transaction: Transaction;
+    showDate?: boolean;
 }
 
-export default function TransactionCard({ transaction }: TransactionCardProps) {
+export default function TransactionCard({ transaction, showDate = true }: TransactionCardProps) {
     const { formatAmount } = useCurrency();
     const jar = getJarDetails(transaction.jarId);
 
-    // Format date roughly like "Today, 10:43 AM" or "Jan 16, 2026"
     // Format date roughly like "Today, 10:43 AM" or "Jan 16, 2026"
     let dateStr = transaction.date;
     try {
@@ -52,10 +52,10 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
                         {subtitle && (
                             <>
                                 <span className="font-medium text-gray-400">{subtitle}</span>
-                                <span className="h-1 w-1 rounded-full bg-gray-700" />
+                                {showDate && <span className="h-1 w-1 rounded-full bg-gray-700" />}
                             </>
                         )}
-                        <span>{dateStr}</span>
+                        {showDate && <span>{dateStr}</span>}
                     </div>
                 </div>
             </div>

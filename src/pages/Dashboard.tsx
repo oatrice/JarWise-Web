@@ -31,6 +31,20 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     // Get drafts
     const drafts = getDrafts();
 
+    // Group transactions by date
+    const groupedTransactions: { date: string; transactions: Transaction[] }[] = [];
+    transactions.forEach((transaction) => {
+        const date = new Date(transaction.date);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        let lastGroup = groupedTransactions[groupedTransactions.length - 1];
+        if (!lastGroup || lastGroup.date !== dateStr) {
+            lastGroup = { date: dateStr, transactions: [] };
+            groupedTransactions.push(lastGroup);
+        }
+        lastGroup.transactions.push(transaction);
+    });
+
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
         alert(`Scanned Code: ${data}`);
@@ -174,9 +188,16 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
                         </div>
                         <div className="space-y-3">
-                            {transactions.length > 0 ? (
-                                transactions.map((t) => (
-                                    <TransactionCard key={t.id} transaction={t} />
+                            {groupedTransactions.length > 0 ? (
+                                groupedTransactions.map((group) => (
+                                    <div key={group.date} className="space-y-3">
+                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1 mt-4 mb-2">
+                                            {group.date}
+                                        </h4>
+                                        {group.transactions.map((t) => (
+                                            <TransactionCard key={t.id} transaction={t} showDate={false} />
+                                        ))}
+                                    </div>
                                 ))
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-gray-900/20 border border-gray-800/50 text-gray-500">
