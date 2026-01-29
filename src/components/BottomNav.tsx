@@ -6,14 +6,15 @@ type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 interface BottomNavProps {
     activePage: Page;
     onNavigate: (page: Page) => void;
+    visible?: boolean;
 }
 
-export default function BottomNav({ activePage, onNavigate }: BottomNavProps) {
+export default function BottomNav({ activePage, onNavigate, visible = true }: BottomNavProps) {
     return (
         <motion.div
             initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
+            animate={{ y: visible ? 0 : 200 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90%] sm:max-w-md lg:hidden"
         >
             <div className="flex items-center justify-between px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-xl border border-gray-800 shadow-2xl ring-1 ring-white/10">

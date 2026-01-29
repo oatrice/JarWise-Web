@@ -14,6 +14,7 @@ import BottomNav from '../components/BottomNav';
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
@@ -28,6 +29,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const [showSettings, setShowSettings] = useState(false);
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const isVisible = useScrollDirection();
 
     // Get drafts
     const drafts = getDrafts();
@@ -73,7 +75,11 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                ========================================= */}
             <div className="lg:hidden pb-24">
                 {/* Header */}
-                <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800">
+                <motion.header
+                    animate={{ y: isVisible ? 0 : -100 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800"
+                >
                     <div className="mx-auto max-w-md px-6 py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -130,7 +136,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                             </div>
                         </div>
                     </div>
-                </header >
+                </motion.header >
 
                 <main className="mx-auto max-w-md px-6 py-8 space-y-8">
                     <div className="flex items-end justify-between">
@@ -219,7 +225,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                 </main>
 
                 {/* Floating Bottom Nav (Mobile) */}
-                <BottomNav activePage="dashboard" onNavigate={onNavigate} />
+                <BottomNav activePage="dashboard" onNavigate={onNavigate} visible={isVisible} />
             </div>
 
 

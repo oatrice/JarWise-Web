@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
 import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 interface TransactionHistoryProps {
     onBack: () => void;
@@ -12,6 +13,8 @@ interface TransactionHistoryProps {
 import BottomNav from '../components/BottomNav';
 
 export default function TransactionHistory({ onBack, onNavigate, transactions }: TransactionHistoryProps) {
+    const isVisible = useScrollDirection();
+
     // Group transactions by date
     const sortedTransactions = [...transactions]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -37,7 +40,11 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800">
+            <motion.header
+                animate={{ y: isVisible ? 0 : -100 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800"
+            >
                 <div className="mx-auto max-w-md px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -59,7 +66,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
                         </div>
                     </div>
                 </div>
-            </header>
+            </motion.header>
 
             <main className="mx-auto max-w-md px-6 py-6 pb-24 space-y-6">
                 {/* Summary Card */}
@@ -120,7 +127,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
                 )}
             </main>
 
-            <BottomNav activePage="history" onNavigate={onNavigate} />
+            <BottomNav activePage="history" onNavigate={onNavigate} visible={isVisible} />
         </div>
     );
 }
