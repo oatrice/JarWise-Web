@@ -5,33 +5,30 @@ import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
 
 interface TransactionHistoryProps {
     onBack: () => void;
+    onNavigate: (page: 'dashboard' | 'history' | 'scan' | 'add-transaction') => void;
     transactions: Transaction[];
 }
 
-export default function TransactionHistory({ onBack, transactions }: TransactionHistoryProps) {
-    const isToday = (dateString: string) => {
-        const date = new Date(dateString);
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
-    };
+import BottomNav from '../components/BottomNav';
 
-    const isYesterday = (dateString: string) => {
-        const date = new Date(dateString);
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return date.getDate() === yesterday.getDate() &&
-            date.getMonth() === yesterday.getMonth() &&
-            date.getFullYear() === yesterday.getFullYear();
-    };
-
+export default function TransactionHistory({ onBack, onNavigate, transactions }: TransactionHistoryProps) {
     // Group transactions by date
-    const groupedTransactions = {
-        'Today': transactions.filter(t => isToday(t.date)),
-        'Yesterday': transactions.filter(t => isYesterday(t.date)),
-        'Older': transactions.filter(t => !isToday(t.date) && !isYesterday(t.date)),
-    };
+    const sortedTransactions = [...transactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const groupedTransactions: { date: string; transactions: Transaction[] }[] = [];
+
+    sortedTransactions.forEach((transaction) => {
+        const date = new Date(transaction.date);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        let lastGroup = groupedTransactions[groupedTransactions.length - 1];
+        if (!lastGroup || lastGroup.date !== dateStr) {
+            lastGroup = { date: dateStr, transactions: [] };
+            groupedTransactions.push(lastGroup);
+        }
+        lastGroup.transactions.push(transaction);
+    });
 
     const totalSpent = transactions
         .filter(t => t.type === 'expense')
@@ -95,22 +92,20 @@ export default function TransactionHistory({ onBack, transactions }: Transaction
                 </motion.div>
 
                 {/* Transaction Groups */}
-                {Object.entries(groupedTransactions).map(([date, txns]) => (
-                    txns.length > 0 && (
-                        <motion.section
-                            key={date}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <h3 className="text-sm font-medium text-gray-500 mb-3">{date}</h3>
-                            <div className="space-y-3">
-                                {txns.map((t) => (
-                                    <TransactionCard key={t.id} transaction={t} />
-                                ))}
-                            </div>
-                        </motion.section>
-                    )
+                {groupedTransactions.map((group) => (
+                    <motion.section
+                        key={group.date}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <h3 className="text-sm font-medium text-gray-500 mb-3">{group.date}</h3>
+                        <div className="space-y-3">
+                            {group.transactions.map((t) => (
+                                <TransactionCard key={t.id} transaction={t} showDate={false} />
+                            ))}
+                        </div>
+                    </motion.section>
                 ))}
 
                 {/* Empty State */}
@@ -124,6 +119,8 @@ export default function TransactionHistory({ onBack, transactions }: Transaction
                     </div>
                 )}
             </main>
+
+            <BottomNav activePage="history" onNavigate={onNavigate} />
         </div>
     );
 }

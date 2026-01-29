@@ -4,11 +4,12 @@ import { getDrafts } from '../utils/transactionStorage';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox, MoreVertical, CloudUpload, FileText } from 'lucide-react';
+import { Flame, Bell, Search, Plus, Settings, PieChart, LogOut, ScanBarcode, User, Wallet, Inbox, MoreVertical, CloudUpload, FileText, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
+import BottomNav from '../components/BottomNav';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
 
@@ -218,34 +219,8 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                 </main>
 
                 {/* Floating Bottom Nav (Mobile) */}
-                <motion.div
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
-                    className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[90%] sm:max-w-md lg:hidden"
-                >
-                    <div className="flex items-center justify-between px-6 py-3 rounded-full bg-gray-900/90 backdrop-blur-xl border border-gray-800 shadow-2xl ring-1 ring-white/10">
-                        <button className="flex flex-col items-center gap-1 text-blue-400">
-                            <LayoutGrid size={24} className="fill-blue-400/20" />
-                        </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors" onClick={() => onNavigate('history')}>
-                            <History size={24} />
-                        </button>
-                        <button
-                            onClick={() => onNavigate('add-transaction')}
-                            className="relative -top flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/40 border-4 border-gray-950 hover:scale-105 active:scale-95 transition-all"
-                        >
-                            <Plus size={28} />
-                        </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
-                            <Wallet size={24} />
-                        </button>
-                        <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
-                            <User size={24} />
-                        </button>
-                    </div>
-                </motion.div>
-            </div >
+                <BottomNav activePage="dashboard" onNavigate={onNavigate} />
+            </div>
 
 
             {/* =========================================
