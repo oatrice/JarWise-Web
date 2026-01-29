@@ -5,10 +5,13 @@
 - **Transaction Grouping**: Transactions are now grouped by date with daily income/expense summary displayed.
 - **Scroll-to-Hide**: Header and Bottom Navigation hide when scrolling down and reappear when scrolling up.
 - **useScrollDirection Hook**: Custom hook for detecting scroll direction.
+- **Draft Transaction Management**: Save imported slips as drafts for later review with visual indicators.
+- **Drafts to Review**: Dashboard section showing pending draft transactions with yellow highlight.
 
 ### Changed
 - **BottomNav Component**: Refactored inline bottom navigation into a reusable `BottomNav` component.
 - **Transaction History**: Improved layout with daily totals (income in blue, expense in red).
+- **TransactionCard**: Added draft status badge with yellow styling.
 
 ## [0.3.0] - 2026-01-18
 ### Changed
