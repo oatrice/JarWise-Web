@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
 import { jars } from '../utils/generatedMockData';
+import { getDrafts } from '../utils/transactionStorage';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox, MoreVertical, CloudUpload } from 'lucide-react';
+import { Flame, Bell, Search, Plus, LayoutGrid, Settings, PieChart, LogOut, ScanBarcode, History, User, Wallet, Inbox, MoreVertical, CloudUpload, FileText } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
@@ -26,6 +27,9 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const [showSettings, setShowSettings] = useState(false);
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Get drafts
+    const drafts = getDrafts();
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -146,6 +150,26 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
 
                     {/* Recent Transactions */}
                     <section>
+                        {/* Drafts Section */}
+                        {drafts.length > 0 && (
+                            <div className="mb-6 animate-in slide-in-from-bottom duration-300">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+                                        <FileText className="text-yellow-500" size={20} />
+                                        <span>Drafts to Review</span>
+                                        <span className="bg-yellow-500/20 text-yellow-500 text-xs px-2 py-0.5 rounded-full">{drafts.length}</span>
+                                    </h3>
+                                </div>
+                                <div className="space-y-3">
+                                    {drafts.map((t) => (
+                                        <div key={t.id} onClick={() => setShowImportSlip(true)}>
+                                            <TransactionCard transaction={t} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
                         </div>
