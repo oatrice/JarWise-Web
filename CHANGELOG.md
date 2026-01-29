@@ -1,61 +1,30 @@
 # Changelog
 
-## [0.1.0] - 2026-01-29
-
+## [0.4.0] - 2026-01-29
 ### Added
-- Introduced a `ContextSummarizer` to create a concise summary of changes made during the implementation phase.
-- The summary includes a list of modified files, a high-level description of changes, and test instructions.
-- This summary is now passed to subsequent agent phases (e.g., QA, Publisher) to provide better context for their tasks.
+- **Transaction Grouping**: Transactions are now grouped by date with daily income/expense summary displayed.
+- **Scroll-to-Hide**: Header and Bottom Navigation hide when scrolling down and reappear when scrolling up.
+- **useScrollDirection Hook**: Custom hook for detecting scroll direction.
 
 ### Changed
-- Updated the Analyst and Publisher agents to utilize the new transaction group summary for improved context-awareness.
+- **BottomNav Component**: Refactored inline bottom navigation into a reusable `BottomNav` component.
+- **Transaction History**: Improved layout with daily totals (income in blue, expense in red).
 
-## [0.0.1] - 2026-01-29
-
-### Added
-- Initial release of the Luma AI Software Engineer agent.
-- Core framework for autonomous task execution, including planning, implementation, and QA phases.
-- Integration with GitHub for project management, issue tracking, and code manipulation.
-- State management system to track agent progress and state.
-- Introduced a rules-based system for guiding agent behavior.
-- Comprehensive test suite for core components and agent flows.
-
-## [0.5.0] - 2026-01-18
-
-### Added
-- **[Multi-Repo Docs]** AI-powered documentation generation for CHANGELOG.md and README.md
-- **[Version Management]** Configurable version file per repository (VERSION, package.json, build.gradle)
-- **[Git Diff Preview]** VS Code diff view for reviewing AI-generated documentation changes
-- **[Version Detection]** Automatic version extraction from CHANGELOG entries
-
+## [0.3.0] - 2026-01-18
 ### Changed
-- **[AI Prompts]** Improved README AI prompts to prevent hallucination and maintain content structure
-- **[Config]** Added `version_file` configuration per project for precise version management
+- **Mock Data**: Updated and diversified the sample data for Jars and Transactions to improve the initial demonstration experience.
 
-## [0.4.0] - 2026-01-18
-
+## [0.2.0] - 2026-01-18
 ### Added
-- **[Multi-Repo PR]** Create Pull Requests across multiple JarWise repositories (Root, Android, Web)
-- **[Multi-Repo Docs]** Update documentation across multiple repos with AI assistance
-- **[Commit Check]** Verify unpushed commits before PR creation
+- **Global Context**: Implemented `CurrencyContext` and `useCurrency` hook for multi-currency support.
+- **Mobile UI**: Added "Import Slip" page with mock Albums dialog.
+- **Mobile UI**: Added "Settings" overlay with functional Currency selection.
+- **Header**: Updated mobile dashboard header with accessible "Import" and "More" actions.
 
-## [0.3.0] - 2025-12-28
-
+## [0.1.0] - 2026-01-15
 ### Added
-- **[Version Badges]** Automatically update README version badges
-- **[AI Version Suggestion]** Semantic version bump suggestions based on commit types
-
-## [0.2.0] - 2025-12-27
-
-### Added
-- **[LLM-Powered PR]** AI-generated Pull Request titles and descriptions
-- **[Changelog Automation]** Auto-generate changelog entries from commits
-- **[Documentation Review]** Automated documentation reviewer agent
-
-## [0.1.0] - 2025-12
-
-### Added
-- **[Core]** Initial multi-agent system with Coder, Reviewer, Tester, and Publisher agents
-- **[LangGraph]** Workflow orchestration using LangGraph
-- **[GitHub Integration]** Issue-driven development mode
-- **[Multi-LLM Support]** Google Gemini and OpenRouter support
+- Initial project setup with React + Vite + TypeScript.
+- Integrated MagicPatterns expense tracker design.
+- Implemented `JarCard` with Framer Motion animations.
+- Implemented `TransactionCard`.
+- Added Tailwind CSS v4 configuration.
