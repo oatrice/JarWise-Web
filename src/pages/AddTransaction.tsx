@@ -10,12 +10,19 @@ interface AddTransactionProps {
     onSave: (transaction: Transaction) => void;
 }
 
-import { JARS } from '../utils/constants';
+import { JARS, WALLETS } from '../utils/constants';
 
 export default function AddTransaction({ onBack, onSave }: AddTransactionProps) {
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
     const [selectedJar, setSelectedJar] = useState<string | null>(null);
+    const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+    const [date, setDate] = useState(() => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
+    });
+
     const [errors, setErrors] = useState<ValidationResult['errors']>({});
     const [touched, setTouched] = useState({ amount: false, jar: false });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,8 +75,9 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
             id: Date.now().toString(),
             amount: parseFloat(amount),
             jarId: selectedJar!,
+            walletId: selectedWallet!,
             note,
-            date: new Date().toISOString(),
+            date: new Date(date).toISOString(),
             type: 'expense' // Default to expense for now
         });
 
@@ -77,7 +85,7 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
         onBack();
     };
 
-    const isFormValid = amount && parseFloat(amount) > 0 && selectedJar;
+    const isFormValid = amount && parseFloat(amount) > 0 && selectedJar && selectedWallet;
 
     return (
         <div className="min-h-screen bg-gray-900 text-white pb-24">
@@ -128,6 +136,44 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
                             </motion.div>
                         )}
                     </AnimatePresence>
+                </section>
+
+                {/* Date & Time Picker */}
+                <section className="space-y-2">
+                    <label className="text-sm font-medium text-gray-400">Date & Time</label>
+                    <input
+                        type="datetime-local"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
+                        style={{ colorScheme: 'dark' }}
+                    />
+                </section>
+
+                {/* Wallet Selector (Horizontal Scroll) */}
+                <section className="space-y-3">
+                    <label className="text-sm font-medium text-gray-400">Source (Wallet)</label>
+                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                        {WALLETS.map((wallet) => (
+                            <motion.button
+                                key={wallet.id}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setSelectedWallet(wallet.id)}
+                                className={`flex-shrink-0 relative w-32 h-24 rounded-2xl p-3 border transition-all flex flex-col justify-between overflow-hidden ${selectedWallet === wallet.id
+                                    ? 'bg-gray-800 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                                    : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
+                                    }`}
+                            >
+                                <div className="z-10 text-3xl">{wallet.icon}</div>
+                                <div className={`z-10 text-sm font-medium text-left ${selectedWallet === wallet.id ? 'text-white' : 'text-gray-400'}`}>
+                                    {wallet.name}
+                                </div>
+                                {selectedWallet === wallet.id && (
+                                    <div className={`absolute inset-0 opacity-10 ${wallet.color}`} />
+                                )}
+                            </motion.button>
+                        ))}
+                    </div>
                 </section>
 
                 {/* Jar Selector */}

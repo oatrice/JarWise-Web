@@ -105,7 +105,8 @@ describe('Transaction Storage Service', () => {
                 id: '1',
                 amount: 100,
                 jarId: 'necessities',
-                createdAt: '2026-01-16T10:00:00Z',
+
+                date: '2026-01-16T10:00:00Z',
                 type: 'expense',
             };
             localStorage.setItem('jarwise_transactions', JSON.stringify([existingTx]));

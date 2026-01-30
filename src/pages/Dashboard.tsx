@@ -4,7 +4,7 @@ import { getDrafts } from '../utils/transactionStorage';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
-import { Flame, Bell, Search, Plus, Settings, PieChart, LogOut, ScanBarcode, User, Wallet, Inbox, MoreVertical, CloudUpload, FileText, LayoutGrid } from 'lucide-react';
+import { Flame, Bell, Search, Plus, Settings, PieChart, LogOut, ScanBarcode, Inbox, MoreVertical, CloudUpload, FileText, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';

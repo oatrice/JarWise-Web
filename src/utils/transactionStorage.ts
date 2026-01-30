@@ -11,6 +11,7 @@ export interface Transaction {
     note?: string;
     date: string;
     type: 'income' | 'expense';
+    walletId?: string;
     status?: 'draft' | 'completed';
 }
 
