@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "project_key": "2",
+  "phase": "coding",
+  "active_issue": {
+    "number": 56,
+    "title": "[Web | Android] Enhance Add Transaction (Date & Wallet)",
+    "html_url": "https://github.com/oatrice/JarWise-Root/issues/56",
+    "body": "## Goals\nEnhance the existing \"Add Transaction\" feature to support realistic usage scenarios, prioritizing Web Mock UI first.\n\n## Requirements\n- [ ] **DateTime Picker**: User must be able to specify the date and time of the transaction (default to current).\n- [ ] **Separation of Concerns**: Separate \"Source\" (Wallet/Account) from \"Category\" (Jar).\n  - **Wallet**: Where the money comes from (e.g., Cash, Bank, Credit Card).\n  - **Jar**: Which 6 Jars bucket this expense belongs to.\n\n## Platforms\n### 🌐 Web (Phase 1: Mock UI Priority)\n- [ ] **Status**: 🚀 Priority\n- [ ] **Objective**: focus on **UI/UX and Visuals**.\n- [ ] Add **Date Picker** UI.\n- [ ] Add **Wallet Type Selector** UI.\n- [ ] Logic can be mocked/localStorage for now.\n\n### 🤖 Android (Phase 2: Full Integration)\n- [ ] **Status**: ⏳ Planned\n- [ ] **Objective**: Full functional implementation.\n- [ ] Add Native Date/Time Dialogs.\n- [ ] Implement robust Wallet selection and Room database integration.\n",
+    "project_item_id": "PVTI_lAHOATfKEM4BMuLizgkh8jk",
+    "project_id": "PVT_kwHOATfKEM4BMuLi",
+    "repository": "oatrice/JarWise-Root"
+  },
+  "active_branch": "feat/56-enhance-add-transaction",
+  "started_at": "2026-01-30T16:26:06.045497",
+  "checklist": {},
+  "pr_url": null,
+  "pr_number": null,
+  "last_updated": "2026-01-30T18:54:53.178434"
+}

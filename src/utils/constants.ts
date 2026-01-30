@@ -1,3 +1,10 @@
+// Wallet Types
+export const WALLETS = [
+    { id: 'wallet-1', name: 'Cash', icon: '💵', color: 'bg-green-500' },
+    { id: 'wallet-2', name: 'Bank Account', icon: '🏦', color: 'bg-blue-500' },
+    { id: 'wallet-3', name: 'Credit Card', icon: '💳', color: 'bg-purple-500' },
+] as const;
+
 export const JARS = [
     { id: 'necessities', name: 'Necessities', color: 'bg-blue-500', icon: '🏠' },
     { id: 'education', name: 'Education', color: 'bg-green-500', icon: '📚' },
