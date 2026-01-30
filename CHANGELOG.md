@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0] - 2026-01-30
+### Added
+- **Add Transaction Form**: Enhanced the form with new fields for more detailed entries:
+    - **Date Selection**: Users can now specify the date for a new transaction.
+    - **Wallet Selection**: Added a dropdown to select the source wallet or jar for the transaction.
+    - **Form Validation**: Implemented validation to ensure a wallet is selected before submission.
+
 ## [0.4.0] - 2026-01-29
 ### Added
 - **Transaction Grouping**: Transactions are now grouped by date with daily income/expense summary displayed.
