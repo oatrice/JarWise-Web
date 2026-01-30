@@ -9,12 +9,14 @@ export interface ValidationResult {
     errors: {
         amount?: string;
         jar?: string;
+        wallet?: string;
     };
 }
 
 export interface TransactionData {
     amount: string;
     jarId: string | null;
+    walletId?: string | null;
     note: string;
 }
 
@@ -51,6 +53,11 @@ export function validateTransaction(data: TransactionData): ValidationResult {
     // Jar validation
     if (!data.jarId || data.jarId.trim() === '') {
         errors.jar = 'กรุณาเลือก Jar';
+    }
+
+    // Wallet validation
+    if (!data.walletId || data.walletId.trim() === '') {
+        errors.wallet = 'กรุณาเลือก Wallet';
     }
 
     return {

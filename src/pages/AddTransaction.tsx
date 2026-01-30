@@ -24,7 +24,7 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
     });
 
     const [errors, setErrors] = useState<ValidationResult['errors']>({});
-    const [touched, setTouched] = useState({ amount: false, jar: false });
+    const [touched, setTouched] = useState({ amount: false, jar: false, wallet: false });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Real-time validation when user has touched the field
@@ -32,11 +32,12 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
         const result = validateTransaction({
             amount,
             jarId: selectedJar,
+            walletId: selectedWallet,
             note,
         });
         setErrors(result.errors);
         return result.isValid;
-    }, [amount, selectedJar, note]);
+    }, [amount, selectedJar, selectedWallet, note]);
 
     const handleAmountChange = (value: string) => {
         setAmount(value);
@@ -61,7 +62,7 @@ export default function AddTransaction({ onBack, onSave }: AddTransactionProps) 
 
     const handleSave = async () => {
         // Mark all fields as touched
-        setTouched({ amount: true, jar: true });
+        setTouched({ amount: true, jar: true, wallet: true });
 
         // Validate all fields
         if (!validate()) return;
