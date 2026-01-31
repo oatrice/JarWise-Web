@@ -56,6 +56,7 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
     );
     const [selectedJarId, setSelectedJarId] = useState<string | null>(null);
     const [showConfirmReset, setShowConfirmReset] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<EditableJar | null>(null);
 
     const totalPercentage = jars.reduce((sum, jar) => sum + jar.percentage, 0);
     const isValid = totalPercentage === 100;
@@ -141,18 +142,25 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
         setJars([...jars, newCategory]);
     };
 
-    const handleDelete = (id: number) => {
-        const idsToDelete = new Set<number>();
-        const recursiveCollect = (itemId: number) => {
+    const handleDelete = (jar: EditableJar) => {
+        setItemToDelete(jar);
+    };
+
+    const confirmDelete = () => {
+        if (!itemToDelete) return;
+
+        const idsToDelete = new Set<string>();
+        const recursiveCollect = (itemId: string) => {
             idsToDelete.add(itemId);
             jars.filter(j => j.parentId === itemId).forEach(c => recursiveCollect(c.id));
         };
-        recursiveCollect(id);
+        recursiveCollect(itemToDelete.id);
 
         setJars(jars.filter(j => !idsToDelete.has(j.id)));
         if (selectedJarId && idsToDelete.has(selectedJarId)) {
             setSelectedJarId(null);
         }
+        setItemToDelete(null);
     };
 
     const handleSave = () => {
@@ -249,7 +257,7 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDelete(jar.id);
+                                                    handleDelete(jar);
                                                 }}
                                                 className="flex-1 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-medium text-red-400 border border-red-900/30 hover:bg-red-900/20 transition-colors"
                                             >
@@ -519,6 +527,51 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
                                     className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors"
                                 >
                                     Reset
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {itemToDelete && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                        onClick={() => setItemToDelete(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-gray-900 border border-gray-700 rounded-3xl p-6 max-w-sm mx-4"
+                        >
+                            <h3 className="text-xl font-bold text-white mb-2">
+                                Delete {itemToDelete.level === 0 ? 'Jar' : 'Category'}?
+                            </h3>
+                            <p className="text-gray-400 mb-6">
+                                Are you sure you want to delete <span className="text-white font-bold">{itemToDelete.name}</span>?
+                                {itemToDelete.level === 0 && (
+                                    <span className="block mt-2 text-red-400 text-sm">
+                                        This will also delete all categories inside it.
+                                    </span>
+                                )}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setItemToDelete(null)}
+                                    className="flex-1 px-4 py-3 rounded-xl bg-gray-800 text-gray-300 font-medium hover:bg-gray-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors"
+                                >
+                                    Delete
                                 </button>
                             </div>
                         </motion.div>
