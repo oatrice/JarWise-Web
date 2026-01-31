@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0] - 2026-01-31
+### Added
+- **Jar Management**: Introduced a new dedicated page for managing savings jars, allowing users to:
+    - Create new jars with a name and a goal amount.
+    - Edit the details of existing jars.
+    - Delete jars that are no longer needed.
+
+### Changed
+- **Dashboard**: Added a link to the new Jar Management page for easy access.
+
 ## [0.5.0] - 2026-01-30
 ### Added
 - **Add Transaction Form**: Enhanced the form with new fields for more detailed entries:
