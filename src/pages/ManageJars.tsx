@@ -98,38 +98,40 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
     };
 
     const handleAddJar = () => {
-        const newId = jars.length > 0 ? Math.max(...jars.map(j => j.id)) + 1 : 1;
+        // Fix: Parse string IDs to numbers for max calculation
+        const newId = jars.length > 0 ? Math.max(...jars.map(j => parseInt(j.id, 10))) + 1 : 1;
         const newJar: EditableJar = {
-            id: newId,
+            id: newId.toString(),
             name: 'New Jar',
             icon: PiggyBank,
             percentage: 0,
             current: 0,
-            target: 0,
+            goal: 0, // Fix: Use 'goal' instead of 'target'
             color: 'text-gray-400',
             barColor: 'bg-gray-400',
             shadowColor: 'shadow-[0_0_15px_rgba(156,163,175,0.3)]',
             bgGlow: 'bg-gray-400/20',
             userId: 'user_123',
             level: 0,
-            parentId: undefined,
+            parentId: null, // Fix: Use null instead of undefined
             children: []
         };
         setJars([...jars, newJar]);
     };
 
-    const handleAddCategory = (parentId: number) => {
+    const handleAddCategory = (parentId: string) => {
         const parent = jars.find(j => j.id === parentId);
         if (!parent) return;
 
-        const newId = jars.length > 0 ? Math.max(...jars.map(j => j.id)) + 1 : 1;
+        // Fix: Parse string IDs to numbers for max calculation
+        const newId = jars.length > 0 ? Math.max(...jars.map(j => parseInt(j.id, 10))) + 1 : 1;
         const newCategory: EditableJar = {
-            id: newId,
+            id: newId.toString(),
             name: 'New Category',
             icon: DollarSign,
             percentage: 0,
             current: 0,
-            target: 0,
+            goal: 0, // Fix: Use 'goal' instead of 'target'
             color: parent.color, // Inherit parent color style initially
             barColor: parent.barColor,
             shadowColor: parent.shadowColor,
