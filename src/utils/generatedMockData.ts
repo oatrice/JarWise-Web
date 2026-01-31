@@ -1,15 +1,14 @@
 // WARNING: This file is auto-generated. Do not edit directly.
-// Generated at: 2026-01-18T06:16:41.637Z
+// Generated at: 2026-01-31T11:08:58.480Z
 import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Headphones, ShoppingBag, type LucideIcon } from 'lucide-react';
 
 export type Allocation = {
     id: string;
-    userId: string;       // 🔒 Added for security
     name: string;
-    parentId: string | null;
-    level: number;        // 0=Jar, 1=Category
     current: number;
     goal: number;
+    level: number;
+    parentId: string | null;
     color: string;
     bgGlow: string;
     icon: LucideIcon;
@@ -17,7 +16,7 @@ export type Allocation = {
     shadowColor: string;
 }
 
-// Alias for backward compatibility during migration
+// Backward compatibility alias
 export type Jar = Allocation;
 
 export type Transaction = {
@@ -31,15 +30,14 @@ export type Transaction = {
     icon: LucideIcon;
 }
 
-export const jars: Jar[] = [
+export const jars: Allocation[] = [
     {
         id: '1',
-        userId: 'user_1',
         name: 'Necessities',
-        parentId: null,
         current: 2450.5,
         goal: 4000,
-        level: 0,
+        parentId: null,
+        level: 0, 
         color: 'text-blue-400',
         bgGlow: 'shadow-[0_0_30px_rgba(96,165,250,0.3)]',
         icon: Home,
@@ -48,12 +46,11 @@ export const jars: Jar[] = [
     },
     {
         id: '2',
-        userId: 'user_1',
         name: 'Financial Freedom',
-        parentId: null,
         current: 12000,
         goal: 100000,
-        level: 0,
+        parentId: null,
+        level: 0, 
         color: 'text-green-400',
         bgGlow: 'shadow-[0_0_30px_rgba(74,222,128,0.3)]',
         icon: DollarSign,
@@ -62,12 +59,11 @@ export const jars: Jar[] = [
     },
     {
         id: '3',
-        userId: 'user_1',
         name: 'Play',
-        parentId: null,
         current: 850,
         goal: 1000,
-        level: 0,
+        parentId: null,
+        level: 0, 
         color: 'text-pink-400',
         bgGlow: 'shadow-[0_0_30px_rgba(244,114,182,0.3)]',
         icon: Gamepad2,
@@ -76,12 +72,11 @@ export const jars: Jar[] = [
     },
     {
         id: '4',
-        userId: 'user_1',
         name: 'Education',
-        parentId: null,
         current: 150,
         goal: 500,
-        level: 0,
+        parentId: null,
+        level: 0, 
         color: 'text-yellow-400',
         bgGlow: 'shadow-[0_0_30px_rgba(250,204,21,0.3)]',
         icon: GraduationCap,
@@ -90,12 +85,11 @@ export const jars: Jar[] = [
     },
     {
         id: '5',
-        userId: 'user_1',
         name: 'Long-term Savings',
-        parentId: null,
         current: 3200,
         goal: 5000,
-        level: 0,
+        parentId: null,
+        level: 0, 
         color: 'text-purple-400',
         bgGlow: 'shadow-[0_0_30px_rgba(192,132,252,0.3)]',
         icon: Plane,
@@ -104,12 +98,11 @@ export const jars: Jar[] = [
     },
     {
         id: '6',
-        userId: 'user_1',
         name: 'Give',
-        parentId: null,
         current: 120,
         goal: 200,
-        level: 0,
+        parentId: null,
+        level: 0, 
         color: 'text-red-400',
         bgGlow: 'shadow-[0_0_30px_rgba(248,113,113,0.3)]',
         icon: Heart,
