@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0] - 2026-01-31
+### Added
+- **Jar Categories**: Implemented hierarchical management, allowing users to organize their savings jars into custom categories for better organization.
+
+### Changed
+- **Jar Deletion**: Improved the jar deletion process by adding a confirmation modal to prevent accidental deletions.
+
 ## [0.6.0] - 2026-01-31
 ### Added
 - **Jar Management**: Introduced a new dedicated page for managing savings jars, allowing users to:
