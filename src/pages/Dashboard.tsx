@@ -9,6 +9,7 @@ import { useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
+import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
 
 type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
@@ -27,6 +28,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const [showScanner, setShowScanner] = useState(false);
     const [showImportSlip, setShowImportSlip] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showManageJars, setShowManageJars] = useState(false);
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const isVisible = useScrollDirection();
@@ -81,6 +83,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
 
     if (showSettings) {
         return <SettingsOverlay onBack={() => setShowSettings(false)} />;
+    }
+
+    if (showManageJars) {
+        return <ManageJars onClose={() => setShowManageJars(false)} />;
     }
 
     return (
@@ -177,7 +183,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                     <section>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold text-gray-100">Your Jars</h3>
-                            <button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">View All</button>
+                            <button
+                                onClick={() => setShowManageJars(true)}
+                                className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                            >Manage Jars</button>
                         </div>
                         <div className="grid gap-4">
                             {jars.map((jar, index) => (
@@ -394,7 +403,10 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                         <LayoutGrid size={20} className="text-blue-500" />
                                         Your Jars
                                     </h3>
-                                    <button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">View All Analysis</button>
+                                    <button
+                                        onClick={() => setShowManageJars(true)}
+                                        className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                                    >Manage Jars</button>
                                 </div>
                                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                     {jars.map((jar, index) => (
