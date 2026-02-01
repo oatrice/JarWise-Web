@@ -143,3 +143,52 @@ export const transactions: Transaction[] = [
         icon: GraduationCap
     }
 ];
+
+export type Wallet = {
+    id: string;
+    name: string;
+    balance: number;
+    color: string;
+    icon: LucideIcon;
+    parentId: string | null;
+    level: number;
+}
+
+export const wallets: Wallet[] = [
+    {
+        id: '1',
+        name: 'Bank Account',
+        balance: 15430.00,
+        color: 'text-blue-500',
+        icon: Home,
+        parentId: null,
+        level: 0
+    },
+    {
+        id: '2',
+        name: 'K-Bank Savings',
+        balance: 12000.00,
+        color: 'text-green-500',
+        icon: DollarSign,
+        parentId: '1',
+        level: 1
+    },
+    {
+        id: '3',
+        name: 'SCB Checking',
+        balance: 3430.00,
+        color: 'text-purple-500',
+        icon: CreditCard,
+        parentId: '1',
+        level: 1
+    },
+    {
+        id: '4',
+        name: 'Cash Wallet',
+        balance: 1250.00,
+        color: 'text-yellow-500',
+        icon: WalletIcon,
+        parentId: null,
+        level: 0
+    }
+];

@@ -7,9 +7,12 @@ interface SettingsOverlayProps {
     onBack: () => void;
 }
 
+import ManageWallets from './ManageWallets';
+
 const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ onBack }) => {
     const { currency, setCurrency } = useCurrency();
     const [showCurrencySelection, setShowCurrencySelection] = useState(false);
+    const [showManageWallets, setShowManageWallets] = useState(false);
 
     const currencies: { code: CurrencyCode; name: string; symbol: string; flag: string }[] = [
         { code: 'THB', name: 'Thai Baht', symbol: '฿', flag: '🇹🇭' },
@@ -18,6 +21,10 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ onBack }) => {
         { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
         { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
     ];
+
+    if (showManageWallets) {
+        return <ManageWallets onClose={() => setShowManageWallets(false)} />;
+    }
 
     if (showCurrencySelection) {
         return (
@@ -77,6 +84,25 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ onBack }) => {
 
             {/* Content */}
             <div className="p-4 space-y-6">
+
+                {/* Account Section (New) */}
+                <section className="space-y-3">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">Accounts</h3>
+                    <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+                        <button
+                            onClick={() => setShowManageWallets(true)}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                                    <Wallet size={20} />
+                                </div>
+                                <span className="font-medium">Manage Wallets</span>
+                            </div>
+                            < ChevronRight size={18} className="text-gray-500" />
+                        </button>
+                    </div>
+                </section>
 
                 {/* General Section */}
                 <section className="space-y-3">
