@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - 2026-02-01
+### Added
+- **Wallet Management**: Introduced a comprehensive Wallet Management interface, allowing users to create, edit, and organize their wallets into a hierarchical structure for a clearer financial overview.
+
+### Fixed
+- **Wallet Hierarchy**: Enforced structural rules to prevent invalid parent-child relationships, such as a wallet being its own parent.
+- **Wallet Hierarchy**: Corrected an issue where wallet levels were not updating properly after changing a parent wallet.
+
 ## [0.7.0] - 2026-01-31
 ### Added
 - **Jar Categories**: Implemented hierarchical management, allowing users to organize their savings jars into custom categories for better organization.
