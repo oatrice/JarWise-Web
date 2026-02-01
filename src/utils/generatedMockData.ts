@@ -1,6 +1,6 @@
 // WARNING: This file is auto-generated. Do not edit directly.
 // Generated at: 2026-01-31T11:08:58.480Z
-import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Headphones, ShoppingBag, type LucideIcon } from 'lucide-react';
+import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Headphones, ShoppingBag, CreditCard, Wallet as WalletIcon, type LucideIcon } from 'lucide-react';
 
 export type Allocation = {
     id: string;
@@ -37,7 +37,7 @@ export const jars: Allocation[] = [
         current: 2450.5,
         goal: 4000,
         parentId: null,
-        level: 0, 
+        level: 0,
         color: 'text-blue-400',
         bgGlow: 'shadow-[0_0_30px_rgba(96,165,250,0.3)]',
         icon: Home,
@@ -50,7 +50,7 @@ export const jars: Allocation[] = [
         current: 12000,
         goal: 100000,
         parentId: null,
-        level: 0, 
+        level: 0,
         color: 'text-green-400',
         bgGlow: 'shadow-[0_0_30px_rgba(74,222,128,0.3)]',
         icon: DollarSign,
@@ -63,7 +63,7 @@ export const jars: Allocation[] = [
         current: 850,
         goal: 1000,
         parentId: null,
-        level: 0, 
+        level: 0,
         color: 'text-pink-400',
         bgGlow: 'shadow-[0_0_30px_rgba(244,114,182,0.3)]',
         icon: Gamepad2,
@@ -76,7 +76,7 @@ export const jars: Allocation[] = [
         current: 150,
         goal: 500,
         parentId: null,
-        level: 0, 
+        level: 0,
         color: 'text-yellow-400',
         bgGlow: 'shadow-[0_0_30px_rgba(250,204,21,0.3)]',
         icon: GraduationCap,
@@ -89,7 +89,7 @@ export const jars: Allocation[] = [
         current: 3200,
         goal: 5000,
         parentId: null,
-        level: 0, 
+        level: 0,
         color: 'text-purple-400',
         bgGlow: 'shadow-[0_0_30px_rgba(192,132,252,0.3)]',
         icon: Plane,
@@ -102,7 +102,7 @@ export const jars: Allocation[] = [
         current: 120,
         goal: 200,
         parentId: null,
-        level: 0, 
+        level: 0,
         color: 'text-red-400',
         bgGlow: 'shadow-[0_0_30px_rgba(248,113,113,0.3)]',
         icon: Heart,

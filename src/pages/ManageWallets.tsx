@@ -47,7 +47,10 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
             <div key={wallet.id} className="mb-3 relative">
                 {/* Vertical Line from previous sibling to this one (if not first child) */}
                 {depth > 0 && (
-                    <div className="absolute -left-4 top-0 bottom-1/2 w-px bg-gray-700" />
+                    <div
+                        className="absolute top-0 bottom-1/2 w-px bg-gray-700"
+                        style={{ left: `${(depth - 1) * 32}px` }}
+                    />
                 )}
 
                 <motion.div
