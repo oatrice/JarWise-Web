@@ -112,11 +112,10 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
                                             onChange={(e) => {
                                                 const newParentId = e.target.value || null;
 
-                                                // 1. Prevent self-selection
+                                                // 1. Validation Logic
                                                 if (newParentId === wallet.id) return;
 
-                                                // 2. Circular Dependency Check
-                                                // Check if newParentId is currently a child/descendant of this wallet
+                                                // Circular Dependency Check
                                                 const isDescendant = (potentialDescendantId: string, currentWalletId: string): boolean => {
                                                     const children = wallets.filter(w => w.parentId === currentWalletId);
                                                     for (const child of children) {
@@ -131,7 +130,6 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
                                                     return;
                                                 }
 
-                                                // 3. Max Depth Check
                                                 // Calculate target level
                                                 let newLevel = 0;
                                                 if (newParentId) {
@@ -141,54 +139,55 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
                                                     }
                                                 }
 
-                                                // Check if this wallet has children that would exceed the limit
-                                                // Simple recursion to find max depth of this subtree
+                                                // Max Depth Check
                                                 const getMaxSubtreeDepth = (rootId: string, currentDepth: number): number => {
                                                     const children = wallets.filter(w => w.parentId === rootId);
                                                     if (children.length === 0) return currentDepth;
                                                     return Math.max(...children.map(c => getMaxSubtreeDepth(c.id, currentDepth + 1)));
                                                 };
 
-                                                // Current depth relative to this wallet is 0. 
-                                                // So if max depth is 1 (has children), and newLevel is 2, total is 3 (level 0,1,2,3 -> 4 levels).
-                                                // We want max level to be 2 (3 levels total: 0, 1, 2).
                                                 const subtreeDepth = getMaxSubtreeDepth(wallet.id, 0);
-                                                // Final level of deepest child = newLevel + subtreeDepth
-
                                                 if (newLevel + subtreeDepth > 2) {
                                                     alert("Maximum hierarchy depth (3 levels) exceeded.");
                                                     return;
                                                 }
 
-                                                updateWallet(wallet.id, {
-                                                    parentId: newParentId,
-                                                    level: newLevel
-                                                });
+                                                // 2. State Update with Recursive Level Propagation
+                                                setWallets(prevWallets => {
+                                                    const newWallets = prevWallets.map(w => ({ ...w }));
+                                                    const movedWallet = newWallets.find(w => w.id === wallet.id);
+                                                    if (!movedWallet) return prevWallets;
 
-                                                // Also strictly need to update children's levels recursively (Mock Logic)
-                                                // Ideally this propagates, but for mock UI just updating immediate might be enough or simple recursion
-                                                const updateChildrenLevels = (parentId: string, parentLevel: number) => {
-                                                    const children = wallets.filter(w => w.parentId === parentId);
-                                                    children.forEach(child => {
-                                                        updateWallet(child.id, { level: parentLevel + 1 });
-                                                        updateChildrenLevels(child.id, parentLevel + 1);
-                                                    });
-                                                };
-                                                // Delay slightly or handle in state update to avoid complexity in this render cycle, 
-                                                // but for now let's assume simple 1-level move is common. 
-                                                // *Implementation Note*: State updates in Loop/Recursion inside event handler might be batching-heavy.
-                                                // For this Mock, we'll accept that children levels update on next interaction or we simply don't strictly update them 
-                                                // immediately because visual indentation depends mainly on recursive render, not the 'level' property. 
-                                                // However, for consistency:
-                                                /* 
-                                                setTimeout(() => updateChildrenLevels(wallet.id, newLevel), 0);
-                                                */
+                                                    movedWallet.parentId = newParentId;
+                                                    movedWallet.level = newLevel;
+
+                                                    const updateChildrenLevels = (parentId: string, parentLevel: number) => {
+                                                        newWallets
+                                                            .filter(w => w.parentId === parentId)
+                                                            .forEach(child => {
+                                                                child.level = parentLevel + 1;
+                                                                updateChildrenLevels(child.id, child.level);
+                                                            });
+                                                    };
+                                                    updateChildrenLevels(movedWallet.id, movedWallet.level);
+                                                    return newWallets;
+                                                });
                                             }}
                                             onClick={(e) => e.stopPropagation()}
                                             className="w-full px-4 py-2 rounded-xl bg-gray-800 border border-gray-700 text-white focus:outline-none"
                                         >
                                             <option value="">(No Parent)</option>
-                                            {rootWallets.filter(p => p.id !== wallet.id).map(p => (
+                                            {wallets.filter(p => {
+                                                if (p.id === wallet.id) return false;
+                                                // Circular check for dropdown options
+                                                const isDescendant = (potentialDescendantId: string, currentWalletId: string): boolean => {
+                                                    const children = wallets.filter(w => w.parentId === currentWalletId);
+                                                    if (children.some(child => child.id === potentialDescendantId)) return true;
+                                                    return children.some(child => isDescendant(potentialDescendantId, child.id));
+                                                };
+                                                if (isDescendant(p.id, wallet.id)) return false;
+                                                return true;
+                                            }).map(p => (
                                                 <option key={p.id} value={p.id}>{p.name}</option>
                                             ))}
                                         </select>
@@ -249,52 +248,71 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
                 </div>
             </div>
 
-            {/* Add Wallet Modal Placeholder - Can be separate component */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-gray-900 border border-gray-700 rounded-3xl p-6 w-full max-w-sm m-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-white">New Wallet</h3>
-                            <button onClick={() => setShowAddModal(false)}><X size={20} className="text-gray-400" /></button>
-                        </div>
-                        <div className="space-y-4">
-                            <input placeholder="Wallet Name" className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white" id="new-wallet-name" />
-                            <select className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white" id="new-wallet-parent">
-                                <option value="">No Parent</option>
-                                {rootWallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                            </select>
-                            <button
-                                onClick={() => {
-                                    const nameInput = document.getElementById('new-wallet-name') as HTMLInputElement;
-                                    const parentSelect = document.getElementById('new-wallet-parent') as HTMLSelectElement;
-                                    if (nameInput.value) {
-                                        handleAddWallet({
-                                            name: nameInput.value,
-                                            balance: 0,
-                                            color: 'text-blue-500',
-                                            icon: WalletIcon,
-                                            parentId: parentSelect.value || null,
-                                            level: (() => {
-                                                if (!parentSelect.value) return 0;
-                                                // Better find in all wallets since rootWallets only has top level
-                                                const trueParent = wallets.find(w => w.id === parentSelect.value);
-                                                if (trueParent && trueParent.level >= 2) {
-                                                    alert("Cannot add child to this wallet (Max depth reached).");
-                                                    return -1; // Flag to cancel
-                                                }
-                                                return trueParent ? trueParent.level + 1 : 0;
-                                            })()
-                                        });
-                                    }
-                                }}
-                                className="w-full bg-blue-500 py-3 rounded-xl font-bold text-white hover:bg-blue-600 transition-colors"
-                            >
-                                Create Wallet
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Add Wallet Modal */}
+            {showAddModal && <AddWalletModal onClose={() => setShowAddModal(false)} onAdd={handleAddWallet} wallets={wallets} />}
         </motion.div>
+    );
+}
+
+function AddWalletModal({ onClose, onAdd, wallets }: { onClose: () => void, onAdd: (w: any) => void, wallets: Wallet[] }) {
+    const [name, setName] = useState("");
+    const [parentId, setParentId] = useState("");
+
+    const handleSubmit = () => {
+        if (!name) return;
+
+        let level = 0;
+        if (parentId) {
+            const parent = wallets.find(w => w.id === parentId);
+            if (parent) {
+                if (parent.level >= 2) {
+                    alert("Cannot add child to this wallet (Max depth reached).");
+                    return;
+                }
+                level = parent.level + 1;
+            }
+        }
+
+        onAdd({
+            name,
+            balance: 0,
+            color: 'text-blue-500',
+            icon: WalletIcon,
+            parentId: parentId || null,
+            level
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-gray-900 border border-gray-700 rounded-3xl p-6 w-full max-w-sm m-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-white">New Wallet</h3>
+                    <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+                </div>
+                <div className="space-y-4">
+                    <input
+                        placeholder="Wallet Name"
+                        className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                    />
+                    <select
+                        className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={parentId}
+                        onChange={e => setParentId(e.target.value)}
+                    >
+                        <option value="">No Parent</option>
+                        {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                    </select>
+                    <button
+                        onClick={handleSubmit}
+                        className="w-full bg-blue-500 py-3 rounded-xl font-bold text-white hover:bg-blue-600 transition-colors"
+                    >
+                        Create Wallet
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }
