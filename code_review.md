@@ -1,90 +1,161 @@
 # Luma Code Review Report
 
-**Date:** 2026-01-31 17:03:47
-**Files Reviewed:** ['src/utils/generatedMockData.ts', '.luma_state.json', 'src/pages/ManageJars.tsx']
+**Date:** 2026-02-01 11:44:15
+**Files Reviewed:** ['.luma_state.json', 'src/pages/SettingsOverlay.tsx', 'src/pages/ManageWallets.tsx', 'src/utils/generatedMockData.ts']
 
 ## 📝 Reviewer Feedback
 
-There are several bugs in the `ManageJars.tsx` component related to adding new jars and categories, which will cause runtime errors and type mismatches.
+The code does not pass the review due to several logic errors and anti-patterns in `src/pages/ManageWallets.tsx`.
 
-### Issues Found in `src/pages/ManageJars.tsx`:
+### 1. Critical Logic Error: Parent Selection is Overly Restrictive
 
-1.  **Incorrect ID Generation and Type:**
-    *   **Problem:** The `id` property in the `Jar` type is a `string`. The functions `handleAddJar` and `handleAddCategory` generate a new ID as a `number` and attempt to find the maximum ID by running `Math.max` on an array of strings (`jars.map(j => j.id)`), which will throw a runtime error.
-    *   **Fix:** You must parse the string IDs to numbers before using `Math.max` and then convert the final new ID back to a string to match the type definition.
+**Problem:** In both the wallet editor and the "Add Wallet" modal, the dropdown for selecting a parent wallet is populated only with `rootWallets`. This makes it impossible to create or move a wallet to be a child of another sub-wallet (e.g., creating a level 2 wallet). The feature is meant to support a hierarchy, but this implementation limits it to a maximum of two levels (root and child).
 
-2.  **Incorrect Property Name:**
-    *   **Problem:** The `Jar` type defines a property named `goal`. The `handleAddJar` and `handleAddCategory` functions incorrectly use the property name `target`.
-    *   **Fix:** Rename `target: 0` to `goal: 0` in the new object creation.
+**File:** `src/pages/ManageWallets.tsx`
 
-3.  **Incorrect Type for `parentId`:**
-    *   **Problem:** In `handleAddJar`, a new top-level jar is created with `parentId: undefined`. The `Allocation` type defines `parentId` as `string | null`. `undefined` is not a valid type here.
-    *   **Fix:** For top-level items, `parentId` should be `null`.
-
-4.  **Incorrect Function Signature:**
-    *   **Problem:** The `handleAddCategory` function is defined with `parentId: number`, but it is called with `jar.id`, which is a string.
-    *   **Fix:** The function signature should be `handleAddCategory(parentId: string)`.
-
-### Corrected Code Snippets:
-
-Here are the corrected versions of the `handleAddJar` and `handleAddCategory` functions in `src/pages/ManageJars.tsx`.
-
-**`handleAddJar` function:**
-
+**Location 1 (Editor Panel, line ~188):**
 ```typescript
-    const handleAddJar = () => {
-        const newId = jars.length > 0 ? Math.max(...jars.map(j => parseInt(j.id, 10))) + 1 : 1;
-        const newJar: EditableJar = {
-            id: newId.toString(), // FIX: ID must be a string
-            name: 'New Jar',
-            icon: PiggyBank,
-            percentage: 0,
-            current: 0,
-            goal: 0, // FIX: Property is 'goal', not 'target'
-            color: 'text-gray-400',
-            barColor: 'bg-gray-400',
-            shadowColor: 'shadow-[0_0_15px_rgba(156,163,175,0.3)]',
-            bgGlow: 'bg-gray-400/20',
-            userId: 'user_123',
-            level: 0,
-            parentId: null, // FIX: parentId should be null for root items
-            children: []
-        };
-        setJars([...jars, newJar]);
-    };
+<select ...>
+    <option value="">(No Parent)</option>
+    {rootWallets.filter(p => p.id !== wallet.id).map(p => (
+        <option key={p.id} value={p.id}>{p.name}</option>
+    ))}
+</select>
 ```
 
-**`handleAddCategory` function:**
-
+**Location 2 (Add Modal, line ~320):**
 ```typescript
-    const handleAddCategory = (parentId: string) => { // FIX: parentId is a string
-        const parent = jars.find(j => j.id === parentId);
-        if (!parent) return;
+<select ...>
+    <option value="">No Parent</option>
+    {rootWallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+</select>
+```
 
-        const newId = jars.length > 0 ? Math.max(...jars.map(j => parseInt(j.id, 10))) + 1 : 1;
-        const newCategory: EditableJar = {
-            id: newId.toString(), // FIX: ID must be a string
-            name: 'New Category',
-            icon: DollarSign,
-            percentage: 0,
-            current: 0,
-            goal: 0, // FIX: Property is 'goal', not 'target'
-            color: parent.color,
-            barColor: parent.barColor,
-            shadowColor: parent.shadowColor,
-            bgGlow: parent.bgGlow,
-            userId: 'user_123',
-            level: (parent.level || 0) + 1,
-            parentId: parentId,
-            children: []
-        };
-        setJars([...jars, newCategory]);
+**Fix:** The dropdown should be populated from the main `wallets` array, filtering out only the wallet being edited and its own descendants to prevent circular dependencies.
+
+**Example Fix (for the editor panel):**
+```typescript
+// Inside the renderWalletItem function, before the return statement:
+const potentialParents = wallets.filter(p => {
+    // Cannot be its own parent
+    if (p.id === wallet.id) return false;
+    // Cannot be a descendant of itself
+    const isDescendant = (potentialDescendantId: string, currentWalletId: string): boolean => {
+        const children = wallets.filter(w => w.parentId === currentWalletId);
+        if (children.some(child => child.id === potentialDescendantId)) return true;
+        return children.some(child => isDescendant(potentialDescendantId, child.id));
     };
+    if (isDescendant(p.id, wallet.id)) return false;
+    
+    return true;
+});
+
+// Then in the JSX:
+<select ...>
+    <option value="">(No Parent)</option>
+    {potentialParents.map(p => (
+        <option key={p.id} value={p.id}>{p.name}</option>
+    ))}
+</select>
+```
+A similar change is needed for the "Add Wallet" modal, although it doesn't need the circular dependency check.
+
+---
+
+### 2. Critical Logic Error: Descendant `level` Property Not Updated
+
+**Problem:** When a wallet's parent is changed, the code correctly updates the `level` of the wallet being moved. However, it fails to recursively update the `level` property for all of that wallet's descendants. The code for this (`updateChildrenLevels`) is commented out or incomplete. This leads to inconsistent data in the state, where a wallet's `level` no longer matches its actual depth in the hierarchy. This will break other logic that depends on an accurate `level`, such as the "Max Depth Check".
+
+**File:** `src/pages/ManageWallets.tsx`
+
+**Location:** Inside the `onChange` handler for the parent selector `select` element (around line ~220).
+
+**Fix:** You must implement the recursive update of descendant levels. The current approach of calling `updateWallet` (which calls `setWallets`) inside a loop is inefficient and can be buggy. A better approach is to compute the new state for all affected wallets and then call `setWallets` once.
+
+**Example Fix:**
+```typescript
+// Inside the parent selector's onChange handler
+// ... after all validation checks pass ...
+
+setWallets(prevWallets => {
+    // Create a mutable copy of the wallets array
+    const newWallets = prevWallets.map(w => ({ ...w }));
+
+    // Find the wallet to update
+    const movedWallet = newWallets.find(w => w.id === wallet.id);
+    if (!movedWallet) return prevWallets; // Should not happen
+
+    // Update the moved wallet
+    movedWallet.parentId = newParentId;
+    movedWallet.level = newLevel;
+
+    // Recursively update levels of all descendants
+    const updateChildrenLevels = (parentId: string, parentLevel: number) => {
+        newWallets
+            .filter(w => w.parentId === parentId)
+            .forEach(child => {
+                child.level = parentLevel + 1;
+                updateChildrenLevels(child.id, child.level);
+            });
+    };
+
+    updateChildrenLevels(movedWallet.id, movedWallet.level);
+
+    return newWallets;
+});
+```
+
+---
+
+### 3. Bad Practice: Direct DOM Manipulation in React
+
+**Problem:** The "Add Wallet" modal uses `document.getElementById` to retrieve input values. This is a React anti-pattern that bypasses React's state management and declarative nature. Forms should be handled using controlled components.
+
+**File:** `src/pages/ManageWallets.tsx`
+
+**Location:** Inside the `onClick` handler for the "Create Wallet" button (around line ~325).
+
+**Fix:** Use React state (`useState`) to manage the form inputs.
+
+**Example Fix:**
+```typescript
+// At the top of the ManageWallets component
+const [newWalletName, setNewWalletName] = useState('');
+const [newWalletParentId, setNewWalletParentId] = useState('');
+
+// ... inside the modal JSX
+<input 
+    placeholder="Wallet Name" 
+    className="..." 
+    value={newWalletName}
+    onChange={(e) => setNewWalletName(e.target.value)}
+/>
+<select 
+    className="..." 
+    value={newWalletParentId}
+    onChange={(e) => setNewWalletParentId(e.target.value)}
+>
+    {/* options */}
+</select>
+<button
+    onClick={() => {
+        if (newWalletName) {
+            const parent = wallets.find(w => w.id === newWalletParentId);
+            // ... rest of the logic using newWalletName and parent ...
+            handleAddWallet({ ... });
+            // Reset form state
+            setNewWalletName('');
+            setNewWalletParentId('');
+        }
+    }}
+>
+    Create Wallet
+</button>
 ```
 
 ## 🧪 Test Suggestions
 
-*   **Unauthorized Data Access:** A logged-in user (`user_A`) attempts to access, view, or modify an allocation/jar that belongs to a different user (`user_B`) by manipulating API requests or URLs. The system should return a "Forbidden" or "Not Found" error and not leak any data.
-*   **Data Isolation Verification:** When multiple users have allocations in the system, log in as one user and verify that only their specific allocations are displayed. Ensure that no data from other users is visible on any part of the UI.
-*   **Handling Legacy Data:** Test the system's behavior with an allocation record that has a `null` or `undefined` `userId`. This simulates data created before the change. The application should handle this gracefully, either by hiding the data, assigning it to a default owner, or flagging it for migration, without crashing or incorrectly assigning it to the currently logged-in user.
+*   **Deleting a parent wallet with sub-wallets:** Verify that the application prompts the user to reassign the child wallets. Test the flow where children are successfully reassigned to another parent, and also test the case where the user cancels the deletion, ensuring the original hierarchy remains intact.
+*   **Creating a circular dependency:** Attempt to make a parent wallet a child of one of its own descendants (e.g., Wallet A is parent of B; try to make B the parent of A). The system should prevent this action and display a user-friendly error message to maintain data integrity.
+*   **Deeply nested hierarchies:** Create a wallet structure with multiple levels of nesting (e.g., 5+ levels deep). Confirm that the UI renders the tree correctly without visual bugs, and that actions like moving a wallet from the middle of the hierarchy to a new parent correctly move its entire sub-tree along with it.
 
