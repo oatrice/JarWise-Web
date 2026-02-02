@@ -46,9 +46,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSignIn }) => {
                 {/* Privacy note */}
                 <p className="mt-8 text-xs text-gray-600 text-center max-w-xs">
                     By signing in, you agree to our{' '}
-                    <span className="text-blue-400">Terms of Service</span>
+                    <a href="/terms" className="text-blue-400 hover:text-blue-500 hover:underline">Terms of Service</a>
                     {' '}and{' '}
-                    <span className="text-blue-400">Privacy Policy</span>
+                    <a href="/privacy" className="text-blue-400 hover:text-blue-500 hover:underline">Privacy Policy</a>
                 </p>
             </div>
 

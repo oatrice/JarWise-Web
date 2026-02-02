@@ -15,7 +15,7 @@ interface SettingsOverlayProps {
     syncStatus?: SyncStatus;
     lastBackupTime?: Date | null;
     onBackupNow?: () => void;
-    onLogout?: () => void;
+    onLogout?: (deleteData: boolean) => void;
 }
 
 import ManageWallets from './ManageWallets';
@@ -235,11 +235,11 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                 onClose={() => setShowLogoutModal(false)}
                 onLogoutKeepData={() => {
                     setShowLogoutModal(false);
-                    onLogout?.();
+                    onLogout?.(false);
                 }}
                 onLogoutDeleteData={() => {
                     setShowLogoutModal(false);
-                    onLogout?.();
+                    onLogout?.(true);
                 }}
             />
         </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export interface MockUser {
     id: string;
@@ -31,6 +31,15 @@ export function useAuthMock() {
         lastBackupTime: null,
     });
 
+    // Safety ref to track if component is mounted
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
     const signIn = useCallback(() => {
         setState({
             isLoggedIn: true,
@@ -53,11 +62,13 @@ export function useAuthMock() {
         setState(prev => ({ ...prev, syncStatus: 'syncing' }));
         // Simulate backup delay
         setTimeout(() => {
-            setState(prev => ({
-                ...prev,
-                syncStatus: 'success',
-                lastBackupTime: new Date(),
-            }));
+            if (isMounted.current) {
+                setState(prev => ({
+                    ...prev,
+                    syncStatus: 'success',
+                    lastBackupTime: new Date(),
+                }));
+            }
         }, 2000);
     }, []);
 
