@@ -1,18 +1,39 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ChevronRight, Coins, DollarSign, Wallet } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Coins, DollarSign, Wallet, CloudUpload, LogOut } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import type { CurrencyCode } from '../context/CurrencyContext';
+import SyncStatusIndicator from '../components/SyncStatusIndicator';
+import LogoutConfirmModal from '../components/LogoutConfirmModal';
+import type { SyncStatus } from '../hooks/useAuthMock';
 
 interface SettingsOverlayProps {
     onBack: () => void;
+    // Mock auth props
+    isLoggedIn?: boolean;
+    userName?: string;
+    userAvatar?: string;
+    syncStatus?: SyncStatus;
+    lastBackupTime?: Date | null;
+    onBackupNow?: () => void;
+    onLogout?: () => void;
 }
 
 import ManageWallets from './ManageWallets';
 
-const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ onBack }) => {
+const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
+    onBack,
+    isLoggedIn = true,
+    userName = 'Anna Smith',
+    userAvatar = 'https://ui-avatars.com/api/?name=Anna+Smith&background=6366f1&color=fff&size=128',
+    syncStatus = 'success',
+    lastBackupTime = new Date(),
+    onBackupNow,
+    onLogout,
+}) => {
     const { currency, setCurrency } = useCurrency();
     const [showCurrencySelection, setShowCurrencySelection] = useState(false);
     const [showManageWallets, setShowManageWallets] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const currencies: { code: CurrencyCode; name: string; symbol: string; flag: string }[] = [
         { code: 'THB', name: 'Thai Baht', symbol: '฿', flag: '🇹🇭' },
@@ -85,7 +106,45 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ onBack }) => {
             {/* Content */}
             <div className="p-4 space-y-6">
 
-                {/* Account Section (New) */}
+                {/* Profile Section (Google Login Mock) */}
+                {isLoggedIn && (
+                    <section className="space-y-3">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">Profile</h3>
+                        <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden p-4">
+                            <div className="flex items-center gap-4 mb-4">
+                                <img
+                                    src={userAvatar}
+                                    alt={userName}
+                                    className="w-14 h-14 rounded-full border-2 border-gray-700"
+                                />
+                                <div>
+                                    <p className="text-white font-semibold">{userName}</p>
+                                    <SyncStatusIndicator status={syncStatus} lastBackupTime={lastBackupTime} />
+                                </div>
+                            </div>
+
+                            {/* Backup Button */}
+                            <button
+                                onClick={onBackupNow}
+                                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-medium transition-colors mb-3"
+                            >
+                                <CloudUpload size={18} />
+                                Back up now
+                            </button>
+
+                            {/* Logout Button */}
+                            <button
+                                onClick={() => setShowLogoutModal(true)}
+                                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white font-medium transition-colors"
+                            >
+                                <LogOut size={18} />
+                                Log out
+                            </button>
+                        </div>
+                    </section>
+                )}
+
+                {/* Account Section */}
                 <section className="space-y-3">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">Accounts</h3>
                     <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
@@ -169,6 +228,20 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ onBack }) => {
                 </div>
 
             </div>
+
+            {/* Logout Confirmation Modal */}
+            <LogoutConfirmModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onLogoutKeepData={() => {
+                    setShowLogoutModal(false);
+                    onLogout?.();
+                }}
+                onLogoutDeleteData={() => {
+                    setShowLogoutModal(false);
+                    onLogout?.();
+                }}
+            />
         </div>
     );
 };
