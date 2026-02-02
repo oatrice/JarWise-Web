@@ -11,8 +11,9 @@ import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
 import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
+import { useAuthMock } from '../hooks/useAuthMock'; // Moved import to top
 
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login'; // Updated Page type
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
 import { useScrollDirection } from '../hooks/useScrollDirection';
@@ -32,9 +33,11 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const isVisible = useScrollDirection();
+    const auth = useAuthMock(); // Mock auth hook
 
     // Get drafts
-    const drafts = getDrafts();
+    const drafts = getDrafts(); // Correctly placed
+
 
     // Group transactions by date
     // Sort items by date descending first
@@ -81,8 +84,24 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
         return <ImportSlip onBack={() => setShowImportSlip(false)} />;
     }
 
+
+
     if (showSettings) {
-        return <SettingsOverlay onBack={() => setShowSettings(false)} />;
+        return (
+            <SettingsOverlay
+                onBack={() => setShowSettings(false)}
+                // Pass auth state and handlers
+                isLoggedIn={true} // Always "logged in" when on Dashboard
+                syncStatus={auth.syncStatus}
+                lastBackupTime={auth.lastBackupTime}
+                onBackupNow={auth.triggerBackup}
+                onLogout={(deleteData) => {
+                    console.log(`Logout requested. Delete data: ${deleteData}`);
+                    // In a real app, we would handle data deletion here
+                    onNavigate('login');
+                }}
+            />
+        );
     }
 
     if (showManageJars) {
