@@ -3,19 +3,19 @@
   "project_key": "2",
   "phase": "coding",
   "active_issue": {
-    "number": 69,
-    "title": "[Web | Android] Support Hierarchical Wallets (Sub-accounts)",
-    "html_url": "https://github.com/oatrice/JarWise-Root/issues/69",
-    "body": "# Feature: Support Hierarchical Wallets (Sub-accounts)\n\n## Overview\nEnable users to organize their wallets (accounts) in a hierarchical structure, allowing for sub-accounts (e.g., \"Bank Account\" -> \"Savings\" | \"Checking\"). This enhances the flexibility of financial tracking.\n\n## Core Objective\n- Implement `parentId` logic for Wallet Allocations.\n- Provide a UI for managing this hierarchy.\n\n## Implementation Phases\n### Phase 1: Web Mock UI (Priority)\n- [ ] Create Mock UI for creating sub-wallets.\n- [ ] Visual tree representation of wallets.\n- [ ] Drag-and-drop or parent selection support.\n\n### Phase 2: Android Implementation (Future)\n- [ ] Update `ManageWalletsViewModel` to support hierarchy.\n- [ ] Update UI to display tree structure.\n\n## Technical Details\n- **Schema:** Uses existing `Allocation` table (`parentId` field).\n- **Type:** `Allocation.type` (implied constraints) or separated UI logic.\n\n## Acceptance Criteria\n- [ ] User can create a Wallet under another Wallet.\n- [ ] Hierarchy is visually distinct in the management list.\n- [ ] Deleting a parent prompt for reassignment (aligned with Jar logic).\n",
-    "project_item_id": "PVTI_lAHOATfKEM4BMuLizgkl3lI",
+    "number": 32,
+    "title": "[Web | Android] Google Login & Cloud Backup",
+    "html_url": "https://github.com/oatrice/JarWise-Root/issues/32",
+    "body": "# 🎯 Objective\nImplement Google Sign-In authentication and automatic backup to Google Drive for data persistence across devices.\n\n## 📝 Specifications\n\n### Phase 1: Google Sign-In\n- [ ] **Google OAuth Integration**: Sign in with Google account\n- [ ] **User Profile**: Display user name and avatar\n- [ ] **Session Management**: Remember login state, auto-refresh tokens\n- [ ] **Logout**: Clear session and local data option\n\n### Phase 2: Google Drive Backup\n- [ ] **Auto Backup**: Automatically backup database to Google Drive\n- [ ] **Manual Backup**: Button to trigger immediate backup\n- [ ] **Restore**: Restore data from Google Drive backup\n- [ ] **Sync Indicator**: Show last backup time and sync status\n- [ ] **Conflict Resolution**: Handle merge conflicts between devices\n\n### Data to Backup\n- [ ] Transactions\n- [ ] Jar configurations\n- [ ] User preferences\n- [ ] App settings\n\n## 🔗 References\n- **Feature ID**: `AUTH-01`, `SYNC-01`\n- **Google APIs**: Google Sign-In, Google Drive API\n\n## 🏗️ Implementation Guidelines\n- **Web**: Google Sign-In for Web, Drive REST API\n- **Android**: Google Sign-In SDK, Drive API\n- **Security**: OAuth 2.0, encrypted backup files\n- **Offline**: Queue backups when offline, sync when online",
+    "project_item_id": "PVTI_lAHOATfKEM4BMuLizgjyd20",
     "project_id": "PVT_kwHOATfKEM4BMuLi",
     "repository": "oatrice/JarWise-Root"
   },
-  "active_branch": "feat/69-hierarchical-wallets",
-  "started_at": "2026-02-01T11:39:22.099068",
+  "active_branch": "feat/32-google-login-cloud-backup",
+  "started_at": "2026-02-02T14:29:58.430842",
   "checklist": {},
   "context": {},
   "pr_url": null,
   "pr_number": null,
-  "last_updated": "2026-02-01T11:39:23.582275"
+  "last_updated": "2026-02-02T14:29:59.878996"
 }
