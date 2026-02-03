@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0] - 2026-02-02
+### Added
+- **Authentication**: Introduced a complete user authentication system, including a new login screen and user session management to secure financial data.
+- **User Experience**: Added a confirmation modal for logging out to prevent accidental session termination.
+- **Data Management**: Implemented a "Restore Backup" modal, allowing users to restore their data upon login.
+- **UI**: Added a new Sync Status Indicator to provide visual feedback on data synchronization.
+
+### Fixed
+- **Authentication**: Corrected an issue with the logout functionality to ensure user sessions are terminated properly and addressed related UI issues.
+
 ## [0.8.0] - 2026-02-01
 ### Added
 - **Wallet Management**: Introduced a comprehensive Wallet Management interface, allowing users to create, edit, and organize their wallets into a hierarchical structure for a clearer financial overview.
