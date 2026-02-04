@@ -115,27 +115,42 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                 </motion.div>
 
                 {/* Transaction Groups */}
-                {groupedTransactions.map((group) => (
-                    <motion.section
-                        key={group.date}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
-                            <div className="flex items-center gap-3 text-xs font-medium">
-                                {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
-                                {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
+                {groupedTransactions.map((group) => {
+                    // Filter out the income side of transfers (we show the expense side as the "transfer" entry)
+                    const visibleTransactions = group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId));
+
+                    return (
+                        <motion.section
+                            key={group.date}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
+                                <div className="flex items-center gap-3 text-xs font-medium">
+                                    {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
+                                    {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
+                                </div>
                             </div>
-                        </div>
-                        <div className="space-y-3">
-                            {group.transactions.map((t) => (
-                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} />
-                            ))}
-                        </div>
-                    </motion.section>
-                ))}
+                            <div className="space-y-3">
+                                {visibleTransactions.map((t) => {
+                                    const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                    return (
+                                        <TransactionCard
+                                            key={t.id}
+                                            transaction={t}
+                                            showDate={false}
+                                            onClick={() => onTransactionClick?.(t.id)}
+                                            isTransfer={!!t.relatedTransactionId}
+                                            linkedTransaction={linkedTx}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </motion.section>
+                    );
+                })}
 
                 {/* Empty State */}
                 {transactions.length === 0 && (

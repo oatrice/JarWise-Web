@@ -254,9 +254,12 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                                                 <span className="text-red-400">-{formatAmount(group.expense)}</span>
                                             </div>
                                         </div>
-                                        {group.transactions.map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} />
-                                        ))}
+                                        {group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                            return (
+                                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                            );
+                                        })}
                                     </div>
                                 ))
                             ) : (
@@ -444,9 +447,12 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                                 </div>
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
                                     {transactions.length > 0 ? (
-                                        transactions.slice(0, 3).map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} onClick={() => onTransactionClick?.(t.id)} />
-                                        ))
+                                        transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).slice(0, 3).map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                            return (
+                                                <TransactionCard key={t.id} transaction={t} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                            );
+                                        })
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>
                                     )}
