@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "project_key": "2",
-  "phase": "coding",
+  "phase": "pr_pending",
   "active_issue": {
     "number": 65,
     "title": "[Feature] Migrate Data from Money Manager App (.mmbak)",
@@ -15,7 +15,7 @@
   "started_at": "2026-02-04T09:17:20.988773",
   "checklist": {},
   "context": {},
-  "pr_url": null,
+  "pr_url": "https://github.com/oatrice/JarWise-Web/pull/18",
   "pr_number": null,
-  "last_updated": "2026-02-04T10:33:19.454787"
+  "last_updated": "2026-02-04T11:58:57.210692"
 }
