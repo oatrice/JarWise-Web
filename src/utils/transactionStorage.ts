@@ -13,6 +13,7 @@ export interface Transaction {
     type: 'income' | 'expense';
     walletId?: string;
     status?: 'draft' | 'completed';
+    relatedTransactionId?: string;
 }
 
 const STORAGE_KEY = 'jarwise_transactions';
@@ -66,6 +67,21 @@ export function saveTransaction(tx: Transaction): void {
     // Limit to max transactions
     const limited = updated.slice(0, MAX_TRANSACTIONS);
 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
+}
+
+/**
+ * Save a transfer (two linked transactions)
+ */
+export function saveTransfer(fromTx: Transaction, toTx: Transaction): void {
+    const existing = getTransactions();
+    
+    // Add both transactions at the beginning
+    const updated = [fromTx, toTx, ...existing];
+    
+    // Limit to max transactions
+    const limited = updated.slice(0, MAX_TRANSACTIONS);
+    
     localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
 }
 

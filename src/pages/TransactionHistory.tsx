@@ -9,11 +9,12 @@ interface TransactionHistoryProps {
     onBack: () => void;
     onNavigate: (page: 'dashboard' | 'history' | 'scan' | 'add-transaction') => void;
     transactions: Transaction[];
+    onTransactionClick?: (id: string) => void;
 }
 
 import BottomNav from '../components/BottomNav';
 
-export default function TransactionHistory({ onBack, onNavigate, transactions }: TransactionHistoryProps) {
+export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
     const { formatAmount } = useCurrency();
     const isVisible = useScrollDirection(); // isVisible call moved here for consistency if needed, though already declared below. I will remove the duplicate declaration in the next step or assume this replacment covers the start of the function.
 
@@ -130,7 +131,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
                         </div>
                         <div className="space-y-3">
                             {group.transactions.map((t) => (
-                                <TransactionCard key={t.id} transaction={t} showDate={false} />
+                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} />
                             ))}
                         </div>
                     </motion.section>

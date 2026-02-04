@@ -6,9 +6,10 @@ import { useCurrency } from '../context/CurrencyContext';
 interface TransactionCardProps {
     transaction: Transaction;
     showDate?: boolean;
+    onClick?: () => void;
 }
 
-export default function TransactionCard({ transaction, showDate = true }: TransactionCardProps) {
+export default function TransactionCard({ transaction, showDate = true, onClick }: TransactionCardProps) {
     const { formatAmount } = useCurrency();
     const jar = getJarDetails(transaction.jarId);
 
@@ -37,7 +38,7 @@ export default function TransactionCard({ transaction, showDate = true }: Transa
     const subtitle = transaction.note ? jar.name : '';
 
     return (
-        <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
+        <div onClick={onClick} className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-xl text-xl bg-gray-800/50 flex items-center justify-center`}>
                     {/* Assuming Icon is imported or jar.icon is used */}

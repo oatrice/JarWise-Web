@@ -21,9 +21,10 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 interface DashboardProps {
     onNavigate: (page: Page) => void;
     transactions?: Transaction[];
+    onTransactionClick?: (id: string) => void;
 }
 
-export default function Dashboard({ onNavigate, transactions = [] }: DashboardProps) {
+export default function Dashboard({ onNavigate, transactions = [], onTransactionClick }: DashboardProps) {
     const { currency, setCurrency, formatAmount } = useCurrency();
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
@@ -230,7 +231,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 <div className="space-y-3">
                                     {drafts.map((t) => (
                                         <div key={t.id} onClick={() => setShowImportSlip(true)}>
-                                            <TransactionCard transaction={t} showDate={false} />
+                                            <TransactionCard transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} />
                                         </div>
                                     ))}
                                 </div>
@@ -254,7 +255,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                             </div>
                                         </div>
                                         {group.transactions.map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} showDate={false} />
+                                            <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} />
                                         ))}
                                     </div>
                                 ))
@@ -444,7 +445,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
                                     {transactions.length > 0 ? (
                                         transactions.slice(0, 3).map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} />
+                                            <TransactionCard key={t.id} transaction={t} onClick={() => onTransactionClick?.(t.id)} />
                                         ))
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>
