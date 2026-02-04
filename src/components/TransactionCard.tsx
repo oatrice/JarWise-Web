@@ -76,7 +76,7 @@ export default function TransactionCard({ transaction, showDate = true, onClick,
 
             <div className="flex items-center gap-3">
                 <span className={`font-semibold ${isTransfer ? 'text-blue-400' : (transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400')}`}>
-                    {isTransfer ? '' : (transaction.type === 'expense' ? '-' : '+')}{formatAmount(transaction.amount)}
+                    {formatAmount(transaction.amount)}
                 </span>
                 <ArrowRight size={16} className="text-gray-600 group-hover:text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
             </div>
