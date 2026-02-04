@@ -2,433 +2,487 @@
 
 You are an AI assistant helping to create a Pull Request description.
     
-TASK: [Feature] Migrate Data from Money Manager App (.mmbak)
+TASK: [Feature] Transaction Linking & Transfers
 ISSUE: {
-  "title": "[Feature] Migrate Data from Money Manager App (.mmbak)",
-  "number": 65
+  "title": "[Feature] Transaction Linking & Transfers",
+  "number": 71
 }
 
 GIT CONTEXT:
 COMMITS:
-1adb2f6 feat: [Feature] Migrate Data from Money Manager App (.mm...
-4938606 ✨ feat(migration): add data migration feature
-0125991 ✨ feat(migration): add data migration screens
+7685564 ✨ feat(transactions): Add transfer functionality and transaction details
+2dd50d4 🐛 fix(ui): removes transaction type prefix from amount display
+75dd8fc 🐛 fix(data): standardize transaction amount handling
+df7d689 ✨ feat(ui): add wallet and profile navigation
+a84d321 ✨ feat(transactions): add transfer transaction support
+afc528a ✨ feat(transactions): add transaction detail view and transfer functionality
+97fe86c ✨ feat(migration): add data migration feature
 
 STATS:
-.luma_state.json                    |  16 +-
- CHANGELOG.md                        |   4 +
- README.md                           |   3 +
- code_review.md                      |  72 +--------
- package.json                        |   2 +-
- src/App.tsx                         |  17 ++-
- src/pages/Dashboard.tsx             |   3 +-
- src/pages/MigrationStatusScreen.tsx | 292 ++++++++++++++++++++++++++++++++++++
- src/pages/MigrationUploadScreen.tsx | 171 +++++++++++++++++++++
- src/pages/SettingsOverlay.tsx       |  20 ++-
- 10 files changed, 523 insertions(+), 77 deletions(-)
+.luma_state.json                        |  18 +-
+ CHANGELOG.md                            |  11 +
+ README.md                               |   4 +-
+ code_review.md                          |  69 ++++-
+ draft_pr_body.md                        |  97 +++++++
+ draft_pr_prompt.md                      | 489 ++++++++++++++++++++++++++++++++
+ package.json                            |   2 +-
+ src/App.tsx                             |  44 ++-
+ src/components/BottomNav.tsx            |  12 +-
+ src/components/TransactionCard.test.tsx | 127 +++++++++
+ src/components/TransactionCard.tsx      |  38 ++-
+ src/components/TransferForm.tsx         | 205 +++++++++++++
+ src/pages/AddTransaction.tsx            | 436 ++++++++++++++++------------
+ src/pages/Dashboard.tsx                 |  23 +-
+ src/pages/TransactionDetail.tsx         | 125 ++++++++
+ src/pages/TransactionHistory.tsx        |  58 ++--
+ src/utils/constants.ts                  |   4 +
+ src/utils/generatedMockData.ts          |  16 +-
+ src/utils/transactionStorage.ts         |  35 ++-
+ src/utils/transferUtils.test.ts         | 131 +++++++++
+ 20 files changed, 1674 insertions(+), 270 deletions(-)
 
 KEY FILE DIFFS:
 diff --git a/src/App.tsx b/src/App.tsx
-index 24cdc8d..d61151a 100644
+index d61151a..4c15189 100644
 --- a/src/App.tsx
 +++ b/src/App.tsx
-@@ -5,7 +5,10 @@ import AddTransaction from './pages/AddTransaction';
+@@ -3,23 +3,33 @@ import Dashboard from './pages/Dashboard';
+ import TransactionHistory from './pages/TransactionHistory';
+ import AddTransaction from './pages/AddTransaction';
  import LoginScreen from './pages/LoginScreen';
++import TransactionDetail from './pages/TransactionDetail';
++import ManageWallets from './pages/ManageWallets';
  import { saveTransaction, getTransactions, type Transaction } from './utils/transactionStorage';
  
--type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login';
-+import MigrationUploadScreen from './pages/MigrationUploadScreen';
-+import MigrationStatusScreen from './pages/MigrationStatusScreen';
-+
-+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status';
+ import MigrationUploadScreen from './pages/MigrationUploadScreen';
+ import MigrationStatusScreen from './pages/MigrationStatusScreen';
+ 
+-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status';
++type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status' | 'transaction-detail' | 'wallets' | 'profile';
  
  function App() {
-   const [currentPage, setCurrentPage] = useState<Page>('login');  // Start with login for testing
-@@ -38,6 +41,18 @@ function App() {
-           onSave={handleSaveTransaction}
-         />
+-  const [currentPage, setCurrentPage] = useState<Page>('login');  // Start with login for testing
++  const [currentPage, setCurrentPage] = useState<Page>('login');
+   const [transactions, setTransactions] = useState<Transaction[]>(getTransactions);
++  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+ 
+   const navigateTo = (page: Page) => {
+     setCurrentPage(page);
+   };
+ 
+-  const handleSaveTransaction = (tx: Transaction) => {
+-    saveTransaction(tx);
++  const handleTransactionClick = (id: string) => {
++    setSelectedTransactionId(id);
++    setCurrentPage('transaction-detail');
++  };
++
++  const handleSaveTransaction = (tx?: Transaction) => {
++    if (tx) {
++      saveTransaction(tx);
++    }
+     setTransactions(getTransactions()); // Refresh from storage
+     navigateTo('dashboard');
+   };
+@@ -30,10 +40,19 @@ function App() {
+         <LoginScreen onSignIn={() => navigateTo('dashboard')} />
        )}
-+      {currentPage === 'migration-upload' && (
-+        <MigrationUploadScreen
+       {currentPage === 'dashboard' && (
+-        <Dashboard onNavigate={navigateTo} transactions={transactions} />
++        <Dashboard
++          onNavigate={navigateTo}
++          transactions={transactions}
++          onTransactionClick={handleTransactionClick}
++        />
+       )}
+       {currentPage === 'history' && (
+-        <TransactionHistory onBack={() => navigateTo('dashboard')} onNavigate={navigateTo} transactions={transactions} />
++        <TransactionHistory
 +          onBack={() => navigateTo('dashboard')}
 +          onNavigate={navigateTo}
++          transactions={transactions}
++          onTransactionClick={handleTransactionClick}
++        />
+       )}
+       {currentPage === 'add-transaction' && (
+         <AddTransaction
+@@ -53,6 +72,19 @@ function App() {
+           onDone={() => navigateTo('dashboard')}
+         />
+       )}
++      {currentPage === 'transaction-detail' && selectedTransactionId && (
++        <TransactionDetail
++          transactionId={selectedTransactionId}
++          allTransactions={transactions}
++          onBack={() => navigateTo('history')}
++          onNavigateLinked={(id) => handleTransactionClick(id)}
 +        />
 +      )}
-+      {currentPage === 'migration-status' && (
-+        <MigrationStatusScreen
-+          onBack={() => navigateTo('migration-upload')}
-+          onDone={() => navigateTo('dashboard')}
++      {currentPage === 'wallets' && (
++        <ManageWallets
++          onClose={() => navigateTo('dashboard')}
 +        />
 +      )}
      </>
    );
  }
-diff --git a/src/pages/Dashboard.tsx b/src/pages/Dashboard.tsx
-index 1e8a40e..ea3d1cf 100644
---- a/src/pages/Dashboard.tsx
-+++ b/src/pages/Dashboard.tsx
-@@ -13,7 +13,7 @@ import ManageJars from './ManageJars';
- import BottomNav from '../components/BottomNav';
- import { useAuthMock } from '../hooks/useAuthMock'; // Moved import to top
+diff --git a/src/components/BottomNav.tsx b/src/components/BottomNav.tsx
+index 121defd..2f7f8d1 100644
+--- a/src/components/BottomNav.tsx
++++ b/src/components/BottomNav.tsx
+@@ -1,7 +1,7 @@
+ import { motion } from 'framer-motion';
+ import { LayoutGrid, History, Plus, Wallet, User } from 'lucide-react';
  
--type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login'; // Updated Page type
-+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status'; // Updated Page type
+-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
++type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'wallets' | 'profile';
  
- import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
- import { useScrollDirection } from '../hooks/useScrollDirection';
-@@ -90,6 +90,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
-         return (
-             <SettingsOverlay
-                 onBack={() => setShowSettings(false)}
-+                onNavigate={onNavigate}
-                 // Pass auth state and handlers
-                 isLoggedIn={true} // Always "logged in" when on Dashboard
-                 syncStatus={auth.syncStatus}
-diff --git a/src/pages/MigrationStatusScreen.tsx b/src/pages/MigrationStatusScreen.tsx
+ interface BottomNavProps {
+     activePage: Page;
+@@ -36,10 +36,16 @@ export default function BottomNav({ activePage, onNavigate, visible = true }: Bo
+                 >
+                     <Plus size={28} />
+                 </button>
+-                <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
++                <button
++                    onClick={() => onNavigate('wallets')}
++                    className={`flex flex-col items-center gap-1 ${activePage === 'wallets' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'} transition-colors`}
++                >
+                     <Wallet size={24} />
+                 </button>
+-                <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
++                <button
++                    onClick={() => onNavigate('profile')}
++                    className={`flex flex-col items-center gap-1 ${activePage === 'profile' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'} transition-colors`}
++                >
+                     <User size={24} />
+                 </button>
+             </div>
+diff --git a/src/components/TransactionCard.test.tsx b/src/components/TransactionCard.test.tsx
 new file mode 100644
-index 0000000..9d564a0
+index 0000000..f289ee1
 --- /dev/null
-+++ b/src/pages/MigrationStatusScreen.tsx
-@@ -0,0 +1,292 @@
-+import React, { useState, useEffect } from 'react';
-+import { ArrowLeft, Loader2, CheckCircle, XCircle, AlertTriangle, Database, Wallet, PiggyBank, Receipt, ChevronRight } from 'lucide-react';
-+import { motion } from 'framer-motion';
++++ b/src/components/TransactionCard.test.tsx
+@@ -0,0 +1,127 @@
++import { describe, it, expect } from 'vitest';
++import { render, screen } from '@testing-library/react';
++import TransactionCard from './TransactionCard';
++import type { Transaction } from '../utils/transactionStorage';
++import { CurrencyProvider } from '../context/CurrencyContext';
 +
-+type StatusState = 'uploading' | 'validating' | 'preview' | 'error' | 'importing' | 'success';
-+
-+interface MigrationStatusScreenProps {
-+    onBack: () => void;
-+    onDone: () => void;
-+}
-+
-+const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, onDone }) => {
-+    const [status, setStatus] = useState<StatusState>('uploading');
-+
-+    useEffect(() => {
-+        // Simulate initial flow
-+        if (status === 'uploading') {
-+            const timer = setTimeout(() => setStatus('validating'), 1500);
-+            return () => clearTimeout(timer);
-+        }
-+        if (status === 'validating') {
-+            const timer = setTimeout(() => setStatus('preview'), 2000);
-+            return () => clearTimeout(timer);
-+        }
-+    }, [status]);
-+
-+    const handleConfirm = () => {
-+        setStatus('importing');
-+        setTimeout(() => {
-+            setStatus('success');
-+        }, 2500);
-+    };
-+
-+    const handleSimulateError = () => {
-+        if (status === 'preview') {
-+            setStatus('error');
-+        } else {
-+            setStatus('uploading'); // Reset
-+        }
-+    };
-+
-+    const renderContent = () => {
-+        switch (status) {
-+            case 'uploading':
-+            case 'validating':
-+                return (
-+                    <div className="flex flex-col items-center justify-center py-12 space-y-6">
-+                        <div className="relative">
-+                            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse"></div>
-+                            <Loader2 size={64} className="text-blue-500 animate-spin relative z-10" />
-+                        </div>
-+                        <div className="text-center space-y-2">
-+                            <h3 className="text-xl font-bold text-white">
-+                                {status === 'uploading' ? 'Uploading files...' : 'Analyzing data...'}
-+                            </h3>
-+                            <p className="text-gray-400 text-sm max-w-xs mx-auto">
-+                                {status === 'uploading'
-+                                    ? 'Sending your backup securely to our server.'
-+                                    : 'Cross-referencing your .mmbak database with the report totals.'}
-+                            </p>
-+                        </div>
-+                    </div>
-+                );
-+
-+            case 'preview':
-+                return (
-+                    <motion.div
-+                        initial={{ opacity: 0, y: 20 }}
-+                        animate={{ opacity: 1, y: 0 }}
-+                        className="space-y-6"
-+                    >
-+                        <div className="flex flex-col items-center text-center space-y-2 mb-8">
-+                            <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
-+                                <CheckCircle size={32} className="text-green-500" />
-+                            </div>
-+                            <h3 className="text-2xl font-bold text-white">Validation Successful</h3>
-+                            <p className="text-gray-400 text-sm">Your data matches perfectly. Ready to import.</p>
-+                        </div>
-+
-+                        {/* Stats Cards */}
-+                        <div className="grid grid-cols-2 gap-4">
-+                            <div className="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-+                                <div className="flex items-center gap-2 mb-2 text-gray-500">
-+                                    <Wallet size={16} />
-+                                    <span className="text-xs font-semibold uppercase">Wallets</span>
-+                                </div>
-+                                <p className="text-2xl font-bold text-white">5</p>
-+                            </div>
-+                            <div className="bg-gray-900 border border-gray-800 p-4 rounded-2xl">
-+                                <div className="flex items-center gap-2 mb-2 text-gray-500">
-+                                    <PiggyBank size={16} />
-+                                    <span className="text-xs font-semibold uppercase">Jars (Categories)</span>
-+                                </div>
-+                                <p className="text-2xl font-bold text-white">12</p>
-+                            </div>
-+                            <div className="col-span-2 bg-gray-900 border border-gray-800 p-4 rounded-2xl flex items-center justify-between">
-+                                <div>
-+                                    <div className="flex items-center gap-2 mb-1 text-gray-500">
-+                                        <Receipt size={16} />
-+                                        <span className="text-xs font-semibold uppercase">Transactions</span>
-+                                    </div>
-+                                    <p className="text-2xl font-bold text-white">2,453</p>
-+                                </div>
-+                                <ChevronRight className="text-gray-700" />
-+                            </div>
-+                        </div>
-+
-+                        {/* Totals Summary */}
-+                        <div className="bg-blue-900/10 border border-blue-500/20 p-5 rounded-2xl space-y-3">
-+                            <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-1">Total Verified</h4>
-+                            <div className="flex justify-between items-end border-b border-blue-500/10 pb-3">
-+                                <span className="text-gray-400 text-sm">Income</span>
-+                                <span className="text-green-400 font-mono font-medium">+ $45,230.00</span>
-+                            </div>
-+                            <div className="flex justify-between items-end">
-+                                <span className="text-gray-400 text-sm">Expenses</span>
-+                                <span className="text-red-400 font-mono font-medium">- $12,450.50</span>
-+                            </div>
-+                        </div>
-+                    </motion.div>
-+                );
-+
-+            case 'error':
-+                return (
-+                    <motion.div
-+                        initial={{ opacity: 0, scale: 0.95 }}
-+                        animate={{ opacity: 1, scale: 1 }}
-+                        className="space-y-6 pt-8"
-+                    >
-+                        <div className="flex flex-col items-center text-center space-y-2">
-+                            <div className="h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
-+                                <XCircle size={40} className="text-red-500" />
-+                            </div>
-+                            <h3 className="text-2xl font-bold text-white">Validation Failed</h3>
-+                            <p className="text-red-200/80 text-sm max-w-xs">
-+                                Totals in database do not match the Excel report.
-+                            </p>
-+                        </div>
-+
-+                        <div className="bg-red-950/30 border border-red-900/50 p-6 rounded-2xl space-y-4">
-+                            <div className="flex items-center gap-3 text-red-400 mb-2">
-+                                <AlertTriangle size={20} />
-+                                <span className="font-semibold">Discrepancy Detected</span>
-+                            </div>
-+
-+                            <div className="space-y-3 text-sm">
-+                                <div className="flex justify-between">
-+                                    <span className="text-gray-400">Database Income:</span>
-+                                    <span className="text-white font-mono">$45,230.00</span>
-+                                </div>
-+                                <div className="flex justify-between">
-+                                    <span className="text-gray-400">Report Income:</span>
-+                                    <span className="text-white font-mono">$45,500.00</span>
-+                                </div>
-+                                <div className="h-px bg-red-800/50 my-2"></div>
-+                                <div className="flex justify-between text-red-400 font-bold">
-+                                    <span>Difference:</span>
-+                                    <span className="font-mono">-$270.00</span>
-+                                </div>
-+                            </div>
-+                        </div>
-+
-+                        <p className="text-xs text-center text-gray-500">
-+                            Please check if you uploaded the correct files from the same export session.
-+                        </p>
-+                    </motion.div>
-+                );
-+
-+            case 'importing':
-+                return (
-+                    <div className="flex flex-col items-center justify-center py-12 space-y-8">
-+                        <div className="w-full bg-gray-900 h-2 rounded-full overflow-hidden max-w-xs">
-+                            <motion.div
-+                                initial={{ width: 0 }}
-+                                animate={{ width: "100%" }}
-+                                transition={{ duration: 2.5, ease: "easeInOut" }}
-+                                className="h-full bg-blue-500"
-+                            />
-+                        </div>
-+                        <div className="text-center">
-+                            <h3 className="text-lg font-bold text-white mb-1">Importing Data...</h3>
-+                            <p className="text-gray-500 text-xs">Writing 2,453 transactions to database.</p>
-+                        </div>
-+                    </div>
-+                );
-+
-+            case 'success':
-+                return (
-+                    <motion.div
-+                        initial={{ opacity: 0, scale: 0.9 }}
-+                        animate={{ opacity: 1, scale: 1 }}
-+                        className="flex flex-col items-center justify-center py-8 space-y-6"
-+                    >
-+                        <div className="relative">
-+                            <div className="absolute inset-0 bg-green-500/20 blur-[60px] rounded-full"></div>
-+                            <div className="h-24 w-24 rounded-full bg-gradient-to-tr from-green-500 to-emerald-400 flex items-center justify-center shadow-lg relative z-10">
-+                                <CheckCircle size={48} className="text-white" />
-+                            </div>
-+                        </div>
-+
-+                        <div className="text-center space-y-2">
-+                            <h3 className="text-3xl font-bold text-white">All Done!</h3>
-+                            <p className="text-gray-400 max-w-xs mx-auto">
-+                                Your history has been successfully migrated to JarWise.
-+                            </p>
-+                        </div>
-+
-+                        <div className="p-4 bg-gray-900 rounded-xl border border-gray-800 w-full">
-+                            <div className="flex items-center gap-3">
-+                                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
-+                                    <Database size={20} />
-+                                </div>
-+                                <div className="text-left">
-+                                    <p className="text-xs text-gray-500">Data Updated</p>
-+                                    <p className="text-sm font-semibold text-white">Just now</p>
-+                                </div>
-+                            </div>
-+                        </div>
-+                    </motion.div>
-+                );
-+        }
-+    };
-+
-+    return (
-+        <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-+            {/* Header */}
-+            <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800 p-4">
-+                <div className="flex items-center gap-4 max-w-lg mx-auto">
-+                    {status !== 'success' && status !== 'importing' && (
-+                        <button
-+                            onClick={onBack}
-+                            className="p-2 -ml-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
-+                            disabled={status === 'uploading' || status === 'validating'}
-+                        >
-+                            <ArrowLeft size={24} />
-+                        </button>
-+                    )}
-+                    <h1 className="text-lg font-semibold text-white">
-+                        {status === 'success' ? 'Import Complete' : 'Migration Status'}
-+                    </h1>
-+                </div>
-+            </header>
-+
-+            <main className="flex-1 p-6 max-w-lg mx-auto w-full flex flex-col justify-center min-h-[60vh]">
-+                {renderContent()}
-+            </main>
-+
-+            {/* Footer Actions */}
-+            <footer className="p-6 border-t border-gray-800 bg-gray-950/80 backdrop-blur-xl">
-+                <div className="max-w-lg mx-auto space-y-4">
-+                    {status === 'preview' && (
-+                        <button
-+                            onClick={handleConfirm}
-+                            className="w-full py-4 rounded-xl font-bold text-base bg-blue-600 text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 active:scale-[0.98] transition-all"
-+                        >
-+                            Confirm Import
-+                        </button>
-+                    )}
-+
-+                    {status === 'error' && (
-+                        <button
-+                            onClick={onBack}
-+                            className="w-full py-4 rounded-xl font-bold text-base bg-gray-800 text-white hover:bg-gray-700 active:scale-[0.98] transition-all"
-+                        >
-+                            Try Again
-+                        </button>
-+                    )}
-+
-+                    {status === 'success' && (
-+                        <button
-+                            onClick={onDone}
-+                            className="w-full py-4 rounded-xl font-bold text-base bg-gray-100 text-gray-900 hover:bg-white active:scale-[0.98] transition-all"
-+                        >
-+                            Go to Dashboard
-+                        </button>
-+                    )}
-+
-+                    {(status === 'preview' || status === 'error') && (
-+                        <button
-+                            onClick={handleSimulateError}
-+                            className="w-full text-center text-xs text-gray-600 hover:text-gray-400 py-2"
-+                        >
-+                            {status === 'error' ? 'Reset Mock State' : '[Debug] Simulate Validation Error'}
-+                        </button>
-+                    )}
-+                </div>
-+            </footer>
-+        </div>
++// Wrapper to provide CurrencyContext
++const renderWithProviders = (ui: React.ReactElement) => {
++    return render(
++        <CurrencyProvider>
++            {ui}
++        </CurrencyProvider>
 +    );
 +};
 +
-+export default MigrationStatusScreen;
-diff --git a/src/pages/MigrationUploadScreen.tsx b/src/pages/MigrationUploadScreen.tsx
-new file mode 100644
-index 0000000..60beb68
---- /dev/null
-+++ b/src/pages/MigrationUploadScreen.tsx
-@@ -0,0 +1,171 @@
-+import React, { useState, useRef } from 'react';
-+import { ArrowLeft, Upload, FileType, CheckCircle, AlertCircle } from 'lucide-react';
++describe('TransactionCard', () => {
++    const baseTransaction: Transaction = {
++        id: 'tx-1',
++        amount: 1000,
++        jarId: 'necessities',
++        walletId: 'wallet-1',
++        note: 'Grocery shopping',
++        date: '2026-02-04T10:00:00Z',
++        type: 'expense',
++    };
 +
-+interface MigrationUploadScreenProps {
-+    onBack: () => void;
-+    onNavigate: (page: 'migration-status') => void;
++    const linkedTransaction: Transaction = {
++        id: 'tx-2',
++        amount: 1000,
++        jarId: 'transfer',
++        walletId: 'wallet-2',
++        note: 'Transfer from Cash',
++        date: '2026-02-04T10:00:00Z',
++        type: 'income',
++        relatedTransactionId: 'tx-1',
++    };
++
++    const transferTransaction: Transaction = {
++        ...baseTransaction,
++        id: 'tx-3',
++        jarId: 'transfer',
++        note: 'Transfer to Bank',
++        relatedTransactionId: 'tx-2',
++    };
++
++    describe('Normal Transaction Rendering', () => {
++        it('renders note as title for normal expense', () => {
++            renderWithProviders(<TransactionCard transaction={baseTransaction} />);
++            expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
++        });
++
++        it('renders amount with minus sign for expense', () => {
++            renderWithProviders(<TransactionCard transaction={baseTransaction} />);
++            // Amount should contain the formatted value with minus
++            expect(screen.getByText(/-.*1,000/)).toBeInTheDocument();
++        });
++
++        it('renders amount with plus sign for income', () => {
++            const incomeTransaction: Transaction = {
++                ...baseTransaction,
++                type: 'income',
++                note: 'Salary',
++            };
++            renderWithProviders(<TransactionCard transaction={incomeTransaction} />);
++            expect(screen.getByText(/\+.*1,000/)).toBeInTheDocument();
++        });
++    });
++
++    describe('Transfer Rendering (isTransfer=true)', () => {
++        it('renders "From → To" title when linkedTransaction is provided', () => {
++            renderWithProviders(
++                <TransactionCard
++                    transaction={transferTransaction}
++                    isTransfer={true}
++                    linkedTransaction={linkedTransaction}
++                />
++            );
++            // Should show wallet names: Cash → Bank Account
++            expect(screen.getByText(/Cash.*→.*Bank Account/)).toBeInTheDocument();
++        });
++
++        it('renders "Transfer from [Wallet]" when no linkedTransaction', () => {
++            renderWithProviders(
++                <TransactionCard
++                    transaction={transferTransaction}
++                    isTransfer={true}
++                />
++            );
++            expect(screen.getByText(/Transfer from Cash/)).toBeInTheDocument();
++        });
++
++        it('renders "Transfer" subtitle', () => {
++            renderWithProviders(
++                <TransactionCard
++                    transaction={transferTransaction}
++                    isTransfer={true}
++                    linkedTransaction={linkedTransaction}
++                />
++            );
++            expect(screen.getByText('Transfer')).toBeInTheDocument();
++        });
++
++        it('renders amount without +/- prefix for transfers', () => {
++            renderWithProviders(
++                <TransactionCard
++                    transaction={transferTransaction}
++                    isTransfer={true}
++                    linkedTransaction={linkedTransaction}
++                />
++            );
++            // Should NOT have + or - prefix
++            const amountElement = screen.getByText(/1,000/);
++            expect(amountElement.textContent).not.toMatch(/^[+-]/);
++        });
++    });
++
++    describe('Draft Transaction Rendering', () => {
++        it('renders draft badge for draft transactions', () => {
++            const draftTransaction: Transaction = {
++                ...baseTransaction,
++                status: 'draft',
++            };
++            renderWithProviders(<TransactionCard transaction={draftTransaction} />);
++            expect(screen.getByText('Draft')).toBeInTheDocument();
++        });
++    });
++});
+diff --git a/src/components/TransactionCard.tsx b/src/components/TransactionCard.tsx
+index bec9c9a..27a0d45 100644
+--- a/src/components/TransactionCard.tsx
++++ b/src/components/TransactionCard.tsx
+@@ -1,14 +1,17 @@
+ import type { Transaction } from '../utils/transactionStorage';
+-import { ArrowRight } from 'lucide-react';
+-import { getJarDetails } from '../utils/constants';
++import { ArrowRight, ArrowRightLeft } from 'lucide-react';
++import { getJarDetails, getWalletDetails } from '../utils/constants';
+ import { useCurrency } from '../context/CurrencyContext';
+ 
+ interface TransactionCardProps {
+     transaction: Transaction;
+     showDate?: boolean;
++    onClick?: () => void;
++    isTransfer?: boolean;
++    linkedTransaction?: Transaction; // The counterpart transaction for transfers
+ }
+ 
+-export default function TransactionCard({ transaction, showDate = true }: TransactionCardProps) {
++export default function TransactionCard({ transaction, showDate = true, onClick, isTransfer = false, linkedTransaction }: TransactionCardProps) {
+     const { formatAmount } = useCurrency();
+     const jar = getJarDetails(transaction.jarId);
+ 
+@@ -32,16 +35,27 @@ export default function TransactionCard({ transaction, showDate = true }: Transa
+     // Display Logic: 
+     // Title: Note (primary) -> Jar Name (fallback)
+     // Subtitle: Jar Name (if Note exists) -> Date
+-    // const jar = getJarDetails(transaction.jarId); // Keep jar details for potential future use or if title/subtitle logic changes
+-    const title = transaction.note || jar.name;
+-    const subtitle = transaction.note ? jar.name : '';
++    let title = transaction.note || jar.name;
++    let subtitle = transaction.note ? jar.name : '';
++
++    if (isTransfer) {
++        const fromWallet = transaction.walletId ? getWalletDetails(transaction.walletId) : null;
++        const toWallet = linkedTransaction?.walletId ? getWalletDetails(linkedTransaction.walletId) : null;
++        if (fromWallet && toWallet) {
++            title = `${fromWallet.name} → ${toWallet.name}`;
++        } else if (fromWallet) {
++            title = `Transfer from ${fromWallet.name}`;
++        } else {
++            title = 'Transfer';
++        }
++        subtitle = 'Transfer';
++    }
+ 
+     return (
+-        <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
++        <div onClick={onClick} className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
+             <div className="flex items-center gap-4">
+-                <div className={`p-3 rounded-xl text-xl bg-gray-800/50 flex items-center justify-center`}>
+-                    {/* Assuming Icon is imported or jar.icon is used */}
+-                    {jar.icon}
++                <div className={`p-3 rounded-xl text-xl ${isTransfer ? 'bg-blue-900/30 text-blue-400' : 'bg-gray-800/50'} flex items-center justify-center`}>
++                    {isTransfer ? <ArrowRightLeft size={20} /> : jar.icon}
+                 </div>
+                 <div>
+                     <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors flex items-center gap-2">
+@@ -61,8 +75,8 @@ export default function TransactionCard({ transaction, showDate = true }: Transa
+             </div>
+ 
+             <div className="flex items-center gap-3">
+-                <span className={`font-semibold ${transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400'}`}>
+-                    {transaction.type === 'expense' ? '-' : '+'}{formatAmount(transaction.amount)}
++                <span className={`font-semibold ${isTransfer ? 'text-blue-400' : (transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400')}`}>
++                    {formatAmount(transaction.amount)}
+                 </span>
+                 <ArrowRight size={16} className="text-gray-600 group-hover:text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
+             </div>
+diff --git a/src/components/TransferForm.tsx b/src/components/TransferForm.tsx
+new file mode 100644
+index 0000000..65ac209
+--- /dev/null
++++ b/src/components/TransferForm.tsx
+@@ -0,0 +1,205 @@
++import { useState } from 'react';
++import { motion, AnimatePresence } from 'framer-motion';
++import { Save, Wallet, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
++import { WALLETS } from '../utils/constants';
++
++interface TransferFormProps {
++    onSave: (data: { amount: number; fromWalletId: string; toWalletId: string; date: string; note: string }) => Promise<void>;
 +}
 +
-+const MigrationUploadScreen: React.FC<MigrationUploadScreenProps> = ({ onBack, onNavigate }) => {
-+    const [mmbakFile, setMmbakFile] = useState<File | null>(null);
-+    const [xlsFile, setXlsFile] = useState<File | null>(null);
++export default function TransferForm({ onSave }: TransferFormProps) {
++    const [amount, setAmount] = useState('');
++    const [fromWalletId, setFromWalletId] = useState<string | null>(null);
++    const [toWalletId, setToWalletId] = useState<string | null>(null);
++    const [note, setNote] = useState('');
++    const [date, setDate] = useState(() => {
++        const now = new Date();
++        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
++        return now.toISOString().slice(0, 16);
++    });
 +
-+    const mmbakInputRef = useRef<HTMLInputElement>(null);
-+    const xlsInputRef = useRef<HTMLInputElement>(null);
++    const [touched, setTouched] = useState({ amount: false, fromWallet: false, toWallet: false });
++    const [isSubmitting, setIsSubmitting] = useState(false);
 +
-+    const handleMmbakChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-+        if (e.target.files && e.target.files[0]) {
-+            setMmbakFile(e.target.files[0]);
-+        }
++    const validate = () => {
++        const errors: { amount?: string; fromWallet?: string; toWallet?: string } = {};
++
++        if (!amount || parseFloat(amount) <= 0) errors.amount = 'Please enter a valid amount';
++        if (!fromWalletId) errors.fromWallet = 'Select source wallet';
++        if (!toWalletId) errors.toWallet = 'Select destination wallet';
++        if (fromWalletId && toWalletId && fromWalletId === toWalletId) errors.toWallet = 'Cannot transfer to same wallet';
++
++        return errors;
 +    };
 +
-+    const handleXlsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-+        if (e.target.files && e.target.files[0]) {
-+            setXlsFile(e.target.files[0]);
-+        }
-+    };
++    const errors = validate();
++    const isFormValid = Object.keys(errors).length === 0;
 +
-+    const isReady = mmbakFile && xlsFile;
++    const handleSave = async () => {
++        setTouched({ amount: true, fromWallet: true, toWallet: true });
++
++        if (!isFormValid) return;
++
++        setIsSubmitting(true);
++        await onSave({
++            amount: parseFloat(amount),
++            fromWalletId: fromWalletId!,
++            toWalletId: toWalletId!,
++            date,
++            note
++        });
++        setIsSubmitting(false);
++    };
 +
 +    return (
-+        <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-+            {/* Header */}
-+            <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-gray-800 p-4">
-+                <div className="flex items-center gap-4 max-w-lg mx-auto">
-+                    <button
-+                        onClick={onBack}
-+                        className="p-2 -ml-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
-+                    >
-+                        <ArrowLeft size={24} />
-+                    </button>
-+            
++        <div className="space-y-8">
++            {/* Amount Input */}
++            <section className="space-y-2">
++                <label className="text-sm font-medium text-gray-400">Amount to Transfer</label>
++                <div className="relative">
++                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-500">฿</span>
++                    <input
++                        type="number"
++                        value={amount}
++                        onChange={(e) => setAmount(e.target.value)}
++                        onBlur={() => setTouched(prev => ({ ...prev, amount: true }))}
++                        placeholder="0.00"
++                        className={`w-full bg-gray-800/50 border rounded-2xl py-6 pl-10 pr-4 text-3xl font-bold text-white placeholder-gray-600 focus:outline-none focus:ring-2 transition-all font-mono ${touched.amount && errors.amount
++                            ? 'border-red-500 focus:ring-red-500/50'
++                            : 'border-gray-700 focus:ring-blue-500/50'
++                            }`}
++                    />
++                </div>
++                <AnimatePresence>
++                    {touched.amount && errors.amount && (
++                        <motion.div
++                            initial={{ opacity: 0, y: -10 }}
++                            animate={{ opacity: 1, y: 0 }}
++                            exit={{ opacity: 0, y: -10 }}
++                            className="flex items-center gap-2 text-red-400 text-sm"
++                        >
++                            <AlertCircle className="w-4 h-4" />
++                            {errors.amount}
++                        </motion.div>
++                    )}
++                </AnimatePresence>
++            </section>
++
++            {/* Date & Time Picker */}
++            <section className="space-y-2">
++                <label className="text-sm font-medium text-gray-400">Date & Time</label>
++                <input
++                    type="datetime-local"
++                    value={date}
++                    onChange={(e) => setDate(e.target.value)}
++                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
++                    style={{ colorScheme: 'dark' }}
++                />
++            </section>
++
++            {/* From Wallet */}
++            <section className="space-y-3">
++                <label className="text-sm font-medium text-gray-400">From (Source)</label>
++                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
++                    {WALLETS.map((wallet) => (
++                        <motion.button
++                            key={wallet.id}
++                            whileTap={{ scale: 0.95 }}
++                            onClick={() => setFromWalletId(wallet.id)}
++                            className={`flex-shrink-0 relative w-32 h-24 rounded-2xl p-3 border transition-all flex flex-col justify-between overflow-hidden ${fromWalletId === wallet.id
++                                ? 'bg-gray-800 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
++                                : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
++                                }`}
++                        >
++                            <div className="z-10 text-3xl">{wallet.icon}</div>
++                            <div clas
 ... (Diff truncated for size) ...
 
 PR TEMPLATE:
