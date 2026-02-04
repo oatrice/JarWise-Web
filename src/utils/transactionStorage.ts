@@ -49,20 +49,11 @@ export function getTransactions(): Transaction[] {
 export function saveTransaction(tx: Transaction): void {
     const existing = getTransactions();
 
-    // Check if updating an existing transaction
-    const index = existing.findIndex(t => t.id === tx.id);
+    // Filter out the old version of the transaction, if it exists.
+    const filtered = existing.filter(t => t.id !== tx.id);
 
-    let updated;
-    if (index >= 0) {
-        // Update existing
-        updated = [...existing];
-        updated[index] = tx;
-        updated.splice(index, 1);
-        updated = [tx, ...updated];
-    } else {
-        // Add new transaction at beginning (newest first)
-        updated = [tx, ...existing];
-    }
+    // Add the new or updated transaction to the beginning.
+    const updated = [tx, ...filtered];
 
     // Limit to max transactions
     const limited = updated.slice(0, MAX_TRANSACTIONS);
@@ -75,13 +66,13 @@ export function saveTransaction(tx: Transaction): void {
  */
 export function saveTransfer(fromTx: Transaction, toTx: Transaction): void {
     const existing = getTransactions();
-    
+
     // Add both transactions at the beginning
     const updated = [fromTx, toTx, ...existing];
-    
+
     // Limit to max transactions
     const limited = updated.slice(0, MAX_TRANSACTIONS);
-    
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
 }
 
