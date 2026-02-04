@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.10.0] - 2026-02-04
+### Added
+- **Data Migration**: Implemented a new data migration feature to allow users to easily import their existing financial data. This includes a dedicated upload screen for data files and a status page to monitor the import progress.
+
 ## [0.9.0] - 2026-02-02
 ### Added
 - **Authentication**: Introduced a complete user authentication system, including a new login screen and user session management to secure financial data.
