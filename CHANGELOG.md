@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.11.0] - 2026-02-04
+### Added
+- **Transfers**: Introduced the ability to create transfer transactions, allowing users to easily move funds between their wallets.
+- **Transaction Details**: Implemented a new Transaction Detail view to display comprehensive information for each transaction.
+- **Data Migration**: Added a feature to allow users to import their existing financial data into the application.
+- **UI**: Added dedicated navigation links for Wallet and Profile sections for improved accessibility.
+
+### Fixed
+- **UI**: Removed the redundant transaction type prefix from the amount display in transaction lists for a cleaner interface.
+- **Data**: Standardized the handling of transaction amounts to ensure data consistency and calculation accuracy.
+
 ## [0.10.0] - 2026-02-04
 ### Added
 - **Data Migration**: Implemented a new data migration feature to allow users to easily import their existing financial data. This includes a dedicated upload screen for data files and a status page to monitor the import progress.
