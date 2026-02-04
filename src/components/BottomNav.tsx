@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { LayoutGrid, History, Plus, Wallet, User } from 'lucide-react';
 
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'wallets' | 'profile';
 
 interface BottomNavProps {
     activePage: Page;
@@ -36,10 +36,16 @@ export default function BottomNav({ activePage, onNavigate, visible = true }: Bo
                 >
                     <Plus size={28} />
                 </button>
-                <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
+                <button
+                    onClick={() => onNavigate('wallets')}
+                    className={`flex flex-col items-center gap-1 ${activePage === 'wallets' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'} transition-colors`}
+                >
                     <Wallet size={24} />
                 </button>
-                <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
+                <button
+                    onClick={() => onNavigate('profile')}
+                    className={`flex flex-col items-center gap-1 ${activePage === 'profile' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'} transition-colors`}
+                >
                     <User size={24} />
                 </button>
             </div>

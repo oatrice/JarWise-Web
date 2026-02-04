@@ -4,12 +4,13 @@ import TransactionHistory from './pages/TransactionHistory';
 import AddTransaction from './pages/AddTransaction';
 import LoginScreen from './pages/LoginScreen';
 import TransactionDetail from './pages/TransactionDetail';
+import ManageWallets from './pages/ManageWallets';
 import { saveTransaction, getTransactions, type Transaction } from './utils/transactionStorage';
 
 import MigrationUploadScreen from './pages/MigrationUploadScreen';
 import MigrationStatusScreen from './pages/MigrationStatusScreen';
 
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status' | 'transaction-detail';
+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status' | 'transaction-detail' | 'wallets' | 'profile';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('login');
@@ -77,6 +78,11 @@ function App() {
           allTransactions={transactions}
           onBack={() => navigateTo('history')}
           onNavigateLinked={(id) => handleTransactionClick(id)}
+        />
+      )}
+      {currentPage === 'wallets' && (
+        <ManageWallets
+          onClose={() => navigateTo('dashboard')}
         />
       )}
     </>
