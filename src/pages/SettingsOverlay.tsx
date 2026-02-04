@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ChevronRight, Coins, DollarSign, Wallet, CloudUpload, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Coins, DollarSign, Wallet, CloudUpload, LogOut, Database } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
 import type { CurrencyCode } from '../context/CurrencyContext';
 import SyncStatusIndicator from '../components/SyncStatusIndicator';
@@ -8,6 +8,7 @@ import type { SyncStatus } from '../hooks/useAuthMock';
 
 interface SettingsOverlayProps {
     onBack: () => void;
+    onNavigate: (page: any) => void;
     // Mock auth props
     isLoggedIn?: boolean;
     userName?: string;
@@ -22,6 +23,7 @@ import ManageWallets from './ManageWallets';
 
 const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
     onBack,
+    onNavigate,
     isLoggedIn = true,
     userName = 'Anna Smith',
     userAvatar = 'https://ui-avatars.com/api/?name=Anna+Smith&background=6366f1&color=fff&size=128',
@@ -169,7 +171,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                     <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
                         <button
                             onClick={() => setShowCurrencySelection(true)}
-                            className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                            className="w-full flex items-center justify-between p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors"
                         >
                             <div className="flex items-center gap-3 text-white">
                                 <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-500">
@@ -181,6 +183,20 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                                 <span>{currency}</span>
                                 <ChevronRight size={18} />
                             </div>
+                        </button>
+
+                        {/* Data Migration Option */}
+                        <button
+                            onClick={() => onNavigate('migration-upload')}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                                    <Database size={20} />
+                                </div>
+                                <span className="font-medium">Data Migration</span>
+                            </div>
+                            < ChevronRight size={18} className="text-gray-500" />
                         </button>
                     </div>
                 </section>

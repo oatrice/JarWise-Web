@@ -13,7 +13,7 @@ import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
 import { useAuthMock } from '../hooks/useAuthMock'; // Moved import to top
 
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login'; // Updated Page type
+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status'; // Updated Page type
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
 import { useScrollDirection } from '../hooks/useScrollDirection';
@@ -90,6 +90,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
         return (
             <SettingsOverlay
                 onBack={() => setShowSettings(false)}
+                onNavigate={onNavigate}
                 // Pass auth state and handlers
                 isLoggedIn={true} // Always "logged in" when on Dashboard
                 syncStatus={auth.syncStatus}

@@ -6,6 +6,7 @@
 
 
 
+
 This is the **Web Frontend** for the [JarWise Project](https://github.com/oatrice/JarWise-Root). It serves as the primary UI/UX playground and dashboard.
 
 ## 🎨 Design System & Tokens
@@ -29,6 +30,7 @@ This project uses a shared design token system managed in the **[JarWise-Root](h
 *   **Mock Functionality**: Import Slip UI and Settings Overlay for mobile demonstration.
 *   **Jar Management**: Add and manage budget jars, with support for hierarchical categories.
 *   **Wallet Management**: Add and manage wallets with support for hierarchical organization.
+*   **Data Migration**: Added screens for uploading and tracking data migration.
 
 ## 🛠 Tech Stack
 ![React](https://img.shields.io/badge/React-19.2.0-20232a?style=for-the-badge&logo=react&logoColor=%2361DAFB)
@@ -36,6 +38,7 @@ This project uses a shared design token system managed in the **[JarWise-Root](h
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.1.18-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-12.26.2-0055FF?style=for-the-badge&logo=framer&logoColor=white)
+
 
 
 
