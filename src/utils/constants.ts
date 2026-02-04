@@ -17,3 +17,7 @@ export const JARS = [
 export const getJarDetails = (id: string) => {
     return JARS.find(j => j.id === id) || JARS[0];
 };
+
+export const getWalletDetails = (id: string) => {
+    return WALLETS.find(w => w.id === id) || { id: 'unknown', name: 'Unknown Wallet', icon: '❓', color: 'bg-gray-500' };
+};

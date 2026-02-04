@@ -21,9 +21,10 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 interface DashboardProps {
     onNavigate: (page: Page) => void;
     transactions?: Transaction[];
+    onTransactionClick?: (id: string) => void;
 }
 
-export default function Dashboard({ onNavigate, transactions = [] }: DashboardProps) {
+export default function Dashboard({ onNavigate, transactions = [], onTransactionClick }: DashboardProps) {
     const { currency, setCurrency, formatAmount } = useCurrency();
     const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
@@ -230,7 +231,7 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 <div className="space-y-3">
                                     {drafts.map((t) => (
                                         <div key={t.id} onClick={() => setShowImportSlip(true)}>
-                                            <TransactionCard transaction={t} showDate={false} />
+                                            <TransactionCard transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} />
                                         </div>
                                     ))}
                                 </div>
@@ -253,9 +254,12 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                                 <span className="text-red-400">-{formatAmount(group.expense)}</span>
                                             </div>
                                         </div>
-                                        {group.transactions.map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} showDate={false} />
-                                        ))}
+                                        {group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                            return (
+                                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                            );
+                                        })}
                                     </div>
                                 ))
                             ) : (
@@ -443,9 +447,12 @@ export default function Dashboard({ onNavigate, transactions = [] }: DashboardPr
                                 </div>
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
                                     {transactions.length > 0 ? (
-                                        transactions.slice(0, 3).map((t) => (
-                                            <TransactionCard key={t.id} transaction={t} />
-                                        ))
+                                        transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).slice(0, 3).map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                            return (
+                                                <TransactionCard key={t.id} transaction={t} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                            );
+                                        })
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>
                                     )}

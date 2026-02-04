@@ -9,11 +9,12 @@ interface TransactionHistoryProps {
     onBack: () => void;
     onNavigate: (page: 'dashboard' | 'history' | 'scan' | 'add-transaction') => void;
     transactions: Transaction[];
+    onTransactionClick?: (id: string) => void;
 }
 
 import BottomNav from '../components/BottomNav';
 
-export default function TransactionHistory({ onBack, onNavigate, transactions }: TransactionHistoryProps) {
+export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
     const { formatAmount } = useCurrency();
     const isVisible = useScrollDirection(); // isVisible call moved here for consistency if needed, though already declared below. I will remove the duplicate declaration in the next step or assume this replacment covers the start of the function.
 
@@ -114,27 +115,42 @@ export default function TransactionHistory({ onBack, onNavigate, transactions }:
                 </motion.div>
 
                 {/* Transaction Groups */}
-                {groupedTransactions.map((group) => (
-                    <motion.section
-                        key={group.date}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
-                            <div className="flex items-center gap-3 text-xs font-medium">
-                                {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
-                                {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
+                {groupedTransactions.map((group) => {
+                    // Filter out the income side of transfers (we show the expense side as the "transfer" entry)
+                    const visibleTransactions = group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId));
+
+                    return (
+                        <motion.section
+                            key={group.date}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
+                                <div className="flex items-center gap-3 text-xs font-medium">
+                                    {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
+                                    {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
+                                </div>
                             </div>
-                        </div>
-                        <div className="space-y-3">
-                            {group.transactions.map((t) => (
-                                <TransactionCard key={t.id} transaction={t} showDate={false} />
-                            ))}
-                        </div>
-                    </motion.section>
-                ))}
+                            <div className="space-y-3">
+                                {visibleTransactions.map((t) => {
+                                    const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                    return (
+                                        <TransactionCard
+                                            key={t.id}
+                                            transaction={t}
+                                            showDate={false}
+                                            onClick={() => onTransactionClick?.(t.id)}
+                                            isTransfer={!!t.relatedTransactionId}
+                                            linkedTransaction={linkedTx}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </motion.section>
+                    );
+                })}
 
                 {/* Empty State */}
                 {transactions.length === 0 && (

@@ -28,6 +28,7 @@ export type Transaction = {
     isTaxDeductible: boolean;
     color: string;
     icon: LucideIcon;
+    type: 'income' | 'expense';
 }
 
 export const jars: Allocation[] = [
@@ -115,32 +116,35 @@ export const transactions: Transaction[] = [
     {
         id: '1',
         merchant: 'Spotify Premium',
-        amount: -12.99,
+        amount: 12.99,
         category: 'Play',
         date: 'Today, 10:43 AM',
         isTaxDeductible: false,
         color: 'text-green-400',
-        icon: Headphones
+        icon: Headphones,
+        type: 'expense'
     },
     {
         id: '2',
         merchant: 'Whole Foods Market',
-        amount: -142.5,
+        amount: 142.5,
         category: 'Necessities',
         date: 'Yesterday, 6:30 PM',
         isTaxDeductible: false,
         color: 'text-blue-400',
-        icon: ShoppingBag
+        icon: ShoppingBag,
+        type: 'expense'
     },
     {
         id: '3',
         merchant: 'Udemy Course',
-        amount: -24.99,
+        amount: 24.99,
         category: 'Education',
         date: 'Dec 28, 2025',
         isTaxDeductible: true,
         color: 'text-yellow-400',
-        icon: GraduationCap
+        icon: GraduationCap,
+        type: 'expense'
     }
 ];
 
