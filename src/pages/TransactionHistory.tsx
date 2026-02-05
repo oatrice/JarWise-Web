@@ -1,9 +1,12 @@
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
 import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useCurrency } from '../context/CurrencyContext';
+import ReportFiltersSheet from '../components/ReportFiltersSheet';
+import { JARS, WALLETS } from '../utils/constants';
 
 interface TransactionHistoryProps {
     onBack: () => void;
@@ -17,9 +20,23 @@ import BottomNav from '../components/BottomNav';
 export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
     const { formatAmount } = useCurrency();
     const isVisible = useScrollDirection(); // isVisible call moved here for consistency if needed, though already declared below. I will remove the duplicate declaration in the next step or assume this replacment covers the start of the function.
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [selectedJarIds, setSelectedJarIds] = useState<string[]>([]);
+    const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
+
+    const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
+
+    const filteredTransactions = useMemo(() => {
+        if (!hasActiveFilters) return transactions;
+        return transactions.filter((tx) => {
+            const jarMatch = selectedJarIds.length === 0 || selectedJarIds.includes(tx.jarId);
+            const walletMatch = selectedWalletIds.length === 0 || (tx.walletId && selectedWalletIds.includes(tx.walletId));
+            return jarMatch && walletMatch;
+        });
+    }, [hasActiveFilters, selectedJarIds, selectedWalletIds, transactions]);
 
     // Group transactions by date
-    const sortedTransactions = [...transactions]
+    const sortedTransactions = [...filteredTransactions]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     interface TransactionGroup {
@@ -49,7 +66,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
         }
     });
 
-    const totalSpent = transactions
+    const totalSpent = filteredTransactions
         .filter(t => t.type === 'expense')
         .reduce((acc, t) => acc + t.amount, 0);
 
@@ -76,8 +93,14 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                             <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
                                 <Search size={20} />
                             </button>
-                            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700">
+                            <button
+                                onClick={() => setFiltersOpen(true)}
+                                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 bg-gray-900 text-gray-400 hover:text-white transition-colors hover:border-gray-700"
+                            >
                                 <Filter size={20} />
+                                {hasActiveFilters && (
+                                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-400" />
+                                )}
                             </button>
                         </div>
                     </div>
@@ -109,7 +132,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 mb-1">Transactions</p>
-                            <p className="text-xl font-bold text-gray-100">{transactions.length}</p>
+                            <p className="text-xl font-bold text-gray-100">{filteredTransactions.length}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -153,18 +176,36 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                 })}
 
                 {/* Empty State */}
-                {transactions.length === 0 && (
+                {filteredTransactions.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <div className="h-16 w-16 rounded-full bg-gray-800 flex items-center justify-center mb-4">
                             <Search size={32} className="text-gray-600" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-300 mb-1">No transactions yet</h3>
-                        <p className="text-sm text-gray-500">Your transaction history will appear here</p>
+                        <h3 className="text-lg font-medium text-gray-300 mb-1">
+                            {hasActiveFilters ? 'No matches found' : 'No transactions yet'}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                            {hasActiveFilters ? 'Try adjusting your filters to see results.' : 'Your transaction history will appear here'}
+                        </p>
                     </div>
                 )}
             </main>
 
             <BottomNav activePage="history" onNavigate={onNavigate} visible={isVisible} />
+
+            <ReportFiltersSheet
+                open={filtersOpen}
+                onClose={() => setFiltersOpen(false)}
+                jarOptions={JARS.map((jar) => ({ id: jar.id, name: jar.name }))}
+                walletOptions={WALLETS.map((wallet) => ({ id: wallet.id, name: wallet.name }))}
+                selectedJarIds={selectedJarIds}
+                selectedWalletIds={selectedWalletIds}
+                onApply={(jarIds, walletIds) => {
+                    setSelectedJarIds(jarIds);
+                    setSelectedWalletIds(walletIds);
+                    setFiltersOpen(false);
+                }}
+            />
         </div>
     );
 }
