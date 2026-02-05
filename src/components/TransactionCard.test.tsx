@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import TransactionCard from './TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
@@ -43,26 +43,31 @@ describe('TransactionCard', () => {
         relatedTransactionId: 'tx-2',
     };
 
+    beforeEach(() => {
+        localStorage.setItem('settings.currency', 'USD');
+    });
+
     describe('Normal Transaction Rendering', () => {
         it('renders note as title for normal expense', () => {
             renderWithProviders(<TransactionCard transaction={baseTransaction} />);
             expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
         });
 
-        it('renders amount with minus sign for expense', () => {
+        it('renders amount without +/- prefix for expense', () => {
             renderWithProviders(<TransactionCard transaction={baseTransaction} />);
-            // Amount should contain the formatted value with minus
-            expect(screen.getByText(/-.*1,000/)).toBeInTheDocument();
+            const amountElement = screen.getByText(/1,000/);
+            expect(amountElement.textContent).not.toMatch(/[+-]/);
         });
 
-        it('renders amount with plus sign for income', () => {
+        it('renders amount without +/- prefix for income', () => {
             const incomeTransaction: Transaction = {
                 ...baseTransaction,
                 type: 'income',
                 note: 'Salary',
             };
             renderWithProviders(<TransactionCard transaction={incomeTransaction} />);
-            expect(screen.getByText(/\+.*1,000/)).toBeInTheDocument();
+            const amountElement = screen.getByText(/1,000/);
+            expect(amountElement.textContent).not.toMatch(/[+-]/);
         });
     });
 

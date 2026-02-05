@@ -15,6 +15,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '',
                 jarId: 'necessities',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -26,6 +27,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '0',
                 jarId: 'necessities',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -37,6 +39,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '-100',
                 jarId: 'necessities',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -48,6 +51,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: 'abc',
                 jarId: 'necessities',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -59,6 +63,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '100',
                 jarId: 'necessities',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -70,6 +75,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '99.99',
                 jarId: 'necessities',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -83,6 +89,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '100',
                 jarId: null,
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -94,6 +101,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '100',
                 jarId: '',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -105,6 +113,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '100',
                 jarId: 'education',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -118,6 +127,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '100',
                 jarId: 'savings',
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -128,6 +138,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '100',
                 jarId: 'savings',
+                walletId: 'wallet-1',
                 note: 'Lunch expense',
             });
 
@@ -140,6 +151,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '',
                 jarId: null,
+                walletId: 'wallet-1',
                 note: '',
             });
 
@@ -152,6 +164,7 @@ describe('Transaction Validation', () => {
             const result = validateTransaction({
                 amount: '500.50',
                 jarId: 'play',
+                walletId: 'wallet-1',
                 note: 'Movie night',
             });
 
