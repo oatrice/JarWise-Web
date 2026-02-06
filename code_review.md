@@ -1,72 +1,76 @@
 # Luma Code Review Report
 
-**Date:** 2026-02-04 19:11:33
-**Files Reviewed:** ['draft_pr_prompt.md', 'src/pages/TransactionHistory.tsx', 'draft_pr_body.md', 'src/components/TransferForm.tsx', 'src/components/BottomNav.tsx', 'src/components/TransactionCard.test.tsx', 'src/pages/AddTransaction.tsx', 'src/pages/TransactionDetail.tsx', 'src/App.tsx', 'src/utils/transactionStorage.ts', 'src/utils/transferUtils.test.ts', '.luma_state.json', 'src/components/TransactionCard.tsx', 'src/pages/Dashboard.tsx', 'src/utils/constants.ts']
+**Date:** 2026-02-05 19:58:44
+**Files Reviewed:** ['src/components/ReportFiltersSheet.tsx', 'src/setupTests.ts', 'src/__tests__/TransactionCard.test.tsx', 'src/components/MultiSelectDropdown.tsx', 'src/__tests__/transactionValidation.test.ts', 'src/__tests__/mockDataIntegration.test.ts', 'src/components/TransactionCard.test.tsx', 'src/pages/TransactionHistory.tsx']
 
 ## 📝 Reviewer Feedback
 
-There are a couple of issues in the code that need to be addressed.
+In `src/pages/TransactionHistory.tsx`, there is a performance issue within the render loop.
 
-### 1. Critical: Inconsistent Data Handling for Transaction Amounts
+**Problem:**
+Inside the `groupedTransactions.map`, you are using `transactions.find(...)` to locate the linked transaction for every transfer:
 
-In `src/pages/AddTransaction.tsx`, your comments correctly identify a major inconsistency:
-
-> // heavily implies amount is positive in storage.
-> // BUT generatedMockData has negative.
-> // Wait, if Mock has negative, and Card adds '-', it would be --12.99 = +12.99.
-
-This is a critical issue. Storing transaction amounts with mixed conventions (some positive, some negative) will lead to bugs in calculations and display logic. For example, if `transaction.amount` is `-50` and the display code is `'-' + formatAmount(transaction.amount)`, you could render `"--50"`.
-
-**Recommendation:**
-
-Establish a single convention for the entire application. The standard practice is to **always store `amount` as a positive number (absolute value)** and use the `type` field (`'income'` or `'expense'`) to determine how it's treated and displayed.
-
-**Required Fix:**
-1.  Ensure all new transactions, including transfers in `handleTransferSave`, are saved with a positive amount. Your current implementation already does this, which is good.
-2.  Update all existing mock data (`generatedMockData.ts`, etc.) and tests to use positive amounts for all transactions to maintain consistency and prevent future bugs.
-
-### 2. Code Quality: Convoluted Logic in `saveTransaction`
-
-In `src/utils/transactionStorage.ts`, the logic for updating an existing transaction in `saveTransaction` is unnecessarily complex and inefficient.
-
-**Current Code:**
 ```typescript
-if (index >= 0) {
-    // Update existing
-    updated = [...existing];
-    updated[index] = tx;        // <-- This line is redundant
-    updated.splice(index, 1);   // <-- This removes the item you just updated
-    updated = [tx, ...updated]; // <-- This adds it back to the front
-}
+{visibleTransactions.map((t) => {
+    const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+    // ...
+})}
 ```
-The line `updated[index] = tx;` has no effect because that element is immediately removed by `splice`.
 
-**Recommendation:**
+This is inefficient. The `.find()` method has to iterate over the entire `transactions` array for each transaction that has a `relatedTransactionId`. If you have a large number of transactions, this will lead to significant performance degradation and slow render times, as the complexity is O(N*M) where N is the total number of transactions and M is the number of transfers being rendered.
 
-Refactor this logic to be more direct and readable. The goal is to replace an existing item and move it to the front of the list. A `filter` approach handles both adding a new transaction and updating an existing one cleanly.
+**Fix:**
+To optimize this, you should create a lookup map of transactions by their ID once, using `useMemo`. This allows for a near-instant O(1) lookup.
 
-**Suggested Fix:**
+Add the following `useMemo` hook near the top of your component:
+
 ```typescript
-export function saveTransaction(tx: Transaction): void {
-    const existing = getTransactions();
-
-    // Filter out the old version of the transaction, if it exists.
-    const filtered = existing.filter(t => t.id !== tx.id);
-
-    // Add the new or updated transaction to the beginning.
-    const updated = [tx, ...filtered];
-
-    // Limit to max transactions
-    const limited = updated.slice(0, MAX_TRANSACTIONS);
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
-}
+const transactionsById = useMemo(() => {
+    return new Map(transactions.map(tx => [tx.id, tx]));
+}, [transactions]);
 ```
-This revised function is cleaner, less error-prone, and correctly handles both creating and updating transactions with a single, declarative data flow.
+
+Then, update the mapping logic to use this map for efficient lookups:
+
+```typescript
+{visibleTransactions.map((t) => {
+    const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
+    return (
+        <TransactionCard
+            key={t.id}
+            transaction={t}
+            showDate={false}
+            onClick={() => onTransactionClick?.(t.id)}
+            isTransfer={!!t.relatedTransactionId}
+            linkedTransaction={linkedTx}
+        />
+    );
+})}
+```
+
+This change will significantly improve the rendering performance of the transaction history page.
 
 ## 🧪 Test Suggestions
 
-*   **Corrupted or Malformed File:** Test uploading a `.mmbak` file that is corrupted, has an unexpected internal schema, or is not a valid database file. The application should handle this gracefully by displaying a user-friendly error message on the `MigrationStatusScreen` and should not crash or import any partial data.
-*   **Duplicate Data Migration:** Run the migration process with a valid `.mmbak` file. After it completes successfully, attempt to run the migration again with the exact same file. The system must prevent the creation of duplicate transactions, accounts, or categories, ensuring the process is idempotent.
-*   **Empty or Minimal Data File:** Test uploading a valid `.mmbak` file that contains no transaction records (e.g., from a brand new Money Manager account). The migration should complete successfully without errors, report that zero items were imported, and not alter any existing data in the application.
+*   **Closing the sheet without applying should discard draft changes.**
+    *   **Steps:**
+        1.  Open the filter sheet with some initial filters selected (e.g., `selectedJarIds = ['jar1']`).
+        2.  Change the selection in the sheet (e.g., deselect 'jar1' and select 'jar2', so `draftJarIds` becomes `['jar2']`).
+        3.  Click the close button or the backdrop overlay instead of "Apply".
+    *   **Expected Result:** The `onApply` function is not called. If the sheet is reopened, it should still display the original selection ('jar1'), not the discarded draft ('jar2').
+
+*   **Clearing all filters and then applying.**
+    *   **Steps:**
+        1.  Open the filter sheet with some initial filters selected (e.g., `selectedJarIds = ['jar1']`, `selectedWalletIds = ['wallet1']`).
+        2.  Click the "Clear" button.
+        3.  Click the "Apply" button.
+    *   **Expected Result:** The `onApply` callback is triggered with two empty arrays: `onApply([], [])`.
+
+*   **Reopening the sheet after applying new filters.**
+    *   **Steps:**
+        1.  Open the sheet with no initial filters (`selectedJarIds = []`).
+        2.  Select a new filter (e.g., `draftJarIds` becomes `['jar1']`) and click "Apply".
+        3.  The parent component updates its state, and the sheet closes.
+        4.  Reopen the filter sheet.
+    *   **Expected Result:** The sheet should now correctly initialize its draft state with the newly applied filter (`['jar1']`), reflecting the updated props passed from the parent.
 

@@ -25,6 +25,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
     const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
 
     const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
+    const transactionsById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
 
     const filteredTransactions = useMemo(() => {
         if (!hasActiveFilters) return transactions;
@@ -158,7 +159,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                             </div>
                             <div className="space-y-3">
                                 {visibleTransactions.map((t) => {
-                                    const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                    const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
                                     return (
                                         <TransactionCard
                                             key={t.id}
