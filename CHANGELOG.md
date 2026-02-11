@@ -1,5 +1,11 @@
 # Changelog
 
+```markdown
+## [0.12.0] - 2026-02-11
+### Added
+- **Transaction History**: Introduced a comprehensive filtering system, enabling users to filter transactions by multiple categories, wallets, and specific date ranges for more detailed reporting.
+```
+
 ## [0.11.0] - 2026-02-04
 ### Added
 - **Transfers**: Introduced the ability to create transfer transactions, allowing users to easily move funds between their wallets.
