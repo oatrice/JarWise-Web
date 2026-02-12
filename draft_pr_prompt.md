@@ -2,487 +2,591 @@
 
 You are an AI assistant helping to create a Pull Request description.
     
-TASK: [Feature] Transaction Linking & Transfers
+TASK: [Feature] Report Filter: Multi-Select Categories & Accounts
 ISSUE: {
-  "title": "[Feature] Transaction Linking & Transfers",
-  "number": 71
+  "title": "[Feature] Report Filter: Multi-Select Categories & Accounts",
+  "number": 68,
+  "body": "# \ud83c\udfaf Objective\nEnable users to filter reports and charts by selecting specific categories (Jars) and accounts (Wallets) via multi-select checkboxes.\n\n## \ud83d\udcdd Specifications\n\n### UI Components\n- [ ] **Filter Panel**: Collapsible sidebar or modal with checkbox tree\n- [ ] **Category Checkboxes**: Select/deselect individual Jars (including sub-jars if HIER-01 is done)\n- [ ] **Account Checkboxes**: Select/deselect individual Wallets (including sub-wallets if HIER-01 is done)\n- [ ] **Select All / Clear All**: Quick actions\n- [ ] **Remember Selection**: Persist filter state per session or per report type\n\n### Behavior\n- [ ] **Real-time Update**: Charts/reports update as checkboxes change (or Apply button)\n- [ ] **Count Display**: Show number of transactions matching current filter\n- [ ] **Visual Indicator**: Badge showing active filter count\n\n## \ud83d\udd17 References\n- Depends on #67 (Hierarchical Accounts & Categories) for sub-item support\n- Related to #59 (Reports & Data Export)\n- Feature ID: `REPORT-02`\n\n## \ud83c\udfd7\ufe0f Technical Notes\n- Use bitmasking or array-based filtering on transaction queries\n- Consider performance with large transaction sets (pagination/lazy load)"
 }
 
 GIT CONTEXT:
 COMMITS:
-7685564 ✨ feat(transactions): Add transfer functionality and transaction details
-2dd50d4 🐛 fix(ui): removes transaction type prefix from amount display
-75dd8fc 🐛 fix(data): standardize transaction amount handling
-df7d689 ✨ feat(ui): add wallet and profile navigation
-a84d321 ✨ feat(transactions): add transfer transaction support
-afc528a ✨ feat(transactions): add transaction detail view and transfer functionality
-97fe86c ✨ feat(migration): add data migration feature
+c20c890 docs: update changelog and readme for v0.12.0 transaction filters
+5c31278 test: add unit tests for sub-transaction storage service
+feb4092 Document code_review.md per project
+c8dcfa6 Wrap TransactionCard tests with USD
+62fa056 Add report filters to transaction
 
 STATS:
-.luma_state.json                        |  18 +-
- CHANGELOG.md                            |  11 +
- README.md                               |   4 +-
- code_review.md                          |  69 ++++-
- draft_pr_body.md                        |  97 +++++++
- draft_pr_prompt.md                      | 489 ++++++++++++++++++++++++++++++++
- package.json                            |   2 +-
- src/App.tsx                             |  44 ++-
- src/components/BottomNav.tsx            |  12 +-
- src/components/TransactionCard.test.tsx | 127 +++++++++
- src/components/TransactionCard.tsx      |  38 ++-
- src/components/TransferForm.tsx         | 205 +++++++++++++
- src/pages/AddTransaction.tsx            | 436 ++++++++++++++++------------
- src/pages/Dashboard.tsx                 |  23 +-
- src/pages/TransactionDetail.tsx         | 125 ++++++++
- src/pages/TransactionHistory.tsx        |  58 ++--
- src/utils/constants.ts                  |   4 +
- src/utils/generatedMockData.ts          |  16 +-
- src/utils/transactionStorage.ts         |  35 ++-
- src/utils/transferUtils.test.ts         | 131 +++++++++
- 20 files changed, 1674 insertions(+), 270 deletions(-)
+CHANGELOG.md                                |   6 +
+ README.md                                   |   3 +
+ code_review.md                              |  69 ++---------
+ package.json                                |   2 +-
+ src/__tests__/ReportFiltersSheet.test.tsx   | 186 ++++++++++++++++++++++++++++
+ src/__tests__/TransactionCard.test.tsx      |  20 ++-
+ src/__tests__/mockDataIntegration.test.ts   |   4 +-
+ src/__tests__/subTransactionStorage.test.ts | 111 +++++++++++++++++
+ src/__tests__/transactionValidation.test.ts |  13 ++
+ src/components/MultiSelectDropdown.tsx      | 119 ++++++++++++++++++
+ src/components/ReportFiltersSheet.tsx       | 123 ++++++++++++++++++
+ src/components/TransactionCard.test.tsx     |  17 ++-
+ src/pages/TransactionHistory.tsx            |  58 +++++++--
+ src/setupTests.ts                           |  28 +++++
+ src/utils/generatedMockData.ts              |  93 +++++---------
+ src/utils/subTransactionStorage.ts          |  65 ++++++++++
+ 16 files changed, 774 insertions(+), 143 deletions(-)
 
 KEY FILE DIFFS:
-diff --git a/src/App.tsx b/src/App.tsx
-index d61151a..4c15189 100644
---- a/src/App.tsx
-+++ b/src/App.tsx
-@@ -3,23 +3,33 @@ import Dashboard from './pages/Dashboard';
- import TransactionHistory from './pages/TransactionHistory';
- import AddTransaction from './pages/AddTransaction';
- import LoginScreen from './pages/LoginScreen';
-+import TransactionDetail from './pages/TransactionDetail';
-+import ManageWallets from './pages/ManageWallets';
- import { saveTransaction, getTransactions, type Transaction } from './utils/transactionStorage';
- 
- import MigrationUploadScreen from './pages/MigrationUploadScreen';
- import MigrationStatusScreen from './pages/MigrationStatusScreen';
- 
--type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status';
-+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status' | 'transaction-detail' | 'wallets' | 'profile';
- 
- function App() {
--  const [currentPage, setCurrentPage] = useState<Page>('login');  // Start with login for testing
-+  const [currentPage, setCurrentPage] = useState<Page>('login');
-   const [transactions, setTransactions] = useState<Transaction[]>(getTransactions);
-+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
- 
-   const navigateTo = (page: Page) => {
-     setCurrentPage(page);
-   };
- 
--  const handleSaveTransaction = (tx: Transaction) => {
--    saveTransaction(tx);
-+  const handleTransactionClick = (id: string) => {
-+    setSelectedTransactionId(id);
-+    setCurrentPage('transaction-detail');
-+  };
-+
-+  const handleSaveTransaction = (tx?: Transaction) => {
-+    if (tx) {
-+      saveTransaction(tx);
-+    }
-     setTransactions(getTransactions()); // Refresh from storage
-     navigateTo('dashboard');
-   };
-@@ -30,10 +40,19 @@ function App() {
-         <LoginScreen onSignIn={() => navigateTo('dashboard')} />
-       )}
-       {currentPage === 'dashboard' && (
--        <Dashboard onNavigate={navigateTo} transactions={transactions} />
-+        <Dashboard
-+          onNavigate={navigateTo}
-+          transactions={transactions}
-+          onTransactionClick={handleTransactionClick}
-+        />
-       )}
-       {currentPage === 'history' && (
--        <TransactionHistory onBack={() => navigateTo('dashboard')} onNavigate={navigateTo} transactions={transactions} />
-+        <TransactionHistory
-+          onBack={() => navigateTo('dashboard')}
-+          onNavigate={navigateTo}
-+          transactions={transactions}
-+          onTransactionClick={handleTransactionClick}
-+        />
-       )}
-       {currentPage === 'add-transaction' && (
-         <AddTransaction
-@@ -53,6 +72,19 @@ function App() {
-           onDone={() => navigateTo('dashboard')}
-         />
-       )}
-+      {currentPage === 'transaction-detail' && selectedTransactionId && (
-+        <TransactionDetail
-+          transactionId={selectedTransactionId}
-+          allTransactions={transactions}
-+          onBack={() => navigateTo('history')}
-+          onNavigateLinked={(id) => handleTransactionClick(id)}
-+        />
-+      )}
-+      {currentPage === 'wallets' && (
-+        <ManageWallets
-+          onClose={() => navigateTo('dashboard')}
-+        />
-+      )}
-     </>
-   );
- }
-diff --git a/src/components/BottomNav.tsx b/src/components/BottomNav.tsx
-index 121defd..2f7f8d1 100644
---- a/src/components/BottomNav.tsx
-+++ b/src/components/BottomNav.tsx
-@@ -1,7 +1,7 @@
- import { motion } from 'framer-motion';
- import { LayoutGrid, History, Plus, Wallet, User } from 'lucide-react';
- 
--type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction';
-+type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'wallets' | 'profile';
- 
- interface BottomNavProps {
-     activePage: Page;
-@@ -36,10 +36,16 @@ export default function BottomNav({ activePage, onNavigate, visible = true }: Bo
-                 >
-                     <Plus size={28} />
-                 </button>
--                <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
-+                <button
-+                    onClick={() => onNavigate('wallets')}
-+                    className={`flex flex-col items-center gap-1 ${activePage === 'wallets' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'} transition-colors`}
-+                >
-                     <Wallet size={24} />
-                 </button>
--                <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-300 transition-colors">
-+                <button
-+                    onClick={() => onNavigate('profile')}
-+                    className={`flex flex-col items-center gap-1 ${activePage === 'profile' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'} transition-colors`}
-+                >
-                     <User size={24} />
-                 </button>
-             </div>
-diff --git a/src/components/TransactionCard.test.tsx b/src/components/TransactionCard.test.tsx
+diff --git a/src/__tests__/ReportFiltersSheet.test.tsx b/src/__tests__/ReportFiltersSheet.test.tsx
 new file mode 100644
-index 0000000..f289ee1
+index 0000000..9568f0e
 --- /dev/null
-+++ b/src/components/TransactionCard.test.tsx
-@@ -0,0 +1,127 @@
-+import { describe, it, expect } from 'vitest';
-+import { render, screen } from '@testing-library/react';
-+import TransactionCard from './TransactionCard';
-+import type { Transaction } from '../utils/transactionStorage';
-+import { CurrencyProvider } from '../context/CurrencyContext';
++++ b/src/__tests__/ReportFiltersSheet.test.tsx
+@@ -0,0 +1,186 @@
++import { fireEvent, render, screen, within } from '@testing-library/react';
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import ReportFiltersSheet from '../components/ReportFiltersSheet';
 +
-+// Wrapper to provide CurrencyContext
-+const renderWithProviders = (ui: React.ReactElement) => {
-+    return render(
-+        <CurrencyProvider>
-+            {ui}
-+        </CurrencyProvider>
-+    );
++vi.mock('framer-motion', () => ({
++    motion: {
++        div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
++            <div {...props}>{children}</div>
++        ),
++    },
++    AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
++}));
++
++const jarOptions = [
++    { id: 'jar-1', name: 'Jar One' },
++    { id: 'jar-2', name: 'Jar Two' },
++];
++
++const walletOptions = [
++    { id: 'wallet-1', name: 'Wallet One' },
++    { id: 'wallet-2', name: 'Wallet Two' },
++];
++
++const getDropdownButton = (label: string) => {
++    const labelNode = screen.getByText(label);
++    const wrapper = labelNode.parentElement;
++    if (!wrapper) {
++        throw new Error(`Missing wrapper for ${label} dropdown`);
++    }
++    const button = wrapper.querySelector('button');
++    if (!button) {
++        throw new Error(`Missing button for ${label} dropdown`);
++    }
++    return button;
 +};
 +
-+describe('TransactionCard', () => {
-+    const baseTransaction: Transaction = {
-+        id: 'tx-1',
-+        amount: 1000,
-+        jarId: 'necessities',
-+        walletId: 'wallet-1',
-+        note: 'Grocery shopping',
-+        date: '2026-02-04T10:00:00Z',
-+        type: 'expense',
-+    };
++const getDropdownContainer = (placeholder: string) => {
++    const searchInput = screen.getByPlaceholderText(placeholder);
++    const dropdownContainer = searchInput.closest('div')?.parentElement;
++    if (!dropdownContainer) {
++        throw new Error(`Missing dropdown container for ${placeholder}`);
++    }
++    return dropdownContainer;
++};
 +
-+    const linkedTransaction: Transaction = {
-+        id: 'tx-2',
-+        amount: 1000,
-+        jarId: 'transfer',
-+        walletId: 'wallet-2',
-+        note: 'Transfer from Cash',
-+        date: '2026-02-04T10:00:00Z',
-+        type: 'income',
-+        relatedTransactionId: 'tx-1',
-+    };
++const getOptionButton = (optionName: string, placeholder: string) => {
++    const dropdownContainer = getDropdownContainer(placeholder);
++    const optionLabel = within(dropdownContainer).getByText(optionName);
++    const button = optionLabel.closest('button');
++    if (!button) {
++        throw new Error(`Missing option button for ${optionName}`);
++    }
++    return button;
++};
 +
-+    const transferTransaction: Transaction = {
-+        ...baseTransaction,
-+        id: 'tx-3',
-+        jarId: 'transfer',
-+        note: 'Transfer to Bank',
-+        relatedTransactionId: 'tx-2',
-+    };
++describe('ReportFiltersSheet', () => {
++    beforeEach(() => {
++        vi.clearAllMocks();
++    });
 +
-+    describe('Normal Transaction Rendering', () => {
-+        it('renders note as title for normal expense', () => {
-+            renderWithProviders(<TransactionCard transaction={baseTransaction} />);
-+            expect(screen.getByText('Grocery shopping')).toBeInTheDocument();
-+        });
++    it('discard draft changes when closed without applying', () => {
++        const onApply = vi.fn();
++        const onClose = vi.fn();
 +
-+        it('renders amount with minus sign for expense', () => {
-+            renderWithProviders(<TransactionCard transaction={baseTransaction} />);
-+            // Amount should contain the formatted value with minus
-+            expect(screen.getByText(/-.*1,000/)).toBeInTheDocument();
-+        });
++        const { rerender } = render(
++            <ReportFiltersSheet
++                open
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={['jar-1']}
++                selectedWalletIds={['wallet-1']}
++                onApply={onApply}
++                onClose={onClose}
++            />
++        );
 +
-+        it('renders amount with plus sign for income', () => {
-+            const incomeTransaction: Transaction = {
-+                ...baseTransaction,
-+                type: 'income',
-+                note: 'Salary',
++        fireEvent.click(getDropdownButton('Jars'));
++        fireEvent.click(getOptionButton('Jar One', 'Search Jars'));
++        fireEvent.click(getOptionButton('Jar Two', 'Search Jars'));
++
++        fireEvent.click(screen.getByRole('button', { name: /close filters/i }));
++        expect(onApply).not.toHaveBeenCalled();
++
++        rerender(
++            <ReportFiltersSheet
++                open={false}
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={['jar-1']}
++                selectedWalletIds={['wallet-1']}
++                onApply={onApply}
++                onClose={onClose}
++            />
++        );
++
++        rerender(
++            <ReportFiltersSheet
++                open
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={['jar-1']}
++                selectedWalletIds={['wallet-1']}
++                onApply={onApply}
++                onClose={onClose}
++            />
++        );
++
++        fireEvent.click(getDropdownButton('Jars'));
++        const jarOneCheckbox = within(getOptionButton('Jar One', 'Search Jars')).getByRole('checkbox');
++        const jarTwoCheckbox = within(getOptionButton('Jar Two', 'Search Jars')).getByRole('checkbox');
++
++        expect(jarOneCheckbox).toBeChecked();
++        expect(jarTwoCheckbox).not.toBeChecked();
++    });
++
++    it('clears all filters then applies empty selections', () => {
++        const onApply = vi.fn();
++
++        render(
++            <ReportFiltersSheet
++                open
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={['jar-1']}
++                selectedWalletIds={['wallet-2']}
++                onApply={onApply}
++                onClose={vi.fn()}
++            />
++        );
++
++        fireEvent.click(screen.getByRole('button', { name: /clear/i }));
++        fireEvent.click(screen.getByRole('button', { name: /apply filters/i }));
++
++        expect(onApply).toHaveBeenCalledWith([], []);
++    });
++
++    it('reopens with the latest applied filters', () => {
++        const onApply = vi.fn();
++
++        const { rerender } = render(
++            <ReportFiltersSheet
++                open
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={[]}
++                selectedWalletIds={[]}
++                onApply={onApply}
++                onClose={vi.fn()}
++            />
++        );
++
++        fireEvent.click(getDropdownButton('Jars'));
++        fireEvent.click(getOptionButton('Jar One', 'Search Jars'));
++        fireEvent.click(screen.getByRole('button', { name: /apply filters/i }));
++
++        expect(onApply).toHaveBeenCalledWith(['jar-1'], []);
++
++        rerender(
++            <ReportFiltersSheet
++                open={false}
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={['jar-1']}
++                selectedWalletIds={[]}
++                onApply={onApply}
++                onClose={vi.fn()}
++            />
++        );
++
++        rerender(
++            <ReportFiltersSheet
++                open
++                jarOptions={jarOptions}
++                walletOptions={walletOptions}
++                selectedJarIds={['jar-1']}
++                selectedWalletIds={[]}
++                onApply={onApply}
++                onClose={vi.fn()}
++            />
++        );
++
++        fireEvent.click(getDropdownButton('Jars'));
++        const jarOneCheckbox = within(getOptionButton('Jar One', 'Search Jars')).getByRole('checkbox');
++        expect(jarOneCheckbox).toBeChecked();
++    });
++});
+diff --git a/src/__tests__/TransactionCard.test.tsx b/src/__tests__/TransactionCard.test.tsx
+index 6f80bb9..e1ab5d4 100644
+--- a/src/__tests__/TransactionCard.test.tsx
++++ b/src/__tests__/TransactionCard.test.tsx
+@@ -1,7 +1,11 @@
+ import { render, screen } from '@testing-library/react';
+-import { describe, it, expect, vi } from 'vitest';
++import { beforeEach, describe, it, expect, vi } from 'vitest';
+ import TransactionCard from '../components/TransactionCard';
+ import type { Transaction } from '../utils/transactionStorage';
++import { CurrencyProvider } from '../context/CurrencyContext';
++
++const renderWithProviders = (ui: React.ReactElement) =>
++    render(<CurrencyProvider>{ui}</CurrencyProvider>);
+ 
+ // Mock getJarDetails
+ vi.mock('../utils/constants', () => ({
+@@ -23,8 +27,12 @@ describe('TransactionCard', () => {
+         type: 'expense'
+     };
+ 
++    beforeEach(() => {
++        localStorage.setItem('settings.currency', 'USD');
++    });
++
+     it('renders Note as the main title', () => {
+-        render(<TransactionCard transaction={mockTransaction} />);
++        renderWithProviders(<TransactionCard transaction={mockTransaction} />);
+ 
+         // The title should be the Note ("Grocery Shopping")
+         const title = screen.getByRole('heading', { level: 4 });
+@@ -32,7 +40,7 @@ describe('TransactionCard', () => {
+     });
+ 
+     it('renders Jar Name as the subtitle when note exists', () => {
+-        render(<TransactionCard transaction={mockTransaction} />);
++        renderWithProviders(<TransactionCard transaction={mockTransaction} />);
+ 
+         // The Jar Name should be visible but NOT as the title
+         expect(screen.getByText('Necessities')).toBeInTheDocument();
+@@ -42,7 +50,7 @@ describe('TransactionCard', () => {
+ 
+     it('renders Jar Name as title if note is empty', () => {
+         const noNoteTransaction = { ...mockTransaction, note: '' };
+-        render(<TransactionCard transaction={noNoteTransaction} />);
++        renderWithProviders(<TransactionCard transaction={noNoteTransaction} />);
+ 
+         // Title should fallback to Jar Name
+         const title = screen.getByRole('heading', { level: 4 });
+@@ -51,7 +59,7 @@ describe('TransactionCard', () => {
+ 
+     it('renders expense amount without - sign and in red', () => {
+         const expenseTx = { ...mockTransaction, type: 'expense' as const, amount: 15.00 };
+-        render(<TransactionCard transaction={expenseTx} />);
++        renderWithProviders(<TransactionCard transaction={expenseTx} />);
+ 
+         // Should display $15.00, NOT -$15.00
+         const amountText = screen.getByText('$15.00');
+@@ -64,7 +72,7 @@ describe('TransactionCard', () => {
+ 
+     it('renders income amount without + sign and in green', () => {
+         const incomeTx = { ...mockTransaction, type: 'income' as const, amount: 500.00 };
+-        render(<TransactionCard transaction={incomeTx} />);
++        renderWithProviders(<TransactionCard transaction={incomeTx} />);
+ 
+         // Should display $500.00, NOT +$500.00
+         const amountText = screen.getByText('$500.00');
+diff --git a/src/__tests__/mockDataIntegration.test.ts b/src/__tests__/mockDataIntegration.test.ts
+index 6e5d7e2..7f35c55 100644
+--- a/src/__tests__/mockDataIntegration.test.ts
++++ b/src/__tests__/mockDataIntegration.test.ts
+@@ -35,11 +35,11 @@ describe('Generated Mock Data Integration', () => {
+ 
+     it('should have LucideIcon type for jar icons', () => {
+         const firstJar = jars[0];
+-        expect(typeof firstJar.icon).toBe('function');
++        expect(['function', 'object']).toContain(typeof firstJar.icon);
+     });
+ 
+     it('should have LucideIcon type for transaction icons', () => {
+         const firstTransaction = transactions[0];
+-        expect(typeof firstTransaction.icon).toBe('function');
++        expect(['function', 'object']).toContain(typeof firstTransaction.icon);
+     });
+ });
+diff --git a/src/__tests__/subTransactionStorage.test.ts b/src/__tests__/subTransactionStorage.test.ts
+new file mode 100644
+index 0000000..de89bf5
+--- /dev/null
++++ b/src/__tests__/subTransactionStorage.test.ts
+@@ -0,0 +1,111 @@
++/**
++ * @vitest-environment jsdom
++ */
++import { describe, it, expect, beforeEach, vi } from 'vitest';
++
++// Functions to be implemented
++import {
++    getSubTransactions,
++    saveSubTransaction,
++    deleteSubTransaction,
++    getSubTransactionsByParentId,
++    type SubTransaction,
++} from '../utils/subTransactionStorage';
++
++describe('SubTransaction Storage Service', () => {
++    beforeEach(() => {
++        // Clear localStorage before each test
++        localStorage.clear();
++    });
++
++    describe('saveSubTransaction', () => {
++        it('should save a new sub-transaction', () => {
++            const newSubTx: SubTransaction = {
++                id: 'sub-1',
++                parentId: 'tx-1',
++                description: 'Milk',
++                amount: 45.0,
++                // category is optional
 +            };
-+            renderWithProviders(<TransactionCard transaction={incomeTransaction} />);
-+            expect(screen.getByText(/\+.*1,000/)).toBeInTheDocument();
++
++            saveSubTransaction(newSubTx);
++
++            const stored = JSON.parse(localStorage.getItem('jarwise_sub_transactions') || '[]');
++            expect(stored).toHaveLength(1);
++            expect(stored[0]).toEqual(newSubTx);
++        });
++
++        it('should append to existing sub-transactions', () => {
++            const existingSubTx: SubTransaction = {
++                id: 'sub-1',
++                parentId: 'tx-1',
++                description: 'Milk',
++                amount: 45.0,
++            };
++            localStorage.setItem('jarwise_sub_transactions', JSON.stringify([existingSubTx]));
++
++            const newSubTx: SubTransaction = {
++                id: 'sub-2',
++                parentId: 'tx-1',
++                description: 'Bread',
++                amount: 35.0,
++            };
++
++            saveSubTransaction(newSubTx);
++
++            const stored = JSON.parse(localStorage.getItem('jarwise_sub_transactions') || '[]');
++            expect(stored).toHaveLength(2);
 +        });
 +    });
 +
-+    describe('Transfer Rendering (isTransfer=true)', () => {
-+        it('renders "From → To" title when linkedTransaction is provided', () => {
-+            renderWithProviders(
-+                <TransactionCard
-+                    transaction={transferTransaction}
-+                    isTransfer={true}
-+                    linkedTransaction={linkedTransaction}
-+                />
-+            );
-+            // Should show wallet names: Cash → Bank Account
-+            expect(screen.getByText(/Cash.*→.*Bank Account/)).toBeInTheDocument();
++    describe('getSubTransactions', () => {
++        it('should return all sub-transactions', () => {
++            const mockData: SubTransaction[] = [
++                { id: 'sub-1', parentId: 'tx-1', description: 'Item 1', amount: 10 },
++                { id: 'sub-2', parentId: 'tx-2', description: 'Item 2', amount: 20 },
++            ];
++            localStorage.setItem('jarwise_sub_transactions', JSON.stringify(mockData));
++
++            const result = getSubTransactions();
++            expect(result).toEqual(mockData);
 +        });
 +
-+        it('renders "Transfer from [Wallet]" when no linkedTransaction', () => {
-+            renderWithProviders(
-+                <TransactionCard
-+                    transaction={transferTransaction}
-+                    isTransfer={true}
-+                />
-+            );
-+            expect(screen.getByText(/Transfer from Cash/)).toBeInTheDocument();
-+        });
-+
-+        it('renders "Transfer" subtitle', () => {
-+            renderWithProviders(
-+                <TransactionCard
-+                    transaction={transferTransaction}
-+                    isTransfer={true}
-+                    linkedTransaction={linkedTransaction}
-+                />
-+            );
-+            expect(screen.getByText('Transfer')).toBeInTheDocument();
-+        });
-+
-+        it('renders amount without +/- prefix for transfers', () => {
-+            renderWithProviders(
-+                <TransactionCard
-+                    transaction={transferTransaction}
-+                    isTransfer={true}
-+                    linkedTransaction={linkedTransaction}
-+                />
-+            );
-+            // Should NOT have + or - prefix
-+            const amountElement = screen.getByText(/1,000/);
-+            expect(amountElement.textContent).not.toMatch(/^[+-]/);
++        it('should return empty array if storage is empty', () => {
++            const result = getSubTransactions();
++            expect(result).toEqual([]);
 +        });
 +    });
 +
-+    describe('Draft Transaction Rendering', () => {
-+        it('renders draft badge for draft transactions', () => {
-+            const draftTransaction: Transaction = {
-+                ...baseTransaction,
-+                status: 'draft',
-+            };
-+            renderWithProviders(<TransactionCard transaction={draftTransaction} />);
-+            expect(screen.getByText('Draft')).toBeInTheDocument();
++    describe('getSubTransactionsByParentId', () => {
++        it('should return only sub-transactions for the given parent ID', () => {
++            const mockData: SubTransaction[] = [
++                { id: 'sub-1', parentId: 'tx-1', description: 'Item 1', amount: 10 },
++                { id: 'sub-2', parentId: 'tx-2', description: 'Item 2', amount: 20 },
++                { id: 'sub-3', parentId: 'tx-1', description: 'Item 3', amount: 30 },
++            ];
++            localStorage.setItem('jarwise_sub_transactions', JSON.stringify(mockData));
++
++            const result = getSubTransactionsByParentId('tx-1');
++            expect(result).toHaveLength(2);
++            expect(result.map(i => i.id)).toContain('sub-1');
++            expect(result.map(i => i.id)).toContain('sub-3');
++            expect(result.map(i => i.id)).not.toContain('sub-2');
++        });
++    });
++
++    describe('deleteSubTransaction', () => {
++        it('should remove the specified sub-transaction', () => {
++            const mockData: SubTransaction[] = [
++                { id: 'sub-1', parentId: 'tx-1', description: 'Item 1', amount: 10 },
++                { id: 'sub-2', parentId: 'tx-1', description: 'Item 2', amount: 20 },
++            ];
++            localStorage.setItem('jarwise_sub_transactions', JSON.stringify(mockData));
++
++            deleteSubTransaction('sub-1');
++
++            const stored = JSON.parse(localStorage.getItem('jarwise_sub_transactions') || '[]');
++            expect(stored).toHaveLength(1);
++            expect(stored[0].id).toBe('sub-2');
 +        });
 +    });
 +});
-diff --git a/src/components/TransactionCard.tsx b/src/components/TransactionCard.tsx
-index bec9c9a..27a0d45 100644
---- a/src/components/TransactionCard.tsx
-+++ b/src/components/TransactionCard.tsx
-@@ -1,14 +1,17 @@
- import type { Transaction } from '../utils/transactionStorage';
--import { ArrowRight } from 'lucide-react';
--import { getJarDetails } from '../utils/constants';
-+import { ArrowRight, ArrowRightLeft } from 'lucide-react';
-+import { getJarDetails, getWalletDetails } from '../utils/constants';
- import { useCurrency } from '../context/CurrencyContext';
+diff --git a/src/__tests__/transactionValidation.test.ts b/src/__tests__/transactionValidation.test.ts
+index 5cd63a6..646e513 100644
+--- a/src/__tests__/transactionValidation.test.ts
++++ b/src/__tests__/transactionValidation.test.ts
+@@ -15,6 +15,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '',
+                 jarId: 'necessities',
++                walletId: 'wallet-1',
+                 note: '',
+             });
  
- interface TransactionCardProps {
-     transaction: Transaction;
-     showDate?: boolean;
-+    onClick?: () => void;
-+    isTransfer?: boolean;
-+    linkedTransaction?: Transaction; // The counterpart transaction for transfers
- }
+@@ -26,6 +27,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '0',
+                 jarId: 'necessities',
++                walletId: 'wallet-1',
+                 note: '',
+             });
  
--export default function TransactionCard({ transaction, showDate = true }: TransactionCardProps) {
-+export default function TransactionCard({ transaction, showDate = true, onClick, isTransfer = false, linkedTransaction }: TransactionCardProps) {
-     const { formatAmount } = useCurrency();
-     const jar = getJarDetails(transaction.jarId);
+@@ -37,6 +39,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '-100',
+                 jarId: 'necessities',
++                walletId: 'wallet-1',
+                 note: '',
+             });
  
-@@ -32,16 +35,27 @@ export default function TransactionCard({ transaction, showDate = true }: Transa
-     // Display Logic: 
-     // Title: Note (primary) -> Jar Name (fallback)
-     // Subtitle: Jar Name (if Note exists) -> Date
--    // const jar = getJarDetails(transaction.jarId); // Keep jar details for potential future use or if title/subtitle logic changes
--    const title = transaction.note || jar.name;
--    const subtitle = transaction.note ? jar.name : '';
-+    let title = transaction.note || jar.name;
-+    let subtitle = transaction.note ? jar.name : '';
-+
-+    if (isTransfer) {
-+        const fromWallet = transaction.walletId ? getWalletDetails(transaction.walletId) : null;
-+        const toWallet = linkedTransaction?.walletId ? getWalletDetails(linkedTransaction.walletId) : null;
-+        if (fromWallet && toWallet) {
-+            title = `${fromWallet.name} → ${toWallet.name}`;
-+        } else if (fromWallet) {
-+            title = `Transfer from ${fromWallet.name}`;
-+        } else {
-+            title = 'Transfer';
-+        }
-+        subtitle = 'Transfer';
-+    }
+@@ -48,6 +51,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: 'abc',
+                 jarId: 'necessities',
++                walletId: 'wallet-1',
+                 note: '',
+             });
  
-     return (
--        <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
-+        <div onClick={onClick} className={`flex items-center justify-between p-4 rounded-xl border transition-colors group cursor-pointer ${transaction.status === 'draft' ? 'bg-yellow-900/20 border-yellow-500/30 hover:bg-yellow-900/30' : 'bg-gray-900/40 border-gray-800/50 hover:bg-gray-800/40'}`}>
-             <div className="flex items-center gap-4">
--                <div className={`p-3 rounded-xl text-xl bg-gray-800/50 flex items-center justify-center`}>
--                    {/* Assuming Icon is imported or jar.icon is used */}
--                    {jar.icon}
-+                <div className={`p-3 rounded-xl text-xl ${isTransfer ? 'bg-blue-900/30 text-blue-400' : 'bg-gray-800/50'} flex items-center justify-center`}>
-+                    {isTransfer ? <ArrowRightLeft size={20} /> : jar.icon}
-                 </div>
-                 <div>
-                     <h4 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors flex items-center gap-2">
-@@ -61,8 +75,8 @@ export default function TransactionCard({ transaction, showDate = true }: Transa
-             </div>
+@@ -59,6 +63,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '100',
+                 jarId: 'necessities',
++                walletId: 'wallet-1',
+                 note: '',
+             });
  
-             <div className="flex items-center gap-3">
--                <span className={`font-semibold ${transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400'}`}>
--                    {transaction.type === 'expense' ? '-' : '+'}{formatAmount(transaction.amount)}
-+                <span className={`font-semibold ${isTransfer ? 'text-blue-400' : (transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400')}`}>
-+                    {formatAmount(transaction.amount)}
-                 </span>
-                 <ArrowRight size={16} className="text-gray-600 group-hover:text-gray-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
-             </div>
-diff --git a/src/components/TransferForm.tsx b/src/components/TransferForm.tsx
+@@ -70,6 +75,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '99.99',
+                 jarId: 'necessities',
++                walletId: 'wallet-1',
+                 note: '',
+             });
+ 
+@@ -83,6 +89,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '100',
+                 jarId: null,
++                walletId: 'wallet-1',
+                 note: '',
+             });
+ 
+@@ -94,6 +101,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '100',
+                 jarId: '',
++                walletId: 'wallet-1',
+                 note: '',
+             });
+ 
+@@ -105,6 +113,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '100',
+                 jarId: 'education',
++                walletId: 'wallet-1',
+                 note: '',
+             });
+ 
+@@ -118,6 +127,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '100',
+                 jarId: 'savings',
++                walletId: 'wallet-1',
+                 note: '',
+             });
+ 
+@@ -128,6 +138,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '100',
+                 jarId: 'savings',
++                walletId: 'wallet-1',
+                 note: 'Lunch expense',
+             });
+ 
+@@ -140,6 +151,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '',
+                 jarId: null,
++                walletId: 'wallet-1',
+                 note: '',
+             });
+ 
+@@ -152,6 +164,7 @@ describe('Transaction Validation', () => {
+             const result = validateTransaction({
+                 amount: '500.50',
+                 jarId: 'play',
++                walletId: 'wallet-1',
+                 note: 'Movie night',
+             });
+ 
+diff --git a/src/components/MultiSelectDropdown.tsx b/src/components/MultiSelectDropdown.tsx
 new file mode 100644
-index 0000000..65ac209
+index 0000000..cbad637
 --- /dev/null
-+++ b/src/components/TransferForm.tsx
-@@ -0,0 +1,205 @@
-+import { useState } from 'react';
-+import { motion, AnimatePresence } from 'framer-motion';
-+import { Save, Wallet, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
-+import { WALLETS } from '../utils/constants';
++++ b/src/components/MultiSelectDropdown.tsx
+@@ -0,0 +1,119 @@
++import { useEffect, useMemo, useRef, useState } from 'react';
++import { ChevronDown, Search } from 'lucide-react';
 +
-+interface TransferFormProps {
-+    onSave: (data: { amount: number; fromWalletId: string; toWalletId: string; date: string; note: string }) => Promise<void>;
++export type MultiSelectOption = {
++    id: string;
++    name: string;
++    meta?: string;
++};
++
++interface MultiSelectDropdownProps {
++    label: string;
++    options: MultiSelectOption[];
++    selectedIds: string[];
++    onChange: (ids: string[]) => void;
++    placeholder?: string;
 +}
 +
-+export default function TransferForm({ onSave }: TransferFormProps) {
-+    const [amount, setAmount] = useState('');
-+    const [fromWalletId, setFromWalletId] = useState<string | null>(null);
-+    const [toWalletId, setToWalletId] = useState<string | null>(null);
-+    const [note, setNote] = useState('');
-+    const [date, setDate] = useState(() => {
-+        const now = new Date();
-+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-+        return now.toISOString().slice(0, 16);
-+    });
++export default function MultiSelectDropdown({
++    label,
++    options,
++    selectedIds,
++    onChange,
++    placeholder,
++}: MultiSelectDropdownProps) {
++    const [isOpen, setIsOpen] = useState(false);
++    const [searchTerm, setSearchTerm] = useState('');
++    const wrapperRef = useRef<HTMLDivElement | null>(null);
 +
-+    const [touched, setTouched] = useState({ amount: false, fromWallet: false, toWallet: false });
-+    const [isSubmitting, setIsSubmitting] = useState(false);
++    useEffect(() => {
++        const handleClickOutside = (event: MouseEvent) => {
++            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
++                setIsOpen(false);
++            }
++        };
++        document.addEventListener('mousedown', handleClickOutside);
++        return () => document.removeEventListener('mousedown', handleClickOutside);
++    }, []);
 +
-+    const validate = () => {
-+        const errors: { amount?: string; fromWallet?: string; toWallet?: string } = {};
-+
-+        if (!amount || parseFloat(amount) <= 0) errors.amount = 'Please enter a valid amount';
-+        if (!fromWalletId) errors.fromWallet = 'Select source wallet';
-+        if (!toWalletId) errors.toWallet = 'Select destination wallet';
-+        if (fromWalletId && toWalletId && fromWalletId === toWalletId) errors.toWallet = 'Cannot transfer to same wallet';
-+
-+        return errors;
-+    };
-+
-+    const errors = validate();
-+    const isFormValid = Object.keys(errors).length === 0;
-+
-+    const handleSave = async () => {
-+        setTouched({ amount: true, fromWallet: true, toWallet: true });
-+
-+        if (!isFormValid) return;
-+
-+        setIsSubmitting(true);
-+        await onSave({
-+            amount: parseFloat(amount),
-+            fromWalletId: fromWalletId!,
-+            toWalletId: toWalletId!,
-+            date,
-+            note
-+        });
-+        setIsSubmitting(false);
-+    };
-+
-+    return (
-+        <div className="space-y-8">
-+            {/* Amount Input */}
-+            <section className="space-y-2">
-+                <label className="text-sm font-medium text-gray-400">Amount to Transfer</label>
-+                <div className="relative">
-+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-500">฿</span>
-+                    <input
-+                        type="number"
-+                        value={amount}
-+                        onChange={(e) => setAmount(e.target.value)}
-+                        onBlur={() => setTouched(prev => ({ ...prev, amount: true }))}
-+                        placeholder="0.00"
-+                        className={`w-full bg-gray-800/50 border rounded-2xl py-6 pl-10 pr-4 text-3xl font-bold text-white placeholder-gray-600 focus:outline-none focus:ring-2 transition-all font-mono ${touched.amount && errors.amount
-+                            ? 'border-red-500 focus:ring-red-500/50'
-+                            : 'border-gray-700 focus:ring-blue-500/50'
-+                            }`}
-+                    />
-+                </div>
-+                <AnimatePresence>
-+                    {touched.amount && errors.amount && (
-+                        <motion.div
-+                            initial={{ opacity: 0, y: -10 }}
-+                            animate={{ opacity: 1, y: 0 }}
-+                            exit={{ opacity: 0, y: -10 }}
-+                            className="flex items-center gap-2 text-red-400 text-sm"
-+                        >
-+                            <AlertCircle className="w-4 h-4" />
-+                            {errors.amount}
-+                        </motion.div>
-+                    )}
-+                </AnimatePresence>
-+            </section>
-+
-+            {/* Date & Time Picker */}
-+            <section className="space-y-2">
-+                <label className="text-sm font-medium text-gray-400">Date & Time</label>
-+                <input
-+                    type="datetime-local"
-+                    value={date}
-+                    onChange={(e) => setDate(e.target.value)}
-+                    className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
-+                    style={{ colorScheme: 'dark' }}
-+                />
-+            </section>
-+
-+            {/* From Wallet */}
-+            <section className="space-y-3">
-+                <label className="text-sm font-medium text-gray-400">From (Source)</label>
-+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-+                    {WALLETS.map((wallet) => (
-+                        <motion.button
-+                            key={wallet.id}
-+                            whileTap={{ scale: 0.95 }}
-+                            onClick={() => setFromWalletId(wallet.id)}
-+                            className={`flex-shrink-0 relative w-32 h-24 rounded-2xl p-3 border transition-all flex flex-col justify-between overflow-hidden ${fromWalletId === wallet.id
-+                                ? 'bg-gray-800 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
-+                                : 'bg-gray-800/30 border-gray-800 hover:bg-gray-800/50'
-+                                }`}
-+                        >
-+                            <div className="z-10 text-3xl">{wallet.icon}</div>
-+                            <div clas
++    const filteredOptions = useMemo(() => {
++        const term = searchTerm.trim().toLowerCase();
++        if (!term) return options;
++        return options.filter((option) 
 ... (Diff truncated for size) ...
 
 PR TEMPLATE:
