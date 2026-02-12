@@ -1,147 +1,52 @@
 # 📋 Summary
-This PR implements comprehensive transaction linking and transfer functionality for the Mobile Web Platform, allowing users to transfer funds between wallets with proper tracking and linking of related transactions.
+This pull request introduces a powerful filtering system for the reports and transaction history pages, as outlined in issue #68. Users can now refine their data by selecting multiple categories (Jars) and accounts (Wallets) through an intuitive slide-in panel. This feature provides greater control and insight into financial data.
+
+A new reusable `MultiSelectDropdown` component has been created to support this functionality, and comprehensive unit tests have been added to ensure the reliability of the new filter logic.
 
 ## ✅ Checklist
 - [x] 🏗️ I have moved the related issue to "In Progress" on the Kanban board
 
 # 🎯 Type
-- [x] ✨ New feature
 - [ ] 🐛 Bug fix
+- [x] ✨ New feature
 - [ ] ⚡ Performance improvement
 - [ ] 🔧 Refactoring
-- [x] 💄 UI/UX Update (Web/Responsive)
-- [ ] 📝 Documentation
+- [ ] 💄 UI/UX Update (Web/Responsive)
+- [x] 📝 Documentation
 - [ ] 💥 Breaking change
 
 # 📱 Responsive Design Checks
-- [x] Mobile View Verified
-- [x] Tablet/Desktop View Verified
-- [x] Cross-browser Check (Chrome, Safari, Firefox)
+- [ ] Mobile View Verified
+- [ ] Tablet/Desktop View Verified
+- [ ] Cross-browser Check (Chrome, Safari, Firefox)
 
 # 📝 Changes
-
-## Core Features Added
-
-### 1. Transfer Functionality
-- **New TransferForm Component** (`src/components/TransferForm.tsx`)
-  - Visual wallet selector with real-time validation
-  - Amount input with currency formatting
-  - Date & time picker for transfer scheduling
-  - Optional notes field
-  - Comprehensive validation (amount > 0, different wallets, required fields)
-  - Loading states and error handling
-
-### 2. Transaction Linking System
-- **Linked Transaction Support** in `transactionStorage.ts`
-  - Two-way linking between transfer transactions
-  - `linkedTransactionId` field added to Transaction type
-  - Automatic linking when creating transfers
-
-### 3. Transaction Detail View
-- **New TransactionDetail Page** (`src/pages/TransactionDetail.tsx`)
-  - Full transaction information display
-  - Linked transaction preview with navigation
-  - Visual indicators for transfer relationships
-  - Wallet and jar information
-  - Notes and metadata display
-
-### 4. Enhanced Navigation
-- **Wallet Management Navigation**
-  - Added wallet icon to bottom navigation
-  - Navigation to ManageWallets page
-  
-- **Profile Navigation**
-  - Added user profile icon to bottom navigation
-  - Navigation to profile page (placeholder)
-
-- **Transaction Click Handling**
-  - Click-through navigation from transaction lists
-  - State management for selected transaction
-  - Back navigation to transaction history
-
-## UI/UX Improvements
-
-### Transaction Display
-- **Enhanced TransactionCard** (`src/components/TransactionCard.tsx`)
-  - Removed transaction type prefix (+/-) from amount display
-  - Special styling for transfer transactions (blue color)
-  - Improved visual hierarchy
-  - Added hover effects with arrow indicator
-
-### Data Handling
-- **Standardized Amount Handling**
-  - Consistent amount formatting across components
-  - Fixed transaction type prefix display logic
-  - Improved currency formatting with context support
-
-## Testing & Quality
-
-### New Test Coverage
-- **TransactionCard Tests** (`src/components/TransactionCard.test.tsx`)
-  - 127 lines of comprehensive test coverage
-  - Tests for expense, income, and transfer transactions
-  - Wallet and jar display validation
-  - Amount formatting verification
-
-- **Transfer Utils Tests** (`src/utils/transferUtils.test.ts`)
-  - 131 lines of utility function tests
-  - Transfer creation validation
-  - Transaction linking verification
-
-## Migration Support
-
-### Data Migration Feature
-- Added migration infrastructure (`src/pages/MigrationUploadScreen.tsx`, `MigrationStatusScreen.tsx`)
-- Support for importing existing transaction data
-- Status tracking for migration processes
-
-## Technical Improvements
-
-### Type Safety
-- Extended `Page` type to include new routes: `'transaction-detail' | 'wallets' | 'profile'`
-- Enhanced Transaction type with optional `linkedTransactionId`
-
-### State Management
-- Added `selectedTransactionId` state in App.tsx
-- Improved transaction refresh logic after saves
-- Better navigation state handling
-
-### File Structure
-- 20 files changed
-- 1,674 insertions, 270 deletions
-- New components properly organized in src structure
+- **New Filter Panel Component (`ReportFiltersSheet.tsx`)**: A new slide-in sheet was created to house the filtering options. It maintains a draft state, allowing users to make selections and only apply them upon confirmation. Changes are discarded if the panel is closed without applying.
+- **Reusable Multi-Select Dropdown (`MultiSelectDropdown.tsx`)**: A generic and reusable multi-select dropdown component with search functionality was developed to handle the selection of Jars and Wallets.
+- **Integration into Transaction History**: The new filter functionality has been integrated into the `TransactionHistory.tsx` page, allowing the transaction list to be updated in real-time based on the applied filters.
+- **State Persistence**: The selected filters are persisted within the component's state to be reapplied when the filter panel is reopened during the same session.
+- **Unit Testing**: Added comprehensive Vitest unit tests for the new `ReportFiltersSheet` component to cover user interactions like applying, clearing, and discarding filters.
+- **Documentation**: Updated `CHANGELOG.md` and `README.md` to reflect the addition of this new feature.
 
 # 📸 UI/UX Screenshots
-<!-- Please add screenshots showing:
-1. TransferForm with wallet selection
-2. Transaction detail view with linked transaction
-3. Updated transaction card display (without +/- prefix)
-4. Enhanced bottom navigation with wallet and profile icons
-5. Mobile and desktop responsive views
--->
+<!-- Add screenshots of the new filter panel in action on mobile and desktop -->
 
 # 🧪 Testing
 - [x] Start command: `npm run dev` working
 - [x] Build command: `npm run build` passing
-- [x] Unit tests added for TransactionCard component
-- [x] Unit tests added for transfer utilities
-- [x] Manual testing of transfer flow completed
-- [x] Transaction linking verified in both directions
 
 # 🚀 Migration/Deployment
-- [x] Environment variables updated (if needed)
-- [x] Dependencies installed
+- [ ] Environment variables updated
+- [ ] Dependencies installed
 
 ```bash
-# No special migration commands required
-# Standard installation:
-npm install
-npm run dev
+# No migration commands required
 ```
 
 # 🔗 Related Issues
-- Closes https://github.com/oatrice/JarWise-Root/issues/71
+- Closes https://github.com/oatrice/JarWise-Root/issues/68
+- Related to https://github.com/oatrice/JarWise-Root/issues/67
+- Related to https://github.com/oatrice/JarWise-Root/issues/59
 
 **Breaking Changes**: No
-
-**Migration Required**: No - All changes are additive and backward compatible with existing transaction data
+**Migration Required**: No
