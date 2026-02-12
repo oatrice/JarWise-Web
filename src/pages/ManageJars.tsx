@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Palette, Type, Percent, RotateCcw, Save, Check, Plus } from 'lucide-react';
 import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Briefcase, PiggyBank, type LucideIcon } from 'lucide-react';
 import { jars as initialJars, type Jar } from '../utils/generatedMockData';
+import ExpenseGraphMock from '../components/ExpenseGraphMock';
 
 // Available icons for selection
 const AVAILABLE_ICONS: { id: string; icon: LucideIcon; label: string }[] = [
@@ -265,6 +266,11 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
                                             >
                                                 Delete {jar.level === 0 ? 'Jar' : 'Category'}
                                             </button>
+                                        </div>
+
+                                        {/* Expense Graph Mock */}
+                                        <div className="mb-6">
+                                            <ExpenseGraphMock />
                                         </div>
 
                                         {/* Name Input */}
