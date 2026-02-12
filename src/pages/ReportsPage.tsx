@@ -225,7 +225,7 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                 </p>
             </div>
 
-            <BottomNav activePage="dashboard" onNavigate={(p) => onNavigate(p)} />
+            <BottomNav activePage="reports" onNavigate={(p) => onNavigate(p)} />
         </div>
     );
 }
