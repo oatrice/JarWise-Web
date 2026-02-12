@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Wallet as WalletIcon, FolderOpen, Trash2, X } from 'lucide-react';
+import ExpenseGraphMock from '../components/ExpenseGraphMock';
 
 import { wallets as initialWallets, type Wallet } from '../utils/generatedMockData';
 
@@ -201,6 +202,11 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
                                         >
                                             <Trash2 size={14} /> Delete
                                         </button>
+                                    </div>
+
+                                    {/* Mock Graph for Category Expenses */}
+                                    <div className="pt-4 border-t border-gray-700">
+                                        <ExpenseGraphMock />
                                     </div>
                                 </div>
                             </motion.div>

@@ -5,6 +5,7 @@ import AddTransaction from './pages/AddTransaction';
 import LoginScreen from './pages/LoginScreen';
 import TransactionDetail from './pages/TransactionDetail';
 import ManageWallets from './pages/ManageWallets';
+import SettingsOverlay from './pages/SettingsOverlay';
 import { saveTransaction, getTransactions, type Transaction } from './utils/transactionStorage';
 
 import MigrationUploadScreen from './pages/MigrationUploadScreen';
@@ -83,6 +84,12 @@ function App() {
       {currentPage === 'wallets' && (
         <ManageWallets
           onClose={() => navigateTo('dashboard')}
+        />
+      )}
+      {currentPage === 'profile' && (
+        <SettingsOverlay
+          onBack={() => navigateTo('dashboard')}
+          onNavigate={navigateTo}
         />
       )}
     </>
