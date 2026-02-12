@@ -11,6 +11,7 @@ ISSUE: {
 
 GIT CONTEXT:
 COMMITS:
+87b174e feat: [Feature] Report Filter: Multi-Select Categories &...
 c20c890 docs: update changelog and readme for v0.12.0 transaction filters
 5c31278 test: add unit tests for sub-transaction storage service
 feb4092 Document code_review.md per project
@@ -20,21 +21,22 @@ c8dcfa6 Wrap TransactionCard tests with USD
 STATS:
 CHANGELOG.md                                |   6 +
  README.md                                   |   3 +
- code_review.md                              |  69 ++---------
+ code_review.md                              |  69 +-
+ draft_pr_prompt.md                          | 966 +++++++++++++++-------------
  package.json                                |   2 +-
- src/__tests__/ReportFiltersSheet.test.tsx   | 186 ++++++++++++++++++++++++++++
- src/__tests__/TransactionCard.test.tsx      |  20 ++-
+ src/__tests__/ReportFiltersSheet.test.tsx   | 186 ++++++
+ src/__tests__/TransactionCard.test.tsx      |  20 +-
  src/__tests__/mockDataIntegration.test.ts   |   4 +-
- src/__tests__/subTransactionStorage.test.ts | 111 +++++++++++++++++
- src/__tests__/transactionValidation.test.ts |  13 ++
- src/components/MultiSelectDropdown.tsx      | 119 ++++++++++++++++++
- src/components/ReportFiltersSheet.tsx       | 123 ++++++++++++++++++
- src/components/TransactionCard.test.tsx     |  17 ++-
- src/pages/TransactionHistory.tsx            |  58 +++++++--
- src/setupTests.ts                           |  28 +++++
- src/utils/generatedMockData.ts              |  93 +++++---------
- src/utils/subTransactionStorage.ts          |  65 ++++++++++
- 16 files changed, 774 insertions(+), 143 deletions(-)
+ src/__tests__/subTransactionStorage.test.ts | 111 ++++
+ src/__tests__/transactionValidation.test.ts |  13 +
+ src/components/MultiSelectDropdown.tsx      | 119 ++++
+ src/components/ReportFiltersSheet.tsx       | 123 ++++
+ src/components/TransactionCard.test.tsx     |  17 +-
+ src/pages/TransactionHistory.tsx            |  58 +-
+ src/setupTests.ts                           |  28 +
+ src/utils/generatedMockData.ts              |  93 +--
+ src/utils/subTransactionStorage.ts          |  65 ++
+ 17 files changed, 1309 insertions(+), 574 deletions(-)
 
 KEY FILE DIFFS:
 diff --git a/src/__tests__/ReportFiltersSheet.test.tsx b/src/__tests__/ReportFiltersSheet.test.tsx
