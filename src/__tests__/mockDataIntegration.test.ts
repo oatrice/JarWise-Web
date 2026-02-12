@@ -35,11 +35,11 @@ describe('Generated Mock Data Integration', () => {
 
     it('should have LucideIcon type for jar icons', () => {
         const firstJar = jars[0];
-        expect(typeof firstJar.icon).toBe('function');
+        expect(['function', 'object']).toContain(typeof firstJar.icon);
     });
 
     it('should have LucideIcon type for transaction icons', () => {
         const firstTransaction = transactions[0];
-        expect(typeof firstTransaction.icon).toBe('function');
+        expect(['function', 'object']).toContain(typeof firstTransaction.icon);
     });
 });

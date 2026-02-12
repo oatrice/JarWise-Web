@@ -8,6 +8,7 @@
 
 
 
+
 This is the **Web Frontend** for the [JarWise Project](https://github.com/oatrice/JarWise-Root). It serves as the primary UI/UX playground and dashboard.
 
 ## 🎨 Design System & Tokens
@@ -26,6 +27,7 @@ This project uses a shared design token system managed in the **[JarWise-Root](h
 ## ✨ Features
 *   **Authentication**: Implemented login/logout flow and user management.
 *   **Transaction Management**: Add new transactions (expense, income, transfer) with date/wallet selection and validation. Includes a transaction detail view and transfer functionality.
+*   **Transaction Filtering**: Added filters to the transaction history page.
 *   **Currency Support**: Multi-currency display (THB, USD, EUR, GBP, JPY) with global context and persistence.
 *   **Mobile Parity**: Responsive Dashboard with mobile-specific header actions (Import Slip, Settings).
 *   **Mock Functionality**: Import Slip UI and Settings Overlay for mobile demonstration.
@@ -39,6 +41,7 @@ This project uses a shared design token system managed in the **[JarWise-Root](h
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.1.18-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-12.26.2-0055FF?style=for-the-badge&logo=framer&logoColor=white)
+
 
 
 

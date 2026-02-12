@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
+import { CurrencyProvider } from '../context/CurrencyContext';
+
+const renderWithProviders = (ui: React.ReactElement) =>
+    render(<CurrencyProvider>{ui}</CurrencyProvider>);
 
 // Mock getJarDetails
 vi.mock('../utils/constants', () => ({
@@ -23,8 +27,12 @@ describe('TransactionCard', () => {
         type: 'expense'
     };
 
+    beforeEach(() => {
+        localStorage.setItem('settings.currency', 'USD');
+    });
+
     it('renders Note as the main title', () => {
-        render(<TransactionCard transaction={mockTransaction} />);
+        renderWithProviders(<TransactionCard transaction={mockTransaction} />);
 
         // The title should be the Note ("Grocery Shopping")
         const title = screen.getByRole('heading', { level: 4 });
@@ -32,7 +40,7 @@ describe('TransactionCard', () => {
     });
 
     it('renders Jar Name as the subtitle when note exists', () => {
-        render(<TransactionCard transaction={mockTransaction} />);
+        renderWithProviders(<TransactionCard transaction={mockTransaction} />);
 
         // The Jar Name should be visible but NOT as the title
         expect(screen.getByText('Necessities')).toBeInTheDocument();
@@ -42,7 +50,7 @@ describe('TransactionCard', () => {
 
     it('renders Jar Name as title if note is empty', () => {
         const noNoteTransaction = { ...mockTransaction, note: '' };
-        render(<TransactionCard transaction={noNoteTransaction} />);
+        renderWithProviders(<TransactionCard transaction={noNoteTransaction} />);
 
         // Title should fallback to Jar Name
         const title = screen.getByRole('heading', { level: 4 });
@@ -51,7 +59,7 @@ describe('TransactionCard', () => {
 
     it('renders expense amount without - sign and in red', () => {
         const expenseTx = { ...mockTransaction, type: 'expense' as const, amount: 15.00 };
-        render(<TransactionCard transaction={expenseTx} />);
+        renderWithProviders(<TransactionCard transaction={expenseTx} />);
 
         // Should display $15.00, NOT -$15.00
         const amountText = screen.getByText('$15.00');
@@ -64,7 +72,7 @@ describe('TransactionCard', () => {
 
     it('renders income amount without + sign and in green', () => {
         const incomeTx = { ...mockTransaction, type: 'income' as const, amount: 500.00 };
-        render(<TransactionCard transaction={incomeTx} />);
+        renderWithProviders(<TransactionCard transaction={incomeTx} />);
 
         // Should display $500.00, NOT +$500.00
         const amountText = screen.getByText('$500.00');
