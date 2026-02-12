@@ -43,10 +43,13 @@ const ExpenseGraphMock: React.FC = () => {
                 {(['weekly', 'monthly', 'yearly'] as Period[]).map((p) => (
                     <button
                         key={p}
-                        onClick={() => setPeriod(p)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setPeriod(p);
+                        }}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 capitalize ${period === p
-                                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                             }`}
                     >
                         {p}
