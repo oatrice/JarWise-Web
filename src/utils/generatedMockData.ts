@@ -1,6 +1,6 @@
 // WARNING: This file is auto-generated. Do not edit directly.
 // Generated at: 2026-02-06T07:25:19.854Z
-import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Headphones, ShoppingBag, type LucideIcon } from 'lucide-react';
+import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Headphones, ShoppingBag, Wallet as WalletIcon, FolderOpen, type LucideIcon } from 'lucide-react';
 
 export type Allocation = {
     id: string;
