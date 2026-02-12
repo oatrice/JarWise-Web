@@ -112,7 +112,6 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
             barColor: 'bg-gray-400',
             shadowColor: 'shadow-[0_0_15px_rgba(156,163,175,0.3)]',
             bgGlow: 'bg-gray-400/20',
-            userId: 'user_123',
             level: 0,
             parentId: null, // Fix: Use null instead of undefined
             children: []
@@ -137,7 +136,6 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
             barColor: parent.barColor,
             shadowColor: parent.shadowColor,
             bgGlow: parent.bgGlow,
-            userId: 'user_123',
             level: (parent.level || 0) + 1,
             parentId: parentId,
             children: []
@@ -486,7 +484,7 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
 
                 {/* Jar List */}
                 <div className="max-w-2xl mx-auto px-4 pb-8 space-y-3">
-                    {buildTree(jars).map((jar, index) => renderJarItem(jar))}
+                    {buildTree(jars).map((jar) => renderJarItem(jar))}
 
                     {/* Add New Jar Button (Mock) */}
                     <button
