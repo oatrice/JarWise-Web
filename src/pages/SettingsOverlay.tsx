@@ -5,10 +5,12 @@ import type { CurrencyCode } from '../context/CurrencyContext';
 import SyncStatusIndicator from '../components/SyncStatusIndicator';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import type { SyncStatus } from '../hooks/useAuthMock';
+import BottomNav from '../components/BottomNav';
+import type { Page } from '../types/navigation';
 
 interface SettingsOverlayProps {
     onBack: () => void;
-    onNavigate: (page: any) => void;
+    onNavigate: (page: Page) => void;
     // Mock auth props
     isLoggedIn?: boolean;
     userName?: string;
@@ -106,7 +108,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
             </div>
 
             {/* Content */}
-            <div className="p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
 
                 {/* Profile Section (Google Login Mock) */}
                 {isLoggedIn && (
@@ -258,6 +260,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                     onLogout?.(true);
                 }}
             />
+            <BottomNav activePage="profile" onNavigate={onNavigate} />
         </div>
     );
 };

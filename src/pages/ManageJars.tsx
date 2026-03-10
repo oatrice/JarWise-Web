@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Palette, Type, Percent, RotateCcw, Save, Check, Plus } from 'lucide-react';
 import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Briefcase, PiggyBank, type LucideIcon } from 'lucide-react';
 import { jars as initialJars, type Jar } from '../utils/generatedMockData';
+import ExpenseGraphMock from '../components/ExpenseGraphMock';
 
 // Available icons for selection
 const AVAILABLE_ICONS: { id: string; icon: LucideIcon; label: string }[] = [
@@ -111,7 +112,6 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
             barColor: 'bg-gray-400',
             shadowColor: 'shadow-[0_0_15px_rgba(156,163,175,0.3)]',
             bgGlow: 'bg-gray-400/20',
-            userId: 'user_123',
             level: 0,
             parentId: null, // Fix: Use null instead of undefined
             children: []
@@ -136,7 +136,6 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
             barColor: parent.barColor,
             shadowColor: parent.shadowColor,
             bgGlow: parent.bgGlow,
-            userId: 'user_123',
             level: (parent.level || 0) + 1,
             parentId: parentId,
             children: []
@@ -265,6 +264,11 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
                                             >
                                                 Delete {jar.level === 0 ? 'Jar' : 'Category'}
                                             </button>
+                                        </div>
+
+                                        {/* Expense Graph Mock */}
+                                        <div className="mb-6">
+                                            <ExpenseGraphMock />
                                         </div>
 
                                         {/* Name Input */}
@@ -480,7 +484,7 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
 
                 {/* Jar List */}
                 <div className="max-w-2xl mx-auto px-4 pb-8 space-y-3">
-                    {buildTree(jars).map((jar, index) => renderJarItem(jar))}
+                    {buildTree(jars).map((jar) => renderJarItem(jar))}
 
                     {/* Add New Jar Button (Mock) */}
                     <button

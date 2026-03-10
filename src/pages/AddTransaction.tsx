@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Save, Wallet, AlertCircle, Loader2, ArrowRightLeft } from 'lucide-react';
+import { ArrowLeft, Save, Wallet, AlertCircle, Loader2 } from 'lucide-react';
 import { validateTransaction } from '../utils/validation';
 import type { ValidationResult } from '../utils/validation';
 import { saveTransfer, type Transaction } from '../utils/transactionStorage';

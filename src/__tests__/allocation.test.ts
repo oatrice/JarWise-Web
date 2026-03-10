@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { jars, type Allocation } from '../utils/generatedMockData';
+import { type LucideIcon } from 'lucide-react';
 
 // Mock data might change, so we test structure and type compliance
 describe('Allocation Hierarchy (Web)', () => {
@@ -33,7 +34,7 @@ describe('Allocation Hierarchy (Web)', () => {
             parentId: 'parent_1', // Valid according to type
             color: 'blue',
             bgGlow: 'bg-blue-500',
-            icon: {} as any, // Mock icon
+            icon: {} as LucideIcon, // Mock icon
             barColor: 'bg-blue-500',
             shadowColor: 'shadow-blue'
         };

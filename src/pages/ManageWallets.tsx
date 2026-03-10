@@ -202,6 +202,7 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
                                             <Trash2 size={14} /> Delete
                                         </button>
                                     </div>
+
                                 </div>
                             </motion.div>
                         )}
@@ -254,7 +255,7 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
     );
 }
 
-function AddWalletModal({ onClose, onAdd, wallets }: { onClose: () => void, onAdd: (w: any) => void, wallets: Wallet[] }) {
+function AddWalletModal({ onClose, onAdd, wallets }: { onClose: () => void, onAdd: (w: Omit<Wallet, 'id'>) => void, wallets: Wallet[] }) {
     const [name, setName] = useState("");
     const [parentId, setParentId] = useState("");
 

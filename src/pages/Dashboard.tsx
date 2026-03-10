@@ -12,8 +12,7 @@ import SettingsOverlay from './SettingsOverlay';
 import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
 import { useAuthMock } from '../hooks/useAuthMock'; // Moved import to top
-
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status'; // Updated Page type
+import type { Page } from '../types/navigation';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
 import { useScrollDirection } from '../hooks/useScrollDirection';
