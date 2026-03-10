@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { LayoutGrid, History, Plus, User, BarChart3 } from 'lucide-react';
-
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'wallets' | 'profile' | 'reports';
+import type { Page } from '../types/navigation';
 
 interface BottomNavProps {
     activePage: Page;

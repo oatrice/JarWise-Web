@@ -7,10 +7,11 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useCurrency } from '../context/CurrencyContext';
 import ReportFiltersSheet from '../components/ReportFiltersSheet';
 import { JARS, WALLETS } from '../utils/constants';
+import type { Page } from '../types/navigation';
 
 interface TransactionHistoryProps {
     onBack: () => void;
-    onNavigate: (page: 'dashboard' | 'history' | 'scan' | 'add-transaction') => void;
+    onNavigate: (page: Page) => void;
     transactions: Transaction[];
     onTransactionClick?: (id: string) => void;
 }

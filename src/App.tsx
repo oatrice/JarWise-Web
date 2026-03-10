@@ -11,8 +11,7 @@ import { saveTransaction, getTransactions, type Transaction } from './utils/tran
 import MigrationUploadScreen from './pages/MigrationUploadScreen';
 import MigrationStatusScreen from './pages/MigrationStatusScreen';
 import ReportsPage from './pages/ReportsPage';
-
-type Page = 'dashboard' | 'history' | 'scan' | 'add-transaction' | 'login' | 'migration-upload' | 'migration-status' | 'transaction-detail' | 'wallets' | 'profile' | 'reports';
+import type { Page } from './types/navigation';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('login');

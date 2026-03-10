@@ -6,10 +6,11 @@ import SyncStatusIndicator from '../components/SyncStatusIndicator';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import type { SyncStatus } from '../hooks/useAuthMock';
 import BottomNav from '../components/BottomNav';
+import type { Page } from '../types/navigation';
 
 interface SettingsOverlayProps {
     onBack: () => void;
-    onNavigate: (page: string) => void;
+    onNavigate: (page: Page) => void;
     // Mock auth props
     isLoggedIn?: boolean;
     userName?: string;

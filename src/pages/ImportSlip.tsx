@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, List, X, Check, Calendar, Wallet, Image as ImageIcon, FolderHeart, Smartphone } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
-import { saveTransaction } from '../utils/transactionStorage';
+import { saveTransaction, type Transaction } from '../utils/transactionStorage';
 
 interface ImportSlipProps {
     onBack: () => void;
@@ -90,7 +90,7 @@ const ImportSlip: React.FC<ImportSlipProps> = ({ onBack }) => {
                             <button
                                 onClick={() => {
                                     // Create transaction object
-                                    const newTransaction: Record<string, unknown> = {
+                                    const newTransaction: Transaction = {
                                         id: `tx-${Date.now()}`,
                                         amount: mockParsedData.amount,
                                         jarId: mockParsedData.jar.toLowerCase(), // simple mock mapping
@@ -163,7 +163,7 @@ const ImportSlip: React.FC<ImportSlipProps> = ({ onBack }) => {
 
                                 <button
                                     onClick={() => {
-                                        const draftTransaction: Record<string, unknown> = {
+                                        const draftTransaction: Transaction = {
                                             id: `draft-${selectedImage}`,
                                             amount: mockParsedData.amount,
                                             jarId: mockParsedData.jar.toLowerCase(),
