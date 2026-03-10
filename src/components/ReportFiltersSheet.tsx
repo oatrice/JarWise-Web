@@ -25,16 +25,13 @@ export default function ReportFiltersSheet({
     const [draftJarIds, setDraftJarIds] = useState<string[]>(selectedJarIds);
     const [draftWalletIds, setDraftWalletIds] = useState<string[]>(selectedWalletIds);
 
+    // Synchronize draft state only when the sheet is opened
     useEffect(() => {
         if (open) {
-            if (JSON.stringify(draftJarIds) !== JSON.stringify(selectedJarIds)) {
-                setDraftJarIds(selectedJarIds);
-            }
-            if (JSON.stringify(draftWalletIds) !== JSON.stringify(selectedWalletIds)) {
-                setDraftWalletIds(selectedWalletIds);
-            }
+            setDraftJarIds(selectedJarIds);
+            setDraftWalletIds(selectedWalletIds);
         }
-    }, [open, selectedJarIds, selectedWalletIds, draftJarIds, draftWalletIds]);
+    }, [open, selectedJarIds, selectedWalletIds]);
 
     const handleClear = () => {
         setDraftJarIds([]);
