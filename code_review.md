@@ -1,19 +1,47 @@
 # Luma Code Review Report
 
-**Date:** 2026-02-11 22:54:03
-**Files Reviewed:** ['src/utils/generatedMockData.ts', 'src/__tests__/transactionValidation.test.ts', 'src/utils/subTransactionStorage.ts', 'code_review.md', 'src/__tests__/mockDataIntegration.test.ts', 'src/pages/TransactionHistory.tsx', 'src/__tests__/subTransactionStorage.test.ts', 'src/setupTests.ts', 'src/components/TransactionCard.test.tsx', 'src/components/MultiSelectDropdown.tsx', 'src/__tests__/ReportFiltersSheet.test.tsx', 'src/__tests__/TransactionCard.test.tsx', 'src/components/ReportFiltersSheet.tsx']
+**Date:** 2026-03-10 11:19:15
+**Files Reviewed:** ['src/App.tsx', 'src/pages/SettingsOverlay.tsx', 'src/pages/ReportsPage.tsx', 'code_review.md', 'package-lock.json', 'package.json', 'src/pages/ManageJars.tsx', 'src/utils/generatedMockData.ts', 'src/components/BottomNav.tsx', 'src/components/ExpenseGraphMock.tsx', 'src/pages/ManageWallets.tsx']
 
 ## 📝 Reviewer Feedback
 
-PASS
+ในไฟล์ `src/pages/ManageWallets.tsx` ที่คอมโพเนนต์ `AddWalletModal` มีข้อผิดพลาดด้าน Logic และทำให้เกิดประสบการณ์การใช้งานที่ไม่ดี
+
+**ปัญหา:**
+
+dropdown สำหรับเลือก Parent Wallet แสดง Wallet ทั้งหมดให้ผู้ใช้เลือก แม้ว่า Wallet บางอันจะไม่สามารถเป็น Parent ได้ (เนื่องจากมี level เกินที่กำหนดไว้คือ level 2) ระบบจะแจ้งเตือนผู้ใช้ด้วย `alert()` ก็ต่อเมื่อพยายามจะบันทึกแล้วเท่านั้น ซึ่งเป็นประสบการณ์ที่ไม่ดี
+
+**วิธีการแก้ไข:**
+
+ควรปรับปรุงโดยการกรองรายชื่อ Wallet ใน dropdown ให้แสดงเฉพาะ Wallet ที่สามารถเป็น Parent ได้เท่านั้น (คือ Wallet ที่มี `level < 2`) เพื่อป้องกันไม่ให้ผู้ใช้เลือกตัวเลือกที่ผิดตั้งแต่แรก
+
+เปลี่ยนจาก:
+```tsx
+<select
+    className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+    value={parentId}
+    onChange={e => setParentId(e.target.value)}
+>
+    <option value="">No Parent</option>
+    {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+</select>
+```
+
+เป็น:
+```tsx
+<select
+    className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+    value={parentId}
+    onChange={e => setParentId(e.target.value)}
+>
+    <option value="">No Parent</option>
+    {wallets.filter(w => w.level < 2).map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+</select>
+```
 
 ## 🧪 Test Suggestions
 
-Based on the introduction of `level` and `parentId` in the `Allocation` type, which implies a hierarchical or tree-like data structure, here are 3 critical edge case test cases:
+สวัสดีครับ เพื่อที่จะวิเคราะห์การเปลี่ยนแปลงของโค้ดและเขียน "Manual Verification Guide" ให้ได้นั้น ผมต้องการข้อมูลโค้ดที่มีการเปลี่ยนแปลงซึ่งยังไม่ได้ระบุไว้ในคำสั่งครับ
 
-*   **Circular Dependency:** Create a scenario where an allocation is its own ancestor (e.g., Allocation 'A' has parent 'B', and 'B' has parent 'A'). The application should handle this gracefully without crashing or entering an infinite loop during rendering or data processing.
-
-*   **Orphaned Allocation:** Test the system's behavior with an allocation that has a `parentId` pointing to a non-existent ID. The application should not crash and should handle the orphan item predictably, for instance, by treating it as a top-level item or by not rendering it at all.
-
-*   **Deeply Nested Allocations:** Verify the system's performance and UI integrity when handling a deeply nested structure (e.g., 5+ levels of parent-child relationships). This tests for potential recursion limits, performance degradation, and visual layout issues with excessive indentation.
+กรุณาแนบโค้ดส่วนที่มีการเปลี่ยนแปลงมาเพื่อให้ผมดำเนินการต่อได้ครับ
 
