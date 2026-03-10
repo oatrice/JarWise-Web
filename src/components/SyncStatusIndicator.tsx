@@ -17,7 +17,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ status, lastB
                     color: 'text-blue-400',
                     bgColor: 'bg-blue-500/10',
                 };
-            case 'success':
+            case 'success': {
                 const timeAgo = lastBackupTime ? getTimeAgo(lastBackupTime) : 'Unknown';
                 return {
                     icon: <Check size={16} />,
@@ -25,6 +25,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ status, lastB
                     color: 'text-green-400',
                     bgColor: 'bg-green-500/10',
                 };
+            }
             case 'error':
                 return {
                     icon: <AlertCircle size={16} />,

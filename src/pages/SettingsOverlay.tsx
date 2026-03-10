@@ -9,7 +9,7 @@ import BottomNav from '../components/BottomNav';
 
 interface SettingsOverlayProps {
     onBack: () => void;
-    onNavigate: (page: any) => void;
+    onNavigate: (page: string) => void;
     // Mock auth props
     isLoggedIn?: boolean;
     userName?: string;

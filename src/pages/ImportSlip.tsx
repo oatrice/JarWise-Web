@@ -90,7 +90,7 @@ const ImportSlip: React.FC<ImportSlipProps> = ({ onBack }) => {
                             <button
                                 onClick={() => {
                                     // Create transaction object
-                                    const newTransaction: any = {
+                                    const newTransaction: Record<string, unknown> = {
                                         id: `tx-${Date.now()}`,
                                         amount: mockParsedData.amount,
                                         jarId: mockParsedData.jar.toLowerCase(), // simple mock mapping
@@ -163,7 +163,7 @@ const ImportSlip: React.FC<ImportSlipProps> = ({ onBack }) => {
 
                                 <button
                                     onClick={() => {
-                                        const draftTransaction: any = {
+                                        const draftTransaction: Record<string, unknown> = {
                                             id: `draft-${selectedImage}`,
                                             amount: mockParsedData.amount,
                                             jarId: mockParsedData.jar.toLowerCase(),

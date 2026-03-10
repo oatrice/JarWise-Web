@@ -27,10 +27,14 @@ export default function ReportFiltersSheet({
 
     useEffect(() => {
         if (open) {
-            setDraftJarIds(selectedJarIds);
-            setDraftWalletIds(selectedWalletIds);
+            if (JSON.stringify(draftJarIds) !== JSON.stringify(selectedJarIds)) {
+                setDraftJarIds(selectedJarIds);
+            }
+            if (JSON.stringify(draftWalletIds) !== JSON.stringify(selectedWalletIds)) {
+                setDraftWalletIds(selectedWalletIds);
+            }
         }
-    }, [open, selectedJarIds, selectedWalletIds]);
+    }, [open, selectedJarIds, selectedWalletIds, draftJarIds, draftWalletIds]);
 
     const handleClear = () => {
         setDraftJarIds([]);
