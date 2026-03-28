@@ -118,6 +118,14 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     const formatCurrency = (value: number) =>
         `฿${value.toLocaleString('th-TH')}`;
 
+    const rangeLabels: Record<DateRange, string> = {
+        month: 'เดือน',
+        quarter: 'ไตรมาส',
+        year: 'ปี',
+        all: 'ภาพรวมการเงินทั้งหมด',
+        custom: 'ช่วงเวลาก่อนหน้านี้'
+    };
+
     const getDaysSelected = () => {
         if (dateRange !== 'custom' || !customStart || !customEnd) return null;
         const start = new Date(customStart);
@@ -320,9 +328,9 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                 </ResponsiveContainer>
                             </div>
 
-                            {/* Jar Distribution (Pie) */}
+                            {/* Category Distribution (Pie) */}
                             <div className="bg-gray-900/60 rounded-2xl p-4 border border-gray-800/60">
-                                <h3 className="text-sm font-semibold text-gray-300 mb-4">🏺 รายจ่ายรวมรายโถ (Distribution)</h3>
+                                <h3 className="text-sm font-semibold text-gray-300 mb-4">🏺 สัดส่วนรายจ่ายตามหมวดหมู่ (Distribution)</h3>
                                 <div className="flex items-center gap-4">
                                     <ResponsiveContainer width="50%" height={180}>
                                         <PieChart>
@@ -354,7 +362,9 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                             {data.comparison && (
                                 <div className="bg-gradient-to-br from-indigo-900/20 to-gray-900/60 rounded-2xl p-4 border border-indigo-500/10">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-sm font-semibold text-gray-300">⚖️ เปรียบเทียบกับเดือนก่อน</h3>
+                                        <h3 className="text-sm font-semibold text-gray-300">
+                                            {dateRange === 'all' ? `📊 ${rangeLabels[dateRange]}` : `⚖️ เปรียบเทียบกับ${rangeLabels[dateRange]}${dateRange === 'custom' ? '' : 'ก่อนหน้า'}`}
+                                        </h3>
                                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${pctChange > 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                                             รายจ่าย {pctChange > 0 ? '↑' : '↓'} {Math.abs(pctChange).toFixed(1)}%
                                         </span>
@@ -369,8 +379,8 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                             <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <YAxis hide />
                                             <Tooltip cursor={{ fill: '#37415120' }} formatter={(v?: number) => formatCurrency(v ?? 0)} />
-                                            <Bar dataKey="current" fill="#6366f1" radius={[4, 4, 0, 0]} name={dateRange === 'month' ? "เดือนนี้" : "ช่วงนี้"} />
-                                            <Bar dataKey="previous" fill="#4b5563" radius={[4, 4, 0, 0]} name={dateRange === 'month' ? "เดือนก่อน" : "ก่อนหน้า"} />
+                                            <Bar dataKey="current" fill="#6366f1" radius={[4, 4, 0, 0]} name={`${rangeLabels[dateRange]}นี้/ช่วงนี้`} />
+                                            <Bar dataKey="previous" fill="#4b5563" radius={[4, 4, 0, 0]} name={`${rangeLabels[dateRange]}ก่อน`} />
                                             <Legend wrapperStyle={{ fontSize: 11 }} />
                                         </BarChart>
                                     </ResponsiveContainer>
