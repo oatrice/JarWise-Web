@@ -147,9 +147,29 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         fetchReport('custom', startStr, endStr);
     };
 
-    const pctChange = data?.comparison?.previous?.expense && data.comparison.previous.expense > 0
-        ? ((data.comparison.current.expense - data.comparison.previous.expense) / data.comparison.previous.expense * 100)
-        : (data?.comparison?.current?.expense && data.comparison.current.expense > 0 ? 100 : 0);
+    const getPct = (curr: number, prev: number) => {
+        if (!prev || prev === 0) return curr > 0 ? 100 : 0;
+        return ((curr - prev) / prev) * 100;
+    };
+
+    const incomePct = data?.comparison ? getPct(data.comparison.current.income, data.comparison.previous.income) : 0;
+    const expensePct = data?.comparison ? getPct(data.comparison.current.expense, data.comparison.previous.expense) : 0;
+    const netPct = data?.comparison ? getPct(data.comparison.current.net, data.comparison.previous.net) : 0;
+
+    const [metricIdx, setMetricIdx] = useState(0);
+    const metrics = [
+        { label: 'รายรับ', pct: incomePct, inverse: false },
+        { label: 'รายจ่าย', pct: expensePct, inverse: true },
+        { label: 'คงเหลือ', pct: netPct, inverse: false }
+    ];
+
+    useEffect(() => {
+        if (!data?.comparison) return;
+        const timer = setInterval(() => {
+            setMetricIdx((prev) => (prev + 1) % metrics.length);
+        }, 3000);
+        return () => clearInterval(timer);
+    }, [data?.comparison, metrics.length]);
 
     return (
         <div className="min-h-screen bg-gray-950 text-white pb-28">
@@ -365,9 +385,23 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                         <h3 className="text-sm font-semibold text-gray-300">
                                             {dateRange === 'all' ? `📊 ${rangeLabels[dateRange]}` : `⚖️ เปรียบเทียบกับ${rangeLabels[dateRange]}${dateRange === 'custom' ? '' : 'ก่อนหน้า'}`}
                                         </h3>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${pctChange > 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
-                                            รายจ่าย {pctChange > 0 ? '↑' : '↓'} {Math.abs(pctChange).toFixed(1)}%
-                                        </span>
+                                        <div className="h-6 overflow-hidden relative min-w-[100px] flex justify-end">
+                                            <AnimatePresence mode="wait">
+                                                <motion.div
+                                                    key={metricIdx}
+                                                    initial={{ y: 10, opacity: 0 }}
+                                                    animate={{ y: 0, opacity: 1 }}
+                                                    exit={{ y: -10, opacity: 0 }}
+                                                    transition={{ duration: 0.3 }}
+                                                >
+                                                    <Badge 
+                                                        label={metrics[metricIdx].label} 
+                                                        pct={metrics[metricIdx].pct} 
+                                                        inverse={metrics[metricIdx].inverse} 
+                                                    />
+                                                </motion.div>
+                                            </AnimatePresence>
+                                        </div>
                                     </div>
                                     <ResponsiveContainer width="100%" height={180}>
                                         <BarChart data={[
@@ -379,8 +413,8 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                             <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <YAxis hide />
                                             <Tooltip cursor={{ fill: '#37415120' }} formatter={(v?: number) => formatCurrency(v ?? 0)} />
+                                            <Bar dataKey="previous" fill="#4b5563" radius={[4, 4, 0, 0]} name={`${rangeLabels[dateRange]}ก่อนหน้า`} />
                                             <Bar dataKey="current" fill="#6366f1" radius={[4, 4, 0, 0]} name={`${rangeLabels[dateRange]}นี้/ช่วงนี้`} />
-                                            <Bar dataKey="previous" fill="#4b5563" radius={[4, 4, 0, 0]} name={`${rangeLabels[dateRange]}ก่อน`} />
                                             <Legend wrapperStyle={{ fontSize: 11 }} />
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -418,6 +452,21 @@ function SummaryCard({ label, value, color, icon }: {
             <p className={`text-base font-bold ${c.text} mt-0.5`}>
                 ฿{(value / 1000).toFixed(1)}k
             </p>
+        </div>
+    );
+}
+
+function Badge({ label, pct, inverse }: { label: string; pct: number; inverse: boolean }) {
+    const isGood = inverse ? pct < 0 : pct > 0;
+    const colorClass = isGood 
+        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+        : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+    return (
+        <div className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${colorClass} flex items-center gap-1 shadow-sm shadow-black/20`}>
+            <span className="opacity-80 font-medium">{label}</span>
+            <span className="font-black text-[9px] mb-0.5">{pct > 0 ? '↑' : '↓'}</span>
+            <span>{Math.abs(pct).toFixed(1)}%</span>
         </div>
     );
 }
