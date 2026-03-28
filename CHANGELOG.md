@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.14.0] - 2026-03-28
+
+### Added
+- ✨ feat(reports): Enhance reports page with new charts and UI
+- feat: add rotating metric comparison with animations
+- feat(reports): Add dynamic date range labels for reports
+- ✨ feat(reports): Enhance date range selection
+- feat(reports): add all and custom date range options
+
+### Changed
+- refactor: reorganize ReportsPage.tsx for better readability and error handling
+- chore(api): update API base port to 8081 and add test
+- chore: bump version to 0.13.0
+
 ## [0.13.0] - 2026-03-10
 ### Added
 - **การแสดงผลข้อมูล**: เพิ่มกราฟสรุปค่าใช้จ่ายในหน้า Wallet เพื่อให้ผู้ใช้เห็นภาพรวมทางการเงินได้ง่ายขึ้น พร้อมตัวเลือกสำหรับดูข้อมูลตามช่วงเวลา
