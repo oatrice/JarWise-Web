@@ -10,7 +10,7 @@ import BottomNav from '../components/BottomNav';
 const API_BASE = 'http://localhost:8081/api/v1';
 const PIE_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#60a5fa', '#93c5fd'];
 
-type DateRange = 'month' | 'quarter' | 'year';
+type DateRange = 'month' | 'quarter' | 'year' | 'all' | 'custom';
 
 interface ReportData {
     summary: { income: number; expense: number; net: number };
@@ -30,13 +30,16 @@ interface ReportsPageProps {
 
 export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     const [dateRange, setDateRange] = useState<DateRange>('month');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
     const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchReport = async (range: DateRange) => {
+    const fetchReport = async (range: DateRange, startOverride?: string, endOverride?: string) => {
         setLoading(true);
         const now = new Date();
         let start = new Date();
+        let end = now;
         
         if (range === 'month') {
             start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -44,11 +47,16 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             start = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
         } else if (range === 'year') {
             start = new Date(now.getFullYear(), 0, 1);
+        } else if (range === 'all') {
+            start = new Date(2000, 0, 1);
+        } else if (range === 'custom' && startOverride && endOverride) {
+            start = new Date(startOverride);
+            end = new Date(endOverride);
         }
 
         const params = new URLSearchParams({
             start_date: start.toISOString(),
-            end_date: now.toISOString(),
+            end_date: end.toISOString(),
         });
 
         try {
@@ -65,6 +73,7 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     const handleExport = async () => {
         const now = new Date();
         let start = new Date();
+        let end = now;
         
         if (dateRange === 'month') {
             start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -72,11 +81,16 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             start = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
         } else if (dateRange === 'year') {
             start = new Date(now.getFullYear(), 0, 1);
+        } else if (dateRange === 'all') {
+            start = new Date(2000, 0, 1);
+        } else if (dateRange === 'custom' && customStart && customEnd) {
+            start = new Date(customStart);
+            end = new Date(customEnd);
         }
 
         const params = new URLSearchParams({
             start_date: start.toISOString(),
-            end_date: now.toISOString(),
+            end_date: end.toISOString(),
         });
 
         try {
@@ -96,7 +110,9 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     };
 
     useEffect(() => {
-        fetchReport(dateRange);
+        if (dateRange !== 'custom') {
+            fetchReport(dateRange);
+        }
     }, [dateRange]);
 
     const formatCurrency = (value: number) =>
@@ -128,20 +144,61 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
 
             <div className="max-w-2xl mx-auto px-4 py-4 space-y-5">
                 {/* Date Range Picker */}
-                <div className="flex gap-2 bg-gray-900/60 p-1 rounded-xl border border-gray-800/60">
-                    {([['month', 'เดือน'], ['quarter', 'ไตรมาส'], ['year', 'ปี']] as [DateRange, string][]).map(([key, label]) => (
-                        <button
-                            key={key}
-                            onClick={() => setDateRange(key)}
-                            disabled={loading}
-                            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${dateRange === key
-                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                : 'text-gray-400 hover:text-gray-200 disabled:opacity-50'
-                                }`}
+                <div className="space-y-3">
+                    <div className="flex gap-2 bg-gray-900/60 p-1 rounded-xl border border-gray-800/60">
+                        {([['month', 'เดือน'], ['quarter', 'ไตรมาส'], ['year', 'ปี'], ['all', 'ทั้งหมด'], ['custom', 'กำหนดเอง']] as [DateRange, string][]).map(([key, label]) => (
+                            <button
+                                key={key}
+                                onClick={() => {
+                                    setDateRange(key);
+                                    if (key !== 'custom') {
+                                        fetchReport(key);
+                                    }
+                                }}
+                                disabled={loading}
+                                className={`flex-1 py-2 text-[11px] font-medium rounded-lg transition-all duration-200 ${dateRange === key
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                    : 'text-gray-400 hover:text-gray-200 disabled:opacity-50'
+                                    }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {dateRange === 'custom' && (
+                        <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            className="flex gap-2 items-end bg-gray-900/40 p-3 rounded-xl border border-gray-800/60"
                         >
-                            {label}
-                        </button>
-                    ))}
+                            <div className="flex-1 space-y-1">
+                                <label className="text-[10px] text-gray-500 uppercase">เริ่มต้น</label>
+                                <input 
+                                    type="date" 
+                                    value={customStart}
+                                    onChange={(e) => setCustomStart(e.target.value)}
+                                    className="w-full bg-gray-800 border-none rounded-lg text-sm text-gray-200 px-3 py-2 outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                                <label className="text-[10px] text-gray-500 uppercase">สิ้นสุด</label>
+                                <input 
+                                    type="date" 
+                                    value={customEnd}
+                                    onChange={(e) => setCustomEnd(e.target.value)}
+                                    className="w-full bg-gray-800 border-none rounded-lg text-sm text-gray-200 px-3 py-2 outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <button 
+                                onClick={() => fetchReport('custom', customStart, customEnd)}
+                                disabled={!customStart || !customEnd || loading}
+                                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 text-white p-2.5 rounded-lg transition-colors"
+                            >
+                                <TrendingUp size={16} />
+                            </button>
+                        </motion.div>
+                    )}
                 </div>
 
                 <AnimatePresence mode="wait">
