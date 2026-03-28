@@ -4,7 +4,7 @@ import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2, Download } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2, Download, Search } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 
 const API_BASE = 'http://localhost:8081/api/v1';
@@ -118,6 +118,27 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     const formatCurrency = (value: number) =>
         `฿${value.toLocaleString('th-TH')}`;
 
+    const getDaysSelected = () => {
+        if (dateRange !== 'custom' || !customStart || !customEnd) return null;
+        const start = new Date(customStart);
+        const end = new Date(customEnd);
+        const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        return diff >= 0 ? diff : null;
+    };
+
+    const daysSelected = getDaysSelected();
+
+    const setQuickRange = (days: number) => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - days);
+        const startStr = start.toISOString().split('T')[0];
+        const endStr = end.toISOString().split('T')[0];
+        setCustomStart(startStr);
+        setCustomEnd(endStr);
+        fetchReport('custom', startStr, endStr);
+    };
+
     const pctChange = data?.comparison?.previous?.expense && data.comparison.previous.expense > 0
         ? ((data.comparison.current.expense - data.comparison.previous.expense) / data.comparison.previous.expense * 100)
         : (data?.comparison?.current?.expense && data.comparison.current.expense > 0 ? 100 : 0);
@@ -143,9 +164,9 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             </div>
 
             <div className="max-w-2xl mx-auto px-4 py-4 space-y-5">
-                {/* Date Range Picker */}
-                <div className="space-y-3">
-                    <div className="flex gap-2 bg-gray-900/60 p-1 rounded-xl border border-gray-800/60">
+                {/* Date Range Picker - Premium Segmented Control */}
+                <div className="space-y-4">
+                    <div className="relative flex bg-gray-900/40 p-1.5 rounded-2xl border border-gray-800/60 backdrop-blur-md">
                         {([['month', 'เดือน'], ['quarter', 'ไตรมาส'], ['year', 'ปี'], ['all', 'ทั้งหมด'], ['custom', 'กำหนดเอง']] as [DateRange, string][]).map(([key, label]) => (
                             <button
                                 key={key}
@@ -156,47 +177,80 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                     }
                                 }}
                                 disabled={loading}
-                                className={`flex-1 py-2 text-[11px] font-medium rounded-lg transition-all duration-200 ${dateRange === key
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                    : 'text-gray-400 hover:text-gray-200 disabled:opacity-50'
-                                    }`}
+                                className={`relative flex-1 py-2 text-[11px] font-semibold rounded-xl transition-colors duration-300 z-10 ${dateRange === key ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                             >
-                                {label}
+                                {dateRange === key && (
+                                    <motion.div
+                                        layoutId="activeRange"
+                                        className="absolute inset-0 bg-indigo-600 shadow-md shadow-indigo-600/20 rounded-xl"
+                                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <span className="relative z-20">{label}</span>
                             </button>
                         ))}
                     </div>
 
                     {dateRange === 'custom' && (
                         <motion.div 
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            className="flex gap-2 items-end bg-gray-900/40 p-3 rounded-xl border border-gray-800/60"
+                            initial={{ height: 0, opacity: 0, y: -10 }}
+                            animate={{ height: 'auto', opacity: 1, y: 0 }}
+                            className="space-y-4 pt-2"
                         >
-                            <div className="flex-1 space-y-1">
-                                <label className="text-[10px] text-gray-500 uppercase">เริ่มต้น</label>
-                                <input 
-                                    type="date" 
-                                    value={customStart}
-                                    onChange={(e) => setCustomStart(e.target.value)}
-                                    className="w-full bg-gray-800 border-none rounded-lg text-sm text-gray-200 px-3 py-2 outline-none focus:ring-1 focus:ring-indigo-500"
-                                />
+                            {/* Quick Presets */}
+                            <div className="flex gap-2">
+                                {[
+                                    { days: 7, label: '7 วันล่าสุด' },
+                                    { days: 30, label: '30 วันล่าสุด' },
+                                    { days: 90, label: '90 วันล่าสุด' }
+                                ].map((p) => (
+                                    <button
+                                        key={p.days}
+                                        onClick={() => setQuickRange(p.days)}
+                                        className="px-3 py-1.5 text-[10px] bg-gray-900/60 border border-gray-800/60 rounded-full text-gray-400 hover:text-white hover:border-indigo-500/50 transition-all"
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
                             </div>
-                            <div className="flex-1 space-y-1">
-                                <label className="text-[10px] text-gray-500 uppercase">สิ้นสุด</label>
-                                <input 
-                                    type="date" 
-                                    value={customEnd}
-                                    onChange={(e) => setCustomEnd(e.target.value)}
-                                    className="w-full bg-gray-800 border-none rounded-lg text-sm text-gray-200 px-3 py-2 outline-none focus:ring-1 focus:ring-indigo-500"
-                                />
+
+                            <div className="flex gap-3 items-end bg-gray-900/20 p-4 rounded-2xl border border-gray-800/40">
+                                <div className="flex-1 space-y-2">
+                                    <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1">เริ่มต้น</label>
+                                    <input 
+                                        type="date" 
+                                        value={customStart}
+                                        onChange={(e) => setCustomStart(e.target.value)}
+                                        className="w-full bg-gray-950/50 border border-gray-800/60 rounded-xl text-sm text-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-600 transition-all"
+                                    />
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-1">สิ้นสุด</label>
+                                    <input 
+                                        type="date" 
+                                        value={customEnd}
+                                        onChange={(e) => setCustomEnd(e.target.value)}
+                                        className="w-full bg-gray-950/50 border border-gray-800/60 rounded-xl text-sm text-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-600 transition-all"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={() => fetchReport('custom', customStart, customEnd)}
+                                    disabled={!customStart || !customEnd || loading}
+                                    className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 text-white p-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="animate-spin" size={18} />
+                                    ) : (
+                                        <Search size={18} />
+                                    )}
+                                </button>
                             </div>
-                            <button 
-                                onClick={() => fetchReport('custom', customStart, customEnd)}
-                                disabled={!customStart || !customEnd || loading}
-                                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 text-white p-2.5 rounded-lg transition-colors"
-                            >
-                                <TrendingUp size={16} />
-                            </button>
+
+                            {daysSelected !== null && (
+                                <p className="text-[11px] text-indigo-400/80 font-medium text-center italic">
+                                    ✨ เลือกช่วงเวลาแล้วทั้งหมด {daysSelected + 1} วัน
+                                </p>
+                            )}
                         </motion.div>
                     )}
                 </div>
