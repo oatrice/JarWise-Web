@@ -7,7 +7,7 @@ import {
 import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2 } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = 'http://localhost:8081/api/v1';
 const PIE_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#60a5fa', '#93c5fd'];
 
 type DateRange = 'month' | 'quarter' | 'year';
