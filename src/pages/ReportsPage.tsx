@@ -15,8 +15,8 @@ type DateRange = 'month' | 'quarter' | 'year';
 interface ReportData {
     summary: { income: number; expense: number; net: number };
     trend: Array<{ date: string; income: number; expense: number }>;
-    by_category: Array<{ id: string; name: string; income: number; expense: number; amount: number }>;
-    by_jar: Array<{ id: string; name: string; income: number; expense: number; amount: number }>;
+    by_category: Array<{ id: string; name: string; income: number; expense: number; amount: number; prev_expense: number }>;
+    by_jar: Array<{ id: string; name: string; income: number; expense: number; amount: number; prev_expense: number }>;
     comparison?: {
         current: { income: number; expense: number; net: number };
         previous: { income: number; expense: number; net: number };
@@ -69,9 +69,9 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     const formatCurrency = (value: number) =>
         `฿${value.toLocaleString('th-TH')}`;
 
-    const pctChange = data?.comparison
-        ? ((data.comparison.current.expense - data.comparison.previous.expense) / (data.comparison.previous.expense || 1) * 100)
-        : 0;
+    const pctChange = data?.comparison?.previous?.expense && data.comparison.previous.expense > 0
+        ? ((data.comparison.current.expense - data.comparison.previous.expense) / data.comparison.previous.expense * 100)
+        : (data?.comparison?.current?.expense && data.comparison.current.expense > 0 ? 100 : 0);
 
     return (
         <div className="min-h-screen bg-gray-950 text-white pb-28">
@@ -163,6 +163,7 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                         />
                                         <Bar dataKey="income" fill="#10b981" radius={[0, 4, 4, 0]} name="รายรับ" />
                                         <Bar dataKey="expense" fill="#f43f5e" radius={[0, 4, 4, 0]} name="รายจ่าย" />
+                                        <Bar dataKey="prev_expense" fill="#94a3b8" radius={[0, 4, 4, 0]} name="รายจ่ายเดือนก่อน" />
                                         <Legend />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -202,7 +203,7 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                             {data.comparison && (
                                 <div className="bg-gradient-to-br from-indigo-900/20 to-gray-900/60 rounded-2xl p-4 border border-indigo-500/10">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-sm font-semibold text-gray-300">⚖️ เทียบกับช่วงเวลาก่อนหน้า</h3>
+                                        <h3 className="text-sm font-semibold text-gray-300">⚖️ เปรียบเทียบกับเดือนก่อน</h3>
                                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${pctChange > 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                                             รายจ่าย {pctChange > 0 ? '↑' : '↓'} {Math.abs(pctChange).toFixed(1)}%
                                         </span>
@@ -217,8 +218,8 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                                             <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <YAxis hide />
                                             <Tooltip cursor={{ fill: '#37415120' }} formatter={(v?: number) => formatCurrency(v ?? 0)} />
-                                            <Bar dataKey="current" fill="#6366f1" radius={[4, 4, 0, 0]} name="ช่วงนี้" />
-                                            <Bar dataKey="previous" fill="#4b5563" radius={[4, 4, 0, 0]} name="ก่อนหน้า" />
+                                            <Bar dataKey="current" fill="#6366f1" radius={[4, 4, 0, 0]} name={dateRange === 'month' ? "เดือนนี้" : "ช่วงนี้"} />
+                                            <Bar dataKey="previous" fill="#4b5563" radius={[4, 4, 0, 0]} name={dateRange === 'month' ? "เดือนก่อน" : "ก่อนหน้า"} />
                                             <Legend wrapperStyle={{ fontSize: 11 }} />
                                         </BarChart>
                                     </ResponsiveContainer>
