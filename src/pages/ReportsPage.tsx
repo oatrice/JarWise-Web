@@ -8,15 +8,18 @@ import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2, Download, Search 
 import BottomNav from '../components/BottomNav';
 
 const API_BASE = 'http://localhost:8081/api/v1';
-const PIE_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#60a5fa', '#93c5fd'];
+const formatCurrency = (value: number, decimals: number = 2) =>
+    `฿${value.toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 
-const formatCurrency = (value: number, decimals: number = 0) =>
-    new Intl.NumberFormat('th-TH', {
-        style: 'currency',
-        currency: 'THB',
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(value);
+const rangeLabels: Record<DateRange, string> = {
+    month: 'เดือน',
+    quarter: 'ไตรมาส',
+    year: 'ปี',
+    all: 'ภาพรวมการเงินทั้งหมด',
+    custom: 'ช่วงเวลาก่อนหน้านี้'
+};
+
+const PIE_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#60a5fa', '#93c5fd'];
 
 type DateRange = 'month' | 'quarter' | 'year' | 'all' | 'custom';
 
@@ -42,6 +45,7 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     const [customEnd, setCustomEnd] = useState('');
     const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchReport = async (range: DateRange, startOverride?: string, endOverride?: string) => {
         setLoading(true);
@@ -68,11 +72,14 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         });
 
         try {
+            setError(null);
             const res = await fetch(`${API_BASE}/reports?${params}`);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const result = await res.json();
             setData(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to fetch report:', err);
+            setError(err.message || 'ไม่สามารถโหลดข้อมูลรายงานได้');
         } finally {
             setLoading(false);
         }
@@ -123,16 +130,6 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         }
     }, [dateRange]);
 
-    const formatCurrency = (value: number, decimals: number = 0) =>
-        `฿${value.toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
-
-    const rangeLabels: Record<DateRange, string> = {
-        month: 'เดือน',
-        quarter: 'ไตรมาส',
-        year: 'ปี',
-        all: 'ภาพรวมการเงินทั้งหมด',
-        custom: 'ช่วงเวลาก่อนหน้านี้'
-    };
 
     const getDaysSelected = () => {
         if (dateRange !== 'custom' || !customStart || !customEnd) return null;
@@ -190,10 +187,10 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     useEffect(() => {
         if (!data?.comparison) return;
         const timer = setInterval(() => {
-            setMetricIdx((prev) => (prev + 1) % metrics.length);
+            setMetricIdx((prev) => (prev + 1) % 3);
         }, 3000);
         return () => clearInterval(timer);
-    }, [data?.comparison, metrics.length]);
+    }, [data?.comparison]);
 
     return (
         <div className="min-h-screen bg-gray-950 text-white pb-28">
@@ -318,6 +315,27 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                         >
                             <Loader2 className="animate-spin text-indigo-500" size={32} />
                             <p className="text-sm">กำลังคำนวณข้อมูลย้อนหลัง...</p>
+                        </motion.div>
+                    ) : error ? (
+                        <motion.div
+                            key="error"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="flex flex-col items-center justify-center py-20 bg-rose-500/5 rounded-3xl border border-rose-500/10 gap-4"
+                        >
+                            <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
+                                <TrendingDown size={24} />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-rose-400 font-semibold">เกิดข้อผิดพลาด</p>
+                                <p className="text-gray-500 text-sm">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => fetchReport(dateRange, customStart, customEnd)}
+                                className="px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-sm font-bold hover:bg-rose-500/20 transition-colors"
+                            >
+                                ลองใหม่อีกครั้ง
+                            </button>
                         </motion.div>
                     ) : data && (
                         <motion.div
