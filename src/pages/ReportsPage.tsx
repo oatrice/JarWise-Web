@@ -4,7 +4,7 @@ import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2, Download } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 
 const API_BASE = 'http://localhost:8081/api/v1';
@@ -62,6 +62,39 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         }
     };
 
+    const handleExport = async () => {
+        const now = new Date();
+        let start = new Date();
+        
+        if (dateRange === 'month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (dateRange === 'quarter') {
+            start = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        } else if (dateRange === 'year') {
+            start = new Date(now.getFullYear(), 0, 1);
+        }
+
+        const params = new URLSearchParams({
+            start_date: start.toISOString(),
+            end_date: now.toISOString(),
+        });
+
+        try {
+            const res = await fetch(`${API_BASE}/reports/export?${params}`);
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jarwise-export-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Failed to export CSV:', err);
+        }
+    };
+
     useEffect(() => {
         fetchReport(dateRange);
     }, [dateRange]);
@@ -81,8 +114,15 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                     <button onClick={onBack} className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors">
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-lg font-semibold">รายงานอย่างละเอียด</h1>
-                    <div className="w-9" />
+                    <h1 className="text-lg font-semibold ml-8">รายงาน</h1>
+                    <button 
+                        onClick={handleExport}
+                        disabled={loading}
+                        className="p-2 text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50"
+                        title="Export CSV"
+                    >
+                        <Download size={20} />
+                    </button>
                 </div>
             </div>
 
