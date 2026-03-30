@@ -1,14 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, FileType, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Upload, FileType, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ApiError, apiFetch } from '../lib/api';
+import type { MigrationJobStatus } from '../types/migration';
 
 interface MigrationUploadScreenProps {
     onBack: () => void;
     onNavigate: (page: 'migration-status') => void;
+    onJobCreated: (jobId: string) => void;
 }
 
-const MigrationUploadScreen: React.FC<MigrationUploadScreenProps> = ({ onBack, onNavigate }) => {
+const MigrationUploadScreen: React.FC<MigrationUploadScreenProps> = ({ onBack, onNavigate, onJobCreated }) => {
     const [mmbakFile, setMmbakFile] = useState<File | null>(null);
     const [xlsFile, setXlsFile] = useState<File | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const mmbakInputRef = useRef<HTMLInputElement>(null);
     const xlsInputRef = useRef<HTMLInputElement>(null);
@@ -26,6 +31,33 @@ const MigrationUploadScreen: React.FC<MigrationUploadScreenProps> = ({ onBack, o
     };
 
     const isReady = mmbakFile && xlsFile;
+
+    const handleCreateJob = async () => {
+        if (!mmbakFile || !xlsFile || isSubmitting) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('mmbak_file', mmbakFile);
+        formData.append('xls_file', xlsFile);
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            const response = await apiFetch<MigrationJobStatus>('/migrations/money-manager/jobs', {
+                method: 'POST',
+                body: formData,
+            });
+            onJobCreated(response.jobId);
+            onNavigate('migration-status');
+        } catch (err) {
+            const message = err instanceof ApiError ? err.message : 'Failed to create migration job';
+            setError(message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -147,20 +179,31 @@ const MigrationUploadScreen: React.FC<MigrationUploadScreenProps> = ({ onBack, o
                     </div>
                 </div>
 
+                {error && (
+                    <div className="p-4 rounded-xl bg-red-950/40 border border-red-900/50 text-sm text-red-100">
+                        {error}
+                    </div>
+                )}
+
             </main>
 
             {/* Footer / Action */}
             <footer className="p-6 border-t border-gray-800 bg-gray-950/80 backdrop-blur-xl">
                 <div className="max-w-lg mx-auto">
                     <button
-                        disabled={!isReady}
-                        onClick={() => onNavigate('migration-status')}
+                        disabled={!isReady || isSubmitting}
+                        onClick={() => {
+                            void handleCreateJob();
+                        }}
                         className={`w-full py-4 rounded-xl font-bold text-base transition-all ${isReady
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 active:scale-[0.98]'
                             : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                             }`}
                     >
-                        Upload and Continue
+                        <span className="inline-flex items-center justify-center gap-2">
+                            {isSubmitting && <Loader2 size={18} className="animate-spin" />}
+                            {isSubmitting ? 'Uploading files...' : 'Upload and Continue'}
+                        </span>
                     </button>
                 </div>
             </footer>

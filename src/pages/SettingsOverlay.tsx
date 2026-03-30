@@ -4,7 +4,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import type { CurrencyCode } from '../context/CurrencyContext';
 import SyncStatusIndicator from '../components/SyncStatusIndicator';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
-import type { SyncStatus } from '../hooks/useAuthMock';
+import type { SyncStatus } from '../types/auth';
 import BottomNav from '../components/BottomNav';
 import type { Page } from '../types/navigation';
 
@@ -14,10 +14,11 @@ interface SettingsOverlayProps {
     // Mock auth props
     isLoggedIn?: boolean;
     userName?: string;
+    userEmail?: string;
     userAvatar?: string;
     syncStatus?: SyncStatus;
     lastBackupTime?: Date | null;
-    onBackupNow?: () => void;
+    onRefreshSession?: () => void;
     onLogout?: (deleteData: boolean) => void;
 }
 
@@ -27,11 +28,12 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
     onBack,
     onNavigate,
     isLoggedIn = true,
-    userName = 'Anna Smith',
+    userName = 'JarWise User',
+    userEmail,
     userAvatar = 'https://ui-avatars.com/api/?name=Anna+Smith&background=6366f1&color=fff&size=128',
     syncStatus = 'success',
-    lastBackupTime = new Date(),
-    onBackupNow,
+    lastBackupTime = null,
+    onRefreshSession,
     onLogout,
 }) => {
     const { currency, setCurrency } = useCurrency();
@@ -123,17 +125,18 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
                                 />
                                 <div>
                                     <p className="text-white font-semibold">{userName}</p>
+                                    {userEmail && <p className="text-xs text-gray-500 mt-1">{userEmail}</p>}
                                     <SyncStatusIndicator status={syncStatus} lastBackupTime={lastBackupTime} />
                                 </div>
                             </div>
 
-                            {/* Backup Button */}
+                            {/* Session Refresh Button */}
                             <button
-                                onClick={onBackupNow}
+                                onClick={onRefreshSession}
                                 className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-medium transition-colors mb-3"
                             >
                                 <CloudUpload size={18} />
-                                Back up now
+                                Refresh session
                             </button>
 
                             {/* Logout Button */}

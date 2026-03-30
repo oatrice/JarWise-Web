@@ -11,7 +11,7 @@ import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
 import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
-import { useAuthMock } from '../hooks/useAuthMock'; // Moved import to top
+import { useAuth } from '../context/AuthContext';
 import type { Page } from '../types/navigation';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
@@ -33,7 +33,9 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const isVisible = useScrollDirection();
-    const auth = useAuthMock(); // Mock auth hook
+    const auth = useAuth();
+    const userName = auth.user?.name ?? 'JarWise User';
+    const userAvatar = auth.user?.avatarUrl ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D0D0D&color=fff`;
 
     // Get drafts
     const drafts = getDrafts(); // Correctly placed
@@ -91,15 +93,20 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
             <SettingsOverlay
                 onBack={() => setShowSettings(false)}
                 onNavigate={onNavigate}
-                // Pass auth state and handlers
-                isLoggedIn={true} // Always "logged in" when on Dashboard
+                isLoggedIn={true}
+                userName={userName}
+                userEmail={auth.user?.email}
+                userAvatar={userAvatar}
                 syncStatus={auth.syncStatus}
-                lastBackupTime={auth.lastBackupTime}
-                onBackupNow={auth.triggerBackup}
-                onLogout={(deleteData) => {
-                    console.log(`Logout requested. Delete data: ${deleteData}`);
-                    // In a real app, we would handle data deletion here
-                    onNavigate('login');
+                lastBackupTime={auth.lastSyncTime}
+                onRefreshSession={() => {
+                    void auth.refreshSession();
+                }}
+                onLogout={() => {
+                    void auth.logout().then(() => {
+                        setShowSettings(false);
+                        onNavigate('dashboard');
+                    });
                 }}
             />
         );
@@ -127,11 +134,11 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px]">
-                                    <img src="https://ui-avatars.com/api/?name=User&background=0D0D0D&color=fff" alt="User" className="h-full w-full rounded-full border-2 border-gray-950" />
+                                    <img src={userAvatar} alt={userName} className="h-full w-full rounded-full border-2 border-gray-950" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">Welcome back</p>
-                                    <h2 className="text-sm font-semibold text-gray-100">Oatrice</h2>
+                                    <h2 className="text-sm font-semibold text-gray-100">{userName}</h2>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -316,14 +323,19 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                     <div className="mt-auto pt-6 border-t border-gray-800">
                         <div className="flex items-center gap-3 mb-6 px-2">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px]">
-                                <img src="https://ui-avatars.com/api/?name=User&background=0D0D0D&color=fff" alt="User" className="h-full w-full rounded-full border-2 border-gray-950" />
+                                <img src={userAvatar} alt={userName} className="h-full w-full rounded-full border-2 border-gray-950" />
                             </div>
                             <div className="flex-1 overflow-hidden">
-                                <h2 className="text-sm font-semibold text-gray-100 truncate">Oatrice</h2>
-                                <p className="text-xs text-gray-500 truncate">oatrice@example.com</p>
+                                <h2 className="text-sm font-semibold text-gray-100 truncate">{userName}</h2>
+                                <p className="text-xs text-gray-500 truncate">{auth.user?.email ?? 'Signed in with Google'}</p>
                             </div>
                         </div>
-                        <button className="flex items-center gap-2 w-full px-2 text-sm text-gray-500 hover:text-red-400 transition-colors">
+                        <button
+                            onClick={() => {
+                                void auth.logout();
+                            }}
+                            className="flex items-center gap-2 w-full px-2 text-sm text-gray-500 hover:text-red-400 transition-colors"
+                        >
                             <LogOut size={16} />
                             Sign Out
                         </button>

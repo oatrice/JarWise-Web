@@ -6,8 +6,8 @@ import {
 } from 'recharts';
 import { ArrowLeft, TrendingUp, TrendingDown, Wallet, Loader2, Download, Search } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
+import { API_BASE, apiFetch } from '../lib/api';
 
-const API_BASE = 'http://localhost:8081/api/v1';
 const formatCurrency = (value: number, decimals: number = 2) =>
     `฿${value.toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 
@@ -73,9 +73,7 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
 
         try {
             setError(null);
-            const res = await fetch(`${API_BASE}/reports?${params}`);
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            const result = await res.json();
+            const result = await apiFetch<ReportData>(`/reports?${params.toString()}`);
             setData(result);
         } catch (err) {
             console.error('Failed to fetch report:', err);
@@ -110,7 +108,12 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         });
 
         try {
-            const res = await fetch(`${API_BASE}/reports/export?${params}`);
+            const res = await fetch(`${API_BASE}/reports/export?${params}`, {
+                credentials: 'include',
+            });
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -673,4 +676,3 @@ function Badge({ label, pct, inverse }: { label: string; pct: number; inverse: b
         </div>
     );
 }
-

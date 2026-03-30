@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import TransactionHistory from './pages/TransactionHistory';
 import AddTransaction from './pages/AddTransaction';
@@ -12,11 +13,22 @@ import MigrationUploadScreen from './pages/MigrationUploadScreen';
 import MigrationStatusScreen from './pages/MigrationStatusScreen';
 import ReportsPage from './pages/ReportsPage';
 import type { Page } from './types/navigation';
+import { useAuth } from './context/AuthContext';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('login');
+  const auth = useAuth();
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(getTransactions);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [migrationJobId, setMigrationJobId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (auth.status === 'unauthenticated') {
+      setCurrentPage('dashboard');
+      setSelectedTransactionId(null);
+      setMigrationJobId(null);
+    }
+  }, [auth.status]);
 
   const navigateTo = (page: Page) => {
     setCurrentPage(page);
@@ -35,19 +47,32 @@ function App() {
     navigateTo('dashboard');
   };
 
+  if (auth.status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center px-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Loader2 className="animate-spin text-blue-400" size={32} />
+          <div>
+            <p className="text-sm text-gray-300 font-medium">Restoring your session</p>
+            <p className="text-xs text-gray-500 mt-1">Checking your JarWise account...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      {currentPage === 'login' && (
-        <LoginScreen onSignIn={() => navigateTo('dashboard')} />
-      )}
-      {currentPage === 'dashboard' && (
+      {auth.status !== 'authenticated' ? (
+        <LoginScreen />
+      ) : currentPage === 'dashboard' && (
         <Dashboard
           onNavigate={navigateTo}
           transactions={transactions}
           onTransactionClick={handleTransactionClick}
         />
       )}
-      {currentPage === 'history' && (
+      {auth.status === 'authenticated' && currentPage === 'history' && (
         <TransactionHistory
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
@@ -55,25 +80,27 @@ function App() {
           onTransactionClick={handleTransactionClick}
         />
       )}
-      {currentPage === 'add-transaction' && (
+      {auth.status === 'authenticated' && currentPage === 'add-transaction' && (
         <AddTransaction
           onBack={() => navigateTo('dashboard')}
           onSave={handleSaveTransaction}
         />
       )}
-      {currentPage === 'migration-upload' && (
+      {auth.status === 'authenticated' && currentPage === 'migration-upload' && (
         <MigrationUploadScreen
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
+          onJobCreated={(jobId) => setMigrationJobId(jobId)}
         />
       )}
-      {currentPage === 'migration-status' && (
+      {auth.status === 'authenticated' && currentPage === 'migration-status' && (
         <MigrationStatusScreen
           onBack={() => navigateTo('migration-upload')}
           onDone={() => navigateTo('dashboard')}
+          jobId={migrationJobId}
         />
       )}
-      {currentPage === 'transaction-detail' && selectedTransactionId && (
+      {auth.status === 'authenticated' && currentPage === 'transaction-detail' && selectedTransactionId && (
         <TransactionDetail
           transactionId={selectedTransactionId}
           allTransactions={transactions}
@@ -81,18 +108,18 @@ function App() {
           onNavigateLinked={(id) => handleTransactionClick(id)}
         />
       )}
-      {currentPage === 'wallets' && (
+      {auth.status === 'authenticated' && currentPage === 'wallets' && (
         <ManageWallets
           onClose={() => navigateTo('dashboard')}
         />
       )}
-      {currentPage === 'profile' && (
+      {auth.status === 'authenticated' && currentPage === 'profile' && (
         <SettingsOverlay
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
         />
       )}
-      {currentPage === 'reports' && (
+      {auth.status === 'authenticated' && currentPage === 'reports' && (
         <ReportsPage
           onBack={() => navigateTo('dashboard')}
           onNavigate={(p) => navigateTo(p as Page)}
@@ -103,4 +130,3 @@ function App() {
 }
 
 export default App;
-

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Cloud, CloudOff, RefreshCw, Check, AlertCircle } from 'lucide-react';
-import type { SyncStatus } from '../hooks/useAuthMock';
+import type { SyncStatus } from '../types/auth';
 
 interface SyncStatusIndicatorProps {
     status: SyncStatus;
@@ -21,7 +21,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ status, lastB
                 const timeAgo = lastBackupTime ? getTimeAgo(lastBackupTime) : 'Unknown';
                 return {
                     icon: <Check size={16} />,
-                    text: `Last backup: ${timeAgo}`,
+                    text: lastBackupTime ? `Session refreshed: ${timeAgo}` : 'Session active',
                     color: 'text-green-400',
                     bgColor: 'bg-green-500/10',
                 };
@@ -29,7 +29,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ status, lastB
             case 'error':
                 return {
                     icon: <AlertCircle size={16} />,
-                    text: 'Backup failed',
+                    text: 'Session refresh failed',
                     color: 'text-red-400',
                     bgColor: 'bg-red-500/10',
                 };
@@ -43,7 +43,7 @@ const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ status, lastB
             default:
                 return {
                     icon: <Cloud size={16} />,
-                    text: 'Not synced',
+                    text: 'Not signed in',
                     color: 'text-gray-400',
                     bgColor: 'bg-gray-500/10',
                 };
