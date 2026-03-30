@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AlertCircle, Loader2, Wallet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,7 +7,20 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '';
 const LoginScreen: React.FC = () => {
     const auth = useAuth();
     const googleButtonRef = useRef<HTMLDivElement>(null);
+    const initializedClientIdRef = useRef<string | null>(null);
     const [scriptLoaded, setScriptLoaded] = useState(false);
+
+    const handleGoogleCredential = useEffectEvent(async (response: GoogleCredentialResponse) => {
+        if (!response.credential) {
+            return;
+        }
+
+        try {
+            await auth.signInWithGoogle(response.credential);
+        } catch {
+            // Error state is surfaced via auth.error.
+        }
+    });
 
     useEffect(() => {
         if (!GOOGLE_CLIENT_ID) {
@@ -42,20 +55,17 @@ const LoginScreen: React.FC = () => {
             return;
         }
 
+        if (initializedClientIdRef.current !== GOOGLE_CLIENT_ID) {
+            window.google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: (response: GoogleCredentialResponse) => {
+                    void handleGoogleCredential(response);
+                },
+            });
+            initializedClientIdRef.current = GOOGLE_CLIENT_ID;
+        }
+
         googleButtonRef.current.innerHTML = '';
-        window.google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: async (response: GoogleCredentialResponse) => {
-                if (!response.credential) {
-                    return;
-                }
-                try {
-                    await auth.signInWithGoogle(response.credential);
-                } catch {
-                    // Error state is surfaced via auth.error.
-                }
-            },
-        });
         window.google.accounts.id.renderButton(googleButtonRef.current, {
             theme: 'outline',
             size: 'large',
@@ -65,9 +75,18 @@ const LoginScreen: React.FC = () => {
         });
 
         return () => {
-            window.google?.accounts.id.cancel();
+            if (googleButtonRef.current) {
+                googleButtonRef.current.innerHTML = '';
+            }
         };
-    }, [auth, scriptLoaded]);
+    }, [scriptLoaded]);
+
+    useEffect(() => {
+        return () => {
+            window.google?.accounts.id.cancel();
+            initializedClientIdRef.current = null;
+        };
+    }, []);
 
     return (
         <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
