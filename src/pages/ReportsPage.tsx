@@ -77,9 +77,10 @@ export default function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const result = await res.json();
             setData(result);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to fetch report:', err);
-            setError(err.message || 'ไม่สามารถโหลดข้อมูลรายงานได้');
+            const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถโหลดข้อมูลรายงานได้';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
