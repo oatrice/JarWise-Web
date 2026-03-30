@@ -12,6 +12,7 @@ ISSUE: {
 
 GIT CONTEXT:
 COMMITS:
+3041ad1 feat: [Web | Android] Financial Reports & Data Export...
 628e66c feat: [Web | Android] Financial Reports & Data Export...
 fddad05 docs: sync AI brain artifacts
 d8a934b ✨ feat(reports): Enhance reports page with new features
@@ -32,12 +33,13 @@ CHANGELOG.md                                       |  14 +
  .../59_issue-59/ai_brain/implementation_plan.md    |  51 ++
  docs/features/59_issue-59/ai_brain/task.md         |  13 +
  docs/features/59_issue-59/ai_brain/walkthrough.md  |  42 +
- draft_pr_prompt.md                                 | 973 +++++++++------------
+ draft_pr_body.md                                   |  51 +-
+ draft_pr_prompt.md                                 | 975 +++++++++------------
  package-lock.json                                  |   4 +-
  package.json                                       |   2 +-
  src/__tests__/apiConfig.test.ts                    |  13 +
  src/pages/ReportsPage.tsx                          | 818 ++++++++++++-----
- 9 files changed, 1166 insertions(+), 764 deletions(-)
+ 10 files changed, 1197 insertions(+), 786 deletions(-)
 
 KEY FILE DIFFS:
 diff --git a/src/__tests__/apiConfig.test.ts b/src/__tests__/apiConfig.test.ts
