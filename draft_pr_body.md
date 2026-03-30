@@ -1,7 +1,6 @@
+```markdown
 # 📋 Summary
-This pull request introduces a powerful filtering system for the reports and transaction history pages, as outlined in issue #68. Users can now refine their data by selecting multiple categories (Jars) and accounts (Wallets) through an intuitive slide-in panel. This feature provides greater control and insight into financial data.
-
-A new reusable `MultiSelectDropdown` component has been created to support this functionality, and comprehensive unit tests have been added to ensure the reliability of the new filter logic.
+This PR implements the comprehensive financial reporting and data export feature for both Web and Android platforms, addressing issue #59. The update includes new charts, dynamic date range selection, and CSV export functionality, moving from mock data to live API integration.
 
 ## ✅ Checklist
 - [x] 🏗️ I have moved the related issue to "In Progress" on the Kanban board
@@ -10,26 +9,32 @@ A new reusable `MultiSelectDropdown` component has been created to support this 
 - [ ] 🐛 Bug fix
 - [x] ✨ New feature
 - [ ] ⚡ Performance improvement
-- [ ] 🔧 Refactoring
-- [ ] 💄 UI/UX Update (Web/Responsive)
-- [x] 📝 Documentation
+- [x] 🔧 Refactoring
+- [x] 💄 UI/UX Update (Web/Responsive)
+- [ ] 📝 Documentation
 - [ ] 💥 Breaking change
 
 # 📱 Responsive Design Checks
-- [ ] Mobile View Verified
-- [ ] Tablet/Desktop View Verified
-- [ ] Cross-browser Check (Chrome, Safari, Firefox)
+- [x] Mobile View Verified
+- [x] Tablet/Desktop View Verified
+- [x] Cross-browser Check (Chrome, Safari, Firefox)
 
 # 📝 Changes
-- **New Filter Panel Component (`ReportFiltersSheet.tsx`)**: A new slide-in sheet was created to house the filtering options. It maintains a draft state, allowing users to make selections and only apply them upon confirmation. Changes are discarded if the panel is closed without applying.
-- **Reusable Multi-Select Dropdown (`MultiSelectDropdown.tsx`)**: A generic and reusable multi-select dropdown component with search functionality was developed to handle the selection of Jars and Wallets.
-- **Integration into Transaction History**: The new filter functionality has been integrated into the `TransactionHistory.tsx` page, allowing the transaction list to be updated in real-time based on the applied filters.
-- **State Persistence**: The selected filters are persisted within the component's state to be reapplied when the filter panel is reopened during the same session.
-- **Unit Testing**: Added comprehensive Vitest unit tests for the new `ReportFiltersSheet` component to cover user interactions like applying, clearing, and discarding filters.
-- **Documentation**: Updated `CHANGELOG.md` and `README.md` to reflect the addition of this new feature.
+- **API Integration:** Replaced mock data with actual API calls to `http://localhost:8081/api/v1/reports` and `/reports/export` for fetching report data and exporting CSV.
+- **Dynamic Date Range Selection:** Implemented a new segmented control for selecting predefined date ranges ('month', 'quarter', 'year', 'all') and a 'custom' option.
+- **Custom Date Range Selector:** Introduced a UI for selecting custom start and end dates, complete with quick preset buttons (7, 30, 90 days) for convenience.
+- **CSV Export Functionality:** Added a download button to allow users to export the current report data as a CSV file.
+- **Enhanced UI/UX on ReportsPage.tsx:**
+    - Updated summary cards to display income, expense, and net values with animated percentage change comparisons against the previous period.
+    - Integrated an Area Chart for visualizing income and expense trends over time.
+    - Improved Pie Charts for a clearer breakdown of income and expense by category or jar, including handling for uncategorized transactions.
+    - Implemented a rotating metric comparison (income, expense, net) with smooth animations to highlight key financial changes.
+    - Refactored the component structure for better readability, maintainability, and error handling.
+- **Testing:** Added `src/__tests__/apiConfig.test.ts` to ensure the correct API base port (8081) is used for reports.
 
 # 📸 UI/UX Screenshots
-<!-- Add screenshots of the new filter panel in action on mobile and desktop -->
+<!-- Mobile & Desktop Comparisons. MUST include screenshots for UI changes. -->
+(Please add screenshots here to showcase the new reports page, date range selection, and chart visualizations.)
 
 # 🧪 Testing
 - [x] Start command: `npm run dev` working
@@ -37,16 +42,18 @@ A new reusable `MultiSelectDropdown` component has been created to support this 
 
 # 🚀 Migration/Deployment
 - [ ] Environment variables updated
-- [ ] Dependencies installed
+- [x] Dependencies installed (package.json and package-lock.json updated)
 
 ```bash
-# No migration commands required
+# Migration commands if applicable
+# No specific migration commands required beyond dependency installation.
 ```
 
 # 🔗 Related Issues
-- Closes https://github.com/oatrice/JarWise-Root/issues/68
-- Related to https://github.com/oatrice/JarWise-Root/issues/67
-- Related to https://github.com/oatrice/JarWise-Root/issues/59
+- Closes https://github.com/oatrice/JarWise-Root/issues/59
+- Related to #
+- Fixes #
 
 **Breaking Changes**: No
 **Migration Required**: No
+```
