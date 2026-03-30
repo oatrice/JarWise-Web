@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('API Configuration', () => {
     it('should use port 8081 for API_BASE in ReportsPage', () => {
