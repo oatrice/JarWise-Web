@@ -84,84 +84,24 @@ function getPeriodRange(period: PeriodKey, customStart: string, customEnd: strin
     };
 }
 
-export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
-    const { formatAmount } = useCurrency();
-    const isVisible = useScrollDirection();
-    const [filtersOpen, setFiltersOpen] = useState(false);
-    const [selectedJarIds, setSelectedJarIds] = useState<string[]>([]);
-    const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
-    const [activePeriod, setActivePeriod] = useState<PeriodKey>('this_month');
-    const [periodPickerOpen, setPeriodPickerOpen] = useState(false);
-    const [pickerPeriod, setPickerPeriod] = useState<PeriodKey>('this_month');
-    const [customStart, setCustomStart] = useState('');
-    const [customEnd, setCustomEnd] = useState('');
-    const [pickerCustomStart, setPickerCustomStart] = useState('');
-    const [pickerCustomEnd, setPickerCustomEnd] = useState('');
+interface TransactionHistoryListProps {
+    filteredTransactions: Transaction[];
+    transactionsById: Map<string, Transaction>;
+    formatAmount: (amount: number) => string;
+    onTransactionClick?: (id: string) => void;
+}
+
+function TransactionHistoryList({
+    filteredTransactions,
+    transactionsById,
+    formatAmount,
+    onTransactionClick,
+}: TransactionHistoryListProps) {
     const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_TRANSACTIONS);
     const [loadingMore, setLoadingMore] = useState(false);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const loadMoreTimerRef = useRef<number | null>(null);
     const loadingMoreRef = useRef(false);
-
-    const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
-    const transactionsById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
-    const periodRange = useMemo(
-        () => getPeriodRange(activePeriod, customStart, customEnd, new Date()),
-        [activePeriod, customEnd, customStart],
-    );
-    const pickerRange = useMemo(
-        () => getPeriodRange(pickerPeriod, pickerCustomStart, pickerCustomEnd, new Date()),
-        [pickerCustomEnd, pickerCustomStart, pickerPeriod],
-    );
-    const isPickerCustomRangeValid = pickerPeriod === 'custom'
-        && !!pickerRange.start
-        && !!pickerRange.end
-        && pickerRange.start.getTime() <= pickerRange.end.getTime();
-
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter((tx) => {
-            const jarMatch = selectedJarIds.length === 0 || (!!tx.jarId && selectedJarIds.includes(tx.jarId));
-            const walletMatch = selectedWalletIds.length === 0 || (tx.walletId && selectedWalletIds.includes(tx.walletId));
-            if (!jarMatch || !walletMatch) {
-                return false;
-            }
-
-            const transactionDate = new Date(tx.date);
-            if (Number.isNaN(transactionDate.getTime())) {
-                return false;
-            }
-
-            if (activePeriod === 'custom') {
-                if (!periodRange.start || !periodRange.end) {
-                    return false;
-                }
-                return transactionDate >= periodRange.start && transactionDate <= periodRange.end;
-            }
-
-            if (!periodRange.start || !periodRange.end) {
-                return true;
-            }
-
-            return transactionDate >= periodRange.start && transactionDate <= periodRange.end;
-        });
-    }, [activePeriod, periodRange.end, periodRange.start, selectedJarIds, selectedWalletIds, transactions]);
-
-    const filterResetKey = useMemo(() => (
-        [
-            selectedJarIds.join(','),
-            selectedWalletIds.join(','),
-            activePeriod,
-            customStart,
-            customEnd,
-        ].join('|')
-    ), [activePeriod, customEnd, customStart, selectedJarIds, selectedWalletIds]);
-
-    useEffect(() => {
-        setVisibleCount(INITIAL_VISIBLE_TRANSACTIONS);
-        setLoadingMore(false);
-        loadingMoreRef.current = false;
-    }, [filterResetKey]);
-
     const visibleTransactions = filteredTransactions.slice(0, visibleCount);
     const remainingTransactions = Math.max(filteredTransactions.length - Math.min(visibleCount, filteredTransactions.length), 0);
 
@@ -226,6 +166,130 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
             lastGroup.expense += transaction.amount;
         }
     });
+
+    return (
+        <>
+            {groupedTransactions.map((group) => {
+                const visibleTransactionsForGroup = group.transactions.filter((transaction) => !(transaction.type === 'income' && transaction.relatedTransactionId));
+
+                return (
+                    <motion.section
+                        key={group.date}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
+                            <div className="flex items-center gap-3 text-xs font-medium">
+                                {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
+                                {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {visibleTransactionsForGroup.map((transaction) => {
+                                const linkedTx = transaction.relatedTransactionId ? transactionsById.get(transaction.relatedTransactionId) : undefined;
+                                return (
+                                    <TransactionCard
+                                        key={transaction.id}
+                                        transaction={transaction}
+                                        showDate={false}
+                                        onClick={() => onTransactionClick?.(transaction.id)}
+                                        isTransfer={transaction.type === 'transfer' || !!transaction.relatedTransactionId}
+                                        linkedTransaction={linkedTx}
+                                    />
+                                );
+                            })}
+                        </div>
+                    </motion.section>
+                );
+            })}
+
+            {remainingTransactions > 0 && (
+                <div className="space-y-3">
+                    {loadingMore && (
+                        <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-400">
+                            <Loader2 size={16} className="animate-spin text-blue-400" />
+                            <span>Loading more transactions...</span>
+                        </div>
+                    )}
+                    <div
+                        ref={loadMoreRef}
+                        aria-hidden="true"
+                        className="h-12 w-full"
+                    />
+                </div>
+            )}
+        </>
+    );
+}
+
+export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
+    const { formatAmount } = useCurrency();
+    const isVisible = useScrollDirection();
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [selectedJarIds, setSelectedJarIds] = useState<string[]>([]);
+    const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
+    const [activePeriod, setActivePeriod] = useState<PeriodKey>('this_month');
+    const [periodPickerOpen, setPeriodPickerOpen] = useState(false);
+    const [pickerPeriod, setPickerPeriod] = useState<PeriodKey>('this_month');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
+    const [pickerCustomStart, setPickerCustomStart] = useState('');
+    const [pickerCustomEnd, setPickerCustomEnd] = useState('');
+
+    const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
+    const transactionsById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
+    const periodRange = useMemo(
+        () => getPeriodRange(activePeriod, customStart, customEnd, new Date()),
+        [activePeriod, customEnd, customStart],
+    );
+    const pickerRange = useMemo(
+        () => getPeriodRange(pickerPeriod, pickerCustomStart, pickerCustomEnd, new Date()),
+        [pickerCustomEnd, pickerCustomStart, pickerPeriod],
+    );
+    const isPickerCustomRangeValid = pickerPeriod === 'custom'
+        && !!pickerRange.start
+        && !!pickerRange.end
+        && pickerRange.start.getTime() <= pickerRange.end.getTime();
+
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter((tx) => {
+            const jarMatch = selectedJarIds.length === 0 || (!!tx.jarId && selectedJarIds.includes(tx.jarId));
+            const walletMatch = selectedWalletIds.length === 0 || (tx.walletId && selectedWalletIds.includes(tx.walletId));
+            if (!jarMatch || !walletMatch) {
+                return false;
+            }
+
+            const transactionDate = new Date(tx.date);
+            if (Number.isNaN(transactionDate.getTime())) {
+                return false;
+            }
+
+            if (activePeriod === 'custom') {
+                if (!periodRange.start || !periodRange.end) {
+                    return false;
+                }
+                return transactionDate >= periodRange.start && transactionDate <= periodRange.end;
+            }
+
+            if (!periodRange.start || !periodRange.end) {
+                return true;
+            }
+
+            return transactionDate >= periodRange.start && transactionDate <= periodRange.end;
+        });
+    }, [activePeriod, periodRange.end, periodRange.start, selectedJarIds, selectedWalletIds, transactions]);
+
+    const filterResetKey = useMemo(() => (
+        [
+            selectedJarIds.join(','),
+            selectedWalletIds.join(','),
+            activePeriod,
+            customStart,
+            customEnd,
+        ].join('|')
+    ), [activePeriod, customEnd, customStart, selectedJarIds, selectedWalletIds]);
 
     const totalSpent = filteredTransactions
         .filter(t => t.type === 'expense')
@@ -447,43 +511,13 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                     </div>
                 </motion.div>
 
-                {/* Transaction Groups */}
-                {groupedTransactions.map((group) => {
-                    // Filter out the income side of transfers (we show the expense side as the "transfer" entry)
-                    const visibleTransactions = group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId));
-
-                    return (
-                        <motion.section
-                            key={group.date}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-medium text-gray-500">{group.date}</h3>
-                                <div className="flex items-center gap-3 text-xs font-medium">
-                                    {group.income > 0 && <span className="text-blue-400">+{formatAmount(group.income)}</span>}
-                                    {group.expense > 0 && <span className="text-red-400">-{formatAmount(group.expense)}</span>}
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                {visibleTransactions.map((t) => {
-                                    const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
-                                    return (
-                                        <TransactionCard
-                                            key={t.id}
-                                            transaction={t}
-                                            showDate={false}
-                                            onClick={() => onTransactionClick?.(t.id)}
-                                            isTransfer={t.type === 'transfer' || !!t.relatedTransactionId}
-                                            linkedTransaction={linkedTx}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </motion.section>
-                    );
-                })}
+                <TransactionHistoryList
+                    key={filterResetKey}
+                    filteredTransactions={filteredTransactions}
+                    transactionsById={transactionsById}
+                    formatAmount={formatAmount}
+                    onTransactionClick={onTransactionClick}
+                />
 
                 {/* Empty State */}
                 {filteredTransactions.length === 0 && (
@@ -496,21 +530,6 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                     </div>
                 )}
 
-                {remainingTransactions > 0 && (
-                    <div className="space-y-3">
-                        {loadingMore && (
-                            <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-400">
-                                <Loader2 size={16} className="animate-spin text-blue-400" />
-                                <span>Loading more transactions...</span>
-                            </div>
-                        )}
-                        <div
-                            ref={loadMoreRef}
-                            aria-hidden="true"
-                            className="h-12 w-full"
-                        />
-                    </div>
-                )}
             </main>
 
             <BottomNav activePage="history" onNavigate={onNavigate} visible={isVisible} />

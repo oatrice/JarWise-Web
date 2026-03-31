@@ -1,9 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 
 const authState = {
-    status: 'authenticated' as const,
+    status: 'authenticated' as 'authenticated' | 'unauthenticated' | 'loading',
     user: {
         id: 'user-1',
         email: 'tester@example.com',
@@ -34,7 +34,7 @@ function createDeferred<T>() {
     return { promise, resolve, reject };
 }
 
-vi.mock('../context/AuthContext', () => ({
+vi.mock('../context/useAuth', () => ({
     useAuth: () => authState,
 }));
 
@@ -56,8 +56,19 @@ vi.mock('../utils/constants', () => ({
 }));
 
 vi.mock('../pages/Dashboard', () => ({
-    default: ({ totalBalance }: { totalBalance?: number }) => (
-        <div>Dashboard total {totalBalance ?? 0}</div>
+    default: ({
+        totalBalance,
+        onNavigate,
+    }: {
+        totalBalance?: number;
+        onNavigate?: (page: 'history') => void;
+    }) => (
+        <div>
+            <div>Dashboard total {totalBalance ?? 0}</div>
+            <button type="button" onClick={() => onNavigate?.('history')}>
+                Go to history
+            </button>
+        </div>
     ),
 }));
 
@@ -153,5 +164,40 @@ describe('App authenticated data hydration', () => {
         await waitFor(() => {
             expect(screen.getByText('Dashboard total 100')).toBeInTheDocument();
         });
+    });
+
+    it('returns to the dashboard after logging out and signing in again instead of restoring a stale subpage', async () => {
+        fetchTransactionsMock.mockResolvedValue([]);
+        fetchWalletsMock.mockResolvedValue([
+            {
+                id: 'wallet-1',
+                name: 'Main Wallet',
+                currency: 'THB',
+                balance: 100,
+                type: 'cash',
+            },
+        ]);
+        fetchJarsMock.mockResolvedValue([]);
+
+        const { rerender } = render(<App />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Dashboard total 100')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Go to history' }));
+        expect(screen.getByText('Transaction History Screen')).toBeInTheDocument();
+
+        authState.status = 'unauthenticated';
+        rerender(<App />);
+        expect(screen.getByText('Login Screen')).toBeInTheDocument();
+
+        authState.status = 'authenticated';
+        rerender(<App />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Dashboard total 100')).toBeInTheDocument();
+        });
+        expect(screen.queryByText('Transaction History Screen')).not.toBeInTheDocument();
     });
 });

@@ -45,4 +45,46 @@ describe('ManageWallets', () => {
         expect(screen.getByText('$7,372.5')).toBeInTheDocument();
         expect(screen.queryByText('Main Wallet')).not.toBeInTheDocument();
     });
+
+    it('refreshes the editable wallet list when imported wallet props change', () => {
+        const { rerender } = render(
+            <ManageWallets
+                onClose={vi.fn()}
+                initialWalletsData={[
+                    {
+                        id: 'wallet-1',
+                        name: 'Cash',
+                        balance: 110,
+                        color: 'text-green-500',
+                        icon: FolderOpen,
+                        parentId: null,
+                        level: 0,
+                    },
+                ]}
+            />,
+        );
+
+        expect(screen.getByText('Cash')).toBeInTheDocument();
+        expect(screen.queryByText('Emergency Fund')).not.toBeInTheDocument();
+
+        rerender(
+            <ManageWallets
+                onClose={vi.fn()}
+                initialWalletsData={[
+                    {
+                        id: 'wallet-2',
+                        name: 'Emergency Fund',
+                        balance: 3200,
+                        color: 'text-blue-500',
+                        icon: WalletIcon,
+                        parentId: null,
+                        level: 0,
+                    },
+                ]}
+            />,
+        );
+
+        expect(screen.getByText('Emergency Fund')).toBeInTheDocument();
+        expect(screen.queryByText('Cash')).not.toBeInTheDocument();
+    });
 });

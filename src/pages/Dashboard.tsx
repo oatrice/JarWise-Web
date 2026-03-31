@@ -11,7 +11,7 @@ import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
 import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import type { Page } from '../types/navigation';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';

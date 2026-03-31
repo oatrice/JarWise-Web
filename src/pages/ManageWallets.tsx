@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Wallet as WalletIcon, FolderOpen, Trash2, X } from 'lucide-react';
 
@@ -9,14 +9,25 @@ interface ManageWalletsProps {
     initialWalletsData?: Wallet[];
 }
 
-export default function ManageWallets({ onClose, initialWalletsData }: ManageWalletsProps) {
-    const [wallets, setWallets] = useState<Wallet[]>(() => initialWalletsData ?? initialWallets);
+function buildWalletSeed(initialWalletsData?: Wallet[]) {
+    return initialWalletsData ?? initialWallets;
+}
+
+function buildWalletEditorKey(initialWalletsData?: Wallet[]) {
+    if (!initialWalletsData?.length) {
+        return 'default-wallets';
+    }
+
+    return initialWalletsData
+        .map((wallet) => [wallet.id, wallet.name, wallet.balance, wallet.parentId ?? 'root', wallet.level].join(':'))
+        .join('|');
+}
+
+function ManageWalletsEditor({ onClose, initialWalletsData }: ManageWalletsProps) {
+    const baseWallets = buildWalletSeed(initialWalletsData);
+    const [wallets, setWallets] = useState<Wallet[]>(() => baseWallets);
     const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-
-    useEffect(() => {
-        setWallets(initialWalletsData ?? initialWallets);
-    }, [initialWalletsData]);
 
     // Group wallets for tree view
     const rootWallets = wallets.filter(w => w.parentId === null);
@@ -258,6 +269,10 @@ export default function ManageWallets({ onClose, initialWalletsData }: ManageWal
             {showAddModal && <AddWalletModal onClose={() => setShowAddModal(false)} onAdd={handleAddWallet} wallets={wallets} />}
         </motion.div>
     );
+}
+
+export default function ManageWallets(props: ManageWalletsProps) {
+    return <ManageWalletsEditor key={buildWalletEditorKey(props.initialWalletsData)} {...props} />;
 }
 
 function AddWalletModal({ onClose, onAdd, wallets }: { onClose: () => void, onAdd: (w: Omit<Wallet, 'id'>) => void, wallets: Wallet[] }) {

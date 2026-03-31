@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useEffectEvent, useState } from 'react';
 import { ArrowLeft, Loader2, CheckCircle, XCircle, AlertTriangle, Database, Wallet, PiggyBank, Receipt } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ApiError, apiFetch } from '../lib/api';
@@ -26,8 +26,9 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
     const [error, setError] = useState<string | null>(null);
     const [confirming, setConfirming] = useState(false);
     const [finishing, setFinishing] = useState(false);
+    const pollingPhase = job?.phase;
 
-    const fetchJob = async () => {
+    const fetchJob = useEffectEvent(async () => {
         if (!jobId) {
             setLoading(false);
             setError('Migration job is missing. Please upload your files again.');
@@ -43,14 +44,14 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
         } finally {
             setLoading(false);
         }
-    };
+    });
 
     useEffect(() => {
         void fetchJob();
     }, [jobId]);
 
     useEffect(() => {
-        if (!job || !POLLING_PHASES.has(job.phase)) {
+        if (!pollingPhase || !POLLING_PHASES.has(pollingPhase)) {
             return;
         }
 
@@ -59,7 +60,7 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
         }, 1500);
 
         return () => window.clearInterval(timer);
-    }, [job]);
+    }, [pollingPhase]);
 
     const handleConfirm = async () => {
         if (!jobId || confirming) {

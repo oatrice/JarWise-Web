@@ -1,14 +1,22 @@
-import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useReducer, useRef } from 'react';
 import { AlertCircle, Loader2, Wallet } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '';
+
+function scriptLoadedReducer(currentState: boolean, nextState: 'loaded') {
+    if (nextState === 'loaded') {
+        return true;
+    }
+
+    return currentState;
+}
 
 const LoginScreen: React.FC = () => {
     const auth = useAuth();
     const googleButtonRef = useRef<HTMLDivElement>(null);
     const initializedClientIdRef = useRef<string | null>(null);
-    const [scriptLoaded, setScriptLoaded] = useState(false);
+    const [scriptLoaded, markScriptLoaded] = useReducer(scriptLoadedReducer, Boolean(window.google));
 
     const handleGoogleCredential = useEffectEvent(async (response: GoogleCredentialResponse) => {
         if (!response.credential) {
@@ -27,14 +35,19 @@ const LoginScreen: React.FC = () => {
             return;
         }
 
+        const handleScriptLoad = () => {
+            markScriptLoaded('loaded');
+        };
         const existingScript = document.querySelector<HTMLScriptElement>('script[data-google-identity="true"]');
         if (existingScript) {
             if (window.google) {
-                setScriptLoaded(true);
+                handleScriptLoad();
             } else {
-                existingScript.addEventListener('load', () => setScriptLoaded(true), { once: true });
+                existingScript.addEventListener('load', handleScriptLoad, { once: true });
             }
-            return;
+            return () => {
+                existingScript.removeEventListener('load', handleScriptLoad);
+            };
         }
 
         const script = document.createElement('script');
@@ -42,11 +55,11 @@ const LoginScreen: React.FC = () => {
         script.async = true;
         script.defer = true;
         script.dataset.googleIdentity = 'true';
-        script.onload = () => setScriptLoaded(true);
+        script.addEventListener('load', handleScriptLoad, { once: true });
         document.head.appendChild(script);
 
         return () => {
-            script.onload = null;
+            script.removeEventListener('load', handleScriptLoad);
         };
     }, []);
 
@@ -65,8 +78,9 @@ const LoginScreen: React.FC = () => {
             initializedClientIdRef.current = GOOGLE_CLIENT_ID;
         }
 
-        googleButtonRef.current.innerHTML = '';
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
+        const buttonHost = googleButtonRef.current;
+        buttonHost.innerHTML = '';
+        window.google.accounts.id.renderButton(buttonHost, {
             theme: 'outline',
             size: 'large',
             shape: 'pill',
@@ -75,9 +89,7 @@ const LoginScreen: React.FC = () => {
         });
 
         return () => {
-            if (googleButtonRef.current) {
-                googleButtonRef.current.innerHTML = '';
-            }
+            buttonHost.innerHTML = '';
         };
     }, [scriptLoaded]);
 

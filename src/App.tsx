@@ -17,7 +17,7 @@ import MigrationUploadScreen from './pages/MigrationUploadScreen';
 import MigrationStatusScreen from './pages/MigrationStatusScreen';
 import ReportsPage from './pages/ReportsPage';
 import type { Page } from './types/navigation';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 
 const WALLET_ICONS = ['💵', '🏦', '💳', '🧾', '💼', '🪙'];
 const WALLET_COLORS = ['bg-green-500', 'bg-blue-500', 'bg-purple-500', 'bg-cyan-500', 'bg-orange-500', 'bg-pink-500'];
@@ -93,8 +93,7 @@ function AppLoadingScreen({
   );
 }
 
-function App() {
-  const auth = useAuth();
+function AuthenticatedApp() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(() => sortTransactionsDescending(getTransactions()));
   const [walletViews, setWalletViews] = useState<Wallet[]>([]);
@@ -104,21 +103,6 @@ function App() {
   const [migrationJobId, setMigrationJobId] = useState<string | null>(null);
   const [appDataStatus, setAppDataStatus] = useState<AppDataStatus>('idle');
   const [hasHydratedAppData, setHasHydratedAppData] = useState(false);
-
-  useEffect(() => {
-    if (auth.status === 'unauthenticated') {
-      setCurrentPage('dashboard');
-      setSelectedTransactionId(null);
-      setMigrationJobId(null);
-      setWalletViews([]);
-      setDashboardJars([]);
-      setManageJarViews([]);
-      setTransactions(sortTransactionsDescending(getTransactions()));
-      setAppDataStatus('idle');
-      setHasHydratedAppData(false);
-      resetCatalogs();
-    }
-  }, [auth.status]);
 
   const applyAuthenticatedAppData = (apiTransactions: ApiTransaction[], apiWallets: ApiWallet[], apiJars: ApiJar[]) => {
     const mergedTransactions = mergeTransactions(
@@ -134,10 +118,6 @@ function App() {
   };
 
   useEffect(() => {
-    if (auth.status !== 'authenticated') {
-      return;
-    }
-
     let cancelled = false;
 
     const loadAppData = async () => {
@@ -169,7 +149,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [auth.status]);
+  }, []);
 
   const navigateTo = (page: Page) => {
     setCurrentPage(page);
@@ -189,10 +169,6 @@ function App() {
   };
 
   const refreshAppData = async ({ blocking = false }: { blocking?: boolean } = {}) => {
-    if (auth.status !== 'authenticated') {
-      return;
-    }
-
     try {
       setAppDataStatus(blocking ? 'loading' : 'refreshing');
       const [apiTransactions, apiWallets, apiJars] = await Promise.all([
@@ -212,16 +188,7 @@ function App() {
 
   const totalBalance = deriveTotalBalance(walletViews);
 
-  if (auth.status === 'loading') {
-    return (
-      <AppLoadingScreen
-        title="Restoring your session"
-        subtitle="Checking your JarWise account..."
-      />
-    );
-  }
-
-  if (auth.status === 'authenticated' && (appDataStatus === 'loading' || (appDataStatus === 'idle' && !hasHydratedAppData))) {
+  if (appDataStatus === 'loading' || (appDataStatus === 'idle' && !hasHydratedAppData)) {
     return (
       <AppLoadingScreen
         title="Loading your data"
@@ -232,9 +199,7 @@ function App() {
 
   return (
     <>
-      {auth.status !== 'authenticated' ? (
-        <LoginScreen />
-      ) : currentPage === 'dashboard' && (
+      {currentPage === 'dashboard' && (
         <Dashboard
           onNavigate={navigateTo}
           transactions={transactions}
@@ -244,7 +209,7 @@ function App() {
           manageJarsData={manageJarViews}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'history' && (
+      {currentPage === 'history' && (
         <TransactionHistory
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
@@ -252,20 +217,20 @@ function App() {
           onTransactionClick={handleTransactionClick}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'add-transaction' && (
+      {currentPage === 'add-transaction' && (
         <AddTransaction
           onBack={() => navigateTo('dashboard')}
           onSave={handleSaveTransaction}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'migration-upload' && (
+      {currentPage === 'migration-upload' && (
         <MigrationUploadScreen
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
           onJobCreated={(jobId) => setMigrationJobId(jobId)}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'migration-status' && (
+      {currentPage === 'migration-status' && (
         <MigrationStatusScreen
           onBack={() => navigateTo('migration-upload')}
           onDone={async () => {
@@ -275,7 +240,7 @@ function App() {
           jobId={migrationJobId}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'transaction-detail' && selectedTransactionId && (
+      {currentPage === 'transaction-detail' && selectedTransactionId && (
         <TransactionDetail
           transactionId={selectedTransactionId}
           allTransactions={transactions}
@@ -283,20 +248,20 @@ function App() {
           onNavigateLinked={(id) => handleTransactionClick(id)}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'wallets' && (
+      {currentPage === 'wallets' && (
         <ManageWallets
           onClose={() => navigateTo('dashboard')}
           initialWalletsData={walletViews}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'profile' && (
+      {currentPage === 'profile' && (
         <SettingsOverlay
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
           walletsData={walletViews}
         />
       )}
-      {auth.status === 'authenticated' && currentPage === 'reports' && (
+      {currentPage === 'reports' && (
         <ReportsPage
           onBack={() => navigateTo('dashboard')}
           onNavigate={(p) => navigateTo(p as Page)}
@@ -304,6 +269,31 @@ function App() {
       )}
     </>
   );
+}
+
+function App() {
+  const auth = useAuth();
+
+  useEffect(() => {
+    if (auth.status !== 'authenticated') {
+      resetCatalogs();
+    }
+  }, [auth.status]);
+
+  if (auth.status === 'loading') {
+    return (
+      <AppLoadingScreen
+        title="Restoring your session"
+        subtitle="Checking your JarWise account..."
+      />
+    );
+  }
+
+  if (auth.status !== 'authenticated') {
+    return <LoginScreen />;
+  }
+
+  return <AuthenticatedApp key={auth.user?.id ?? 'authenticated'} />;
 }
 
 export default App;

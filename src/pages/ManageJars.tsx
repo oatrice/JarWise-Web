@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Palette, Type, Percent, RotateCcw, Save, Check, Plus } from 'lucide-react';
 import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Briefcase, PiggyBank, type LucideIcon } from 'lucide-react';
@@ -64,18 +64,28 @@ function cloneEditableJars(jars: EditableJar[]): EditableJar[] {
     }));
 }
 
-export default function ManageJars({ onClose, initialJarsData }: ManageJarsProps) {
+function buildJarSeed(initialJarsData?: ManageJarView[]) {
+    return initialJarsData ?? buildDefaultEditableJars();
+}
+
+function buildJarEditorKey(initialJarsData?: ManageJarView[]) {
+    if (!initialJarsData?.length) {
+        return 'default-jars';
+    }
+
+    return initialJarsData
+        .map((jar) => [jar.id, jar.name, jar.percentage, jar.current, jar.goal, jar.parentId ?? 'root'].join(':'))
+        .join('|');
+}
+
+function ManageJarsEditor({ onClose, initialJarsData }: ManageJarsProps) {
+    const baseJars = buildJarSeed(initialJarsData);
     const [jars, setJars] = useState<EditableJar[]>(() =>
-        cloneEditableJars(initialJarsData ?? buildDefaultEditableJars())
+        cloneEditableJars(baseJars)
     );
     const [selectedJarId, setSelectedJarId] = useState<string | null>(null);
     const [showConfirmReset, setShowConfirmReset] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<EditableJar | null>(null);
-    const baseJars = initialJarsData ?? buildDefaultEditableJars();
-
-    useEffect(() => {
-        setJars(cloneEditableJars(baseJars));
-    }, [initialJarsData]);
 
     const totalPercentage = jars.reduce((sum, jar) => sum + jar.percentage, 0);
     const isValid = totalPercentage === 100;
@@ -598,4 +608,8 @@ export default function ManageJars({ onClose, initialJarsData }: ManageJarsProps
             </AnimatePresence>
         </motion.div>
     );
+}
+
+export default function ManageJars(props: ManageJarsProps) {
+    return <ManageJarsEditor key={buildJarEditorKey(props.initialJarsData)} {...props} />;
 }

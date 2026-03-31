@@ -44,7 +44,7 @@ vi.mock('../components/BottomNav', () => ({
     default: () => null,
 }));
 
-vi.mock('../context/AuthContext', () => ({
+vi.mock('../context/useAuth', () => ({
     useAuth: () => ({
         user: {
             name: 'Test User',
