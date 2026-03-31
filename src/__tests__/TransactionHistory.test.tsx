@@ -1,7 +1,24 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TransactionHistory from '../pages/TransactionHistory';
 import type { Transaction } from '../utils/transactionStorage';
+
+const observerCallbacks: IntersectionObserverCallback[] = [];
+
+class MockIntersectionObserver implements IntersectionObserver {
+    readonly root = null;
+    readonly rootMargin = '';
+    readonly thresholds = [0];
+
+    constructor(callback: IntersectionObserverCallback) {
+        observerCallbacks.push(callback);
+    }
+
+    disconnect() { }
+    observe() { }
+    takeRecords() { return []; }
+    unobserve() { }
+}
 
 vi.mock('framer-motion', () => ({
     motion: {
@@ -42,7 +59,12 @@ vi.mock('../context/CurrencyContext', () => ({
 }));
 
 describe('TransactionHistory', () => {
-    it('renders transactions in fast initial chunks with a load more affordance for large imports', () => {
+    beforeEach(() => {
+        observerCallbacks.length = 0;
+        vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+    });
+
+    it('loads the next batch automatically when the bottom sentinel enters view', () => {
         const transactions = Array.from({ length: 250 }, (_, index) => ({
             id: `tx-${index + 1}`,
             amount: index + 1,
@@ -65,8 +87,14 @@ describe('TransactionHistory', () => {
         expect(screen.getByText('Showing 100 of 250 transactions')).toBeInTheDocument();
         expect(screen.getAllByTestId('transaction-card')).toHaveLength(100);
         expect(screen.queryByText('Transaction 101')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Load 100 more transactions/i })).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Load 100 more transactions' }));
+        act(() => {
+            observerCallbacks[0]?.(
+                [{ isIntersecting: true } as IntersectionObserverEntry],
+                {} as IntersectionObserver,
+            );
+        });
 
         expect(screen.getAllByTestId('transaction-card')).toHaveLength(200);
         expect(screen.getByText('Showing 200 of 250 transactions')).toBeInTheDocument();

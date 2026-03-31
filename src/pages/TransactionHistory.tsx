@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
@@ -28,6 +28,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
     const [selectedJarIds, setSelectedJarIds] = useState<string[]>([]);
     const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
     const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_TRANSACTIONS);
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
     const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
     const transactionsById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
@@ -48,6 +49,32 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
     const visibleTransactions = filteredTransactions.slice(0, visibleCount);
     const visibleTransactionCount = Math.min(visibleCount, filteredTransactions.length);
     const remainingTransactions = Math.max(filteredTransactions.length - visibleTransactionCount, 0);
+
+    useEffect(() => {
+        if (remainingTransactions <= 0 || !loadMoreRef.current || typeof IntersectionObserver === 'undefined') {
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (!entry?.isIntersecting) {
+                return;
+            }
+
+            startTransition(() => {
+                setVisibleCount((current) => Math.min(current + TRANSACTION_PAGE_SIZE, filteredTransactions.length));
+            });
+        }, {
+            rootMargin: '240px 0px',
+            threshold: 0.1,
+        });
+
+        observer.observe(loadMoreRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [filteredTransactions.length, remainingTransactions]);
 
     interface TransactionGroup {
         date: string;
@@ -155,7 +182,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                                     Showing {visibleTransactionCount.toLocaleString()} of {filteredTransactions.length.toLocaleString()} transactions
                                 </p>
                                 <p className="text-xs text-blue-200/70 mt-1">
-                                    Rendering recent transactions first to keep this screen responsive.
+                                    More transactions will load automatically as you scroll to the bottom.
                                 </p>
                             </div>
                             <div className="text-right">
@@ -163,18 +190,6 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                                 <p className="text-lg font-bold text-white">{remainingTransactions.toLocaleString()}</p>
                             </div>
                         </div>
-                        {remainingTransactions > 0 && (
-                            <button
-                                onClick={() => {
-                                    startTransition(() => {
-                                        setVisibleCount((current) => Math.min(current + TRANSACTION_PAGE_SIZE, filteredTransactions.length));
-                                    });
-                                }}
-                                className="w-full rounded-xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100 hover:bg-blue-500/20 transition-colors"
-                            >
-                                Load {Math.min(remainingTransactions, TRANSACTION_PAGE_SIZE).toLocaleString()} more transactions
-                            </button>
-                        )}
                     </div>
                 )}
 
@@ -229,6 +244,14 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                             {hasActiveFilters ? 'Try adjusting your filters to see results.' : 'Your transaction history will appear here'}
                         </p>
                     </div>
+                )}
+
+                {remainingTransactions > 0 && (
+                    <div
+                        ref={loadMoreRef}
+                        aria-hidden="true"
+                        className="h-12 w-full"
+                    />
                 )}
             </main>
 
