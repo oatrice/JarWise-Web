@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
@@ -18,12 +18,16 @@ interface TransactionHistoryProps {
 
 import BottomNav from '../components/BottomNav';
 
+const INITIAL_VISIBLE_TRANSACTIONS = 200;
+const TRANSACTION_PAGE_SIZE = 200;
+
 export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
     const { formatAmount } = useCurrency();
-    const isVisible = useScrollDirection(); // isVisible call moved here for consistency if needed, though already declared below. I will remove the duplicate declaration in the next step or assume this replacment covers the start of the function.
+    const isVisible = useScrollDirection();
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [selectedJarIds, setSelectedJarIds] = useState<string[]>([]);
     const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
+    const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_TRANSACTIONS);
 
     const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
     const transactionsById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
@@ -37,9 +41,16 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
         });
     }, [hasActiveFilters, selectedJarIds, selectedWalletIds, transactions]);
 
-    // Group transactions by date
-    const sortedTransactions = [...filteredTransactions]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    useEffect(() => {
+        setVisibleCount(INITIAL_VISIBLE_TRANSACTIONS);
+    }, [filteredTransactions.length]);
+
+    const sortedTransactions = useMemo(() => (
+        [...filteredTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    ), [filteredTransactions]);
+    const visibleTransactions = sortedTransactions.slice(0, visibleCount);
+    const visibleTransactionCount = Math.min(visibleCount, filteredTransactions.length);
+    const remainingTransactions = Math.max(filteredTransactions.length - visibleTransactionCount, 0);
 
     interface TransactionGroup {
         date: string;
@@ -50,7 +61,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
 
     const groupedTransactions: TransactionGroup[] = [];
 
-    sortedTransactions.forEach((transaction) => {
+    visibleTransactions.forEach((transaction) => {
         const date = new Date(transaction.date);
         const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -138,6 +149,37 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                         </div>
                     </div>
                 </motion.div>
+
+                {filteredTransactions.length > INITIAL_VISIBLE_TRANSACTIONS && (
+                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-semibold text-blue-100">
+                                    Showing {visibleTransactionCount.toLocaleString()} of {filteredTransactions.length.toLocaleString()} transactions
+                                </p>
+                                <p className="text-xs text-blue-200/70 mt-1">
+                                    Rendering recent transactions first to keep this screen responsive.
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs uppercase tracking-wider text-blue-300">Remaining</p>
+                                <p className="text-lg font-bold text-white">{remainingTransactions.toLocaleString()}</p>
+                            </div>
+                        </div>
+                        {remainingTransactions > 0 && (
+                            <button
+                                onClick={() => {
+                                    startTransition(() => {
+                                        setVisibleCount((current) => Math.min(current + TRANSACTION_PAGE_SIZE, filteredTransactions.length));
+                                    });
+                                }}
+                                className="w-full rounded-xl border border-blue-400/30 bg-blue-500/10 px-4 py-3 text-sm font-semibold text-blue-100 hover:bg-blue-500/20 transition-colors"
+                            >
+                                Load {Math.min(remainingTransactions, TRANSACTION_PAGE_SIZE).toLocaleString()} more transactions
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* Transaction Groups */}
                 {groupedTransactions.map((group) => {

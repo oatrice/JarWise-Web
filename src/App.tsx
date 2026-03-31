@@ -24,6 +24,7 @@ const WALLET_COLORS = ['bg-green-500', 'bg-blue-500', 'bg-purple-500', 'bg-cyan-
 const JAR_EXPENSE_ICONS = ['🧾', '🍽️', '🎮', '🚌', '🏠', '🛍️'];
 const JAR_INCOME_ICONS = ['💰', '💵', '🏆', '📈', '🎁', '🏦'];
 const JAR_COLORS = ['bg-blue-500', 'bg-green-500', 'bg-pink-500', 'bg-yellow-500', 'bg-purple-500', 'bg-red-500', 'bg-cyan-500', 'bg-orange-500'];
+type AppDataStatus = 'idle' | 'loading' | 'ready' | 'refreshing' | 'error';
 
 function mapApiTransaction(transaction: ApiTransaction): Transaction {
   return {
@@ -68,6 +69,26 @@ function syncCatalogs(wallets: ApiWallet[], jars: ApiJar[]) {
   })));
 }
 
+function AppLoadingScreen({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center px-6">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Loader2 className="animate-spin text-blue-400" size={32} />
+        <div>
+          <p className="text-sm text-gray-300 font-medium">{title}</p>
+          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const auth = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -77,6 +98,8 @@ function App() {
   const [manageJarViews, setManageJarViews] = useState<ManageJarView[]>([]);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [migrationJobId, setMigrationJobId] = useState<string | null>(null);
+  const [appDataStatus, setAppDataStatus] = useState<AppDataStatus>('idle');
+  const [hasHydratedAppData, setHasHydratedAppData] = useState(false);
 
   useEffect(() => {
     if (auth.status === 'unauthenticated') {
@@ -87,9 +110,26 @@ function App() {
       setDashboardJars([]);
       setManageJarViews([]);
       setTransactions(getTransactions());
+      setAppDataStatus('idle');
+      setHasHydratedAppData(false);
       resetCatalogs();
     }
   }, [auth.status]);
+
+  const applyAuthenticatedAppData = (apiTransactions: ApiTransaction[], apiWallets: ApiWallet[], apiJars: ApiJar[]) => {
+    const mergedTransactions = mergeTransactions(
+      apiTransactions.map(mapApiTransaction),
+      getTransactions(),
+    );
+
+    startTransition(() => {
+      setTransactions(mergedTransactions);
+      setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
+      setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
+      setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
+      syncCatalogs(apiWallets, apiJars);
+    });
+  };
 
   useEffect(() => {
     if (auth.status !== 'authenticated') {
@@ -100,6 +140,7 @@ function App() {
 
     const loadAppData = async () => {
       try {
+        setAppDataStatus('loading');
         const [apiTransactions, apiWallets, apiJars] = await Promise.all([
           fetchTransactions(),
           fetchWallets(),
@@ -110,20 +151,14 @@ function App() {
           return;
         }
 
-        const mergedTransactions = mergeTransactions(
-          apiTransactions.map(mapApiTransaction),
-          getTransactions(),
-        );
-
-        startTransition(() => {
-          setTransactions(mergedTransactions);
-          setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
-          setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
-          setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
-          syncCatalogs(apiWallets, apiJars);
-        });
+        applyAuthenticatedAppData(apiTransactions, apiWallets, apiJars);
+        setHasHydratedAppData(true);
+        setAppDataStatus('ready');
       } catch (error) {
         console.error('Failed to load authenticated app data:', error);
+        if (!cancelled) {
+          setAppDataStatus('error');
+        }
       }
     };
 
@@ -151,28 +186,25 @@ function App() {
     navigateTo('dashboard');
   };
 
-  const refreshAppData = async () => {
+  const refreshAppData = async ({ blocking = false }: { blocking?: boolean } = {}) => {
     if (auth.status !== 'authenticated') {
       return;
     }
 
     try {
+      setAppDataStatus(blocking ? 'loading' : 'refreshing');
       const [apiTransactions, apiWallets, apiJars] = await Promise.all([
         fetchTransactions(),
         fetchWallets(),
         fetchJars(),
       ]);
 
-      startTransition(() => {
-        const mergedTransactions = mergeTransactions(apiTransactions.map(mapApiTransaction), getTransactions());
-        setTransactions(mergedTransactions);
-        setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
-        setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
-        setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
-        syncCatalogs(apiWallets, apiJars);
-      });
+      applyAuthenticatedAppData(apiTransactions, apiWallets, apiJars);
+      setHasHydratedAppData(true);
+      setAppDataStatus('ready');
     } catch (error) {
       console.error('Failed to refresh authenticated app data:', error);
+      setAppDataStatus(hasHydratedAppData ? 'ready' : 'error');
     }
   };
 
@@ -180,15 +212,19 @@ function App() {
 
   if (auth.status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center px-6">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Loader2 className="animate-spin text-blue-400" size={32} />
-          <div>
-            <p className="text-sm text-gray-300 font-medium">Restoring your session</p>
-            <p className="text-xs text-gray-500 mt-1">Checking your JarWise account...</p>
-          </div>
-        </div>
-      </div>
+      <AppLoadingScreen
+        title="Restoring your session"
+        subtitle="Checking your JarWise account..."
+      />
+    );
+  }
+
+  if (auth.status === 'authenticated' && (appDataStatus === 'loading' || (appDataStatus === 'idle' && !hasHydratedAppData))) {
+    return (
+      <AppLoadingScreen
+        title="Loading your data"
+        subtitle="Syncing your wallets, jars, and transactions..."
+      />
     );
   }
 
@@ -230,9 +266,9 @@ function App() {
       {auth.status === 'authenticated' && currentPage === 'migration-status' && (
         <MigrationStatusScreen
           onBack={() => navigateTo('migration-upload')}
-          onDone={() => {
-            void refreshAppData();
+          onDone={async () => {
             navigateTo('dashboard');
+            await refreshAppData({ blocking: true });
           }}
           jobId={migrationJobId}
         />

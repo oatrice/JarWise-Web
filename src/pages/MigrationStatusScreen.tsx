@@ -6,7 +6,7 @@ import type { MigrationJobStatus, MigrationDuplicateItem } from '../types/migrat
 
 interface MigrationStatusScreenProps {
     onBack: () => void;
-    onDone: () => void;
+    onDone: () => void | Promise<void>;
     jobId: string | null;
 }
 
@@ -25,6 +25,7 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [confirming, setConfirming] = useState(false);
+    const [finishing, setFinishing] = useState(false);
 
     const fetchJob = async () => {
         if (!jobId) {
@@ -394,10 +395,25 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
 
                     {job?.phase === 'completed' && (
                         <button
-                            onClick={onDone}
-                            className="w-full py-4 rounded-xl font-bold text-base bg-gray-100 text-gray-900 hover:bg-white active:scale-[0.98] transition-all"
+                            onClick={async () => {
+                                if (finishing) {
+                                    return;
+                                }
+
+                                setFinishing(true);
+                                try {
+                                    await onDone();
+                                } finally {
+                                    setFinishing(false);
+                                }
+                            }}
+                            disabled={finishing}
+                            className="w-full py-4 rounded-xl font-bold text-base bg-gray-100 text-gray-900 hover:bg-white active:scale-[0.98] transition-all disabled:opacity-70"
                         >
-                            Go to Dashboard
+                            <span className="inline-flex items-center justify-center gap-2">
+                                {finishing && <Loader2 size={18} className="animate-spin" />}
+                                {finishing ? 'Refreshing dashboard...' : 'Go to Dashboard'}
+                            </span>
                         </button>
                     )}
 
