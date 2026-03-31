@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import TransactionHistory from './pages/TransactionHistory';
@@ -26,6 +26,10 @@ const JAR_INCOME_ICONS = ['💰', '💵', '🏆', '📈', '🎁', '🏦'];
 const JAR_COLORS = ['bg-blue-500', 'bg-green-500', 'bg-pink-500', 'bg-yellow-500', 'bg-purple-500', 'bg-red-500', 'bg-cyan-500', 'bg-orange-500'];
 type AppDataStatus = 'idle' | 'loading' | 'ready' | 'refreshing' | 'error';
 
+function sortTransactionsDescending(transactions: Transaction[]) {
+  return [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
 function mapApiTransaction(transaction: ApiTransaction): Transaction {
   return {
     id: transaction.id,
@@ -48,7 +52,7 @@ function mergeTransactions(remoteTransactions: Transaction[], localTransactions:
   for (const transaction of localTransactions) {
     merged.set(transaction.id, transaction);
   }
-  return [...merged.values()].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return sortTransactionsDescending([...merged.values()]);
 }
 
 function syncCatalogs(wallets: ApiWallet[], jars: ApiJar[]) {
@@ -92,7 +96,7 @@ function AppLoadingScreen({
 function App() {
   const auth = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-  const [transactions, setTransactions] = useState<Transaction[]>(getTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => sortTransactionsDescending(getTransactions()));
   const [walletViews, setWalletViews] = useState<Wallet[]>([]);
   const [dashboardJars, setDashboardJars] = useState<Jar[]>([]);
   const [manageJarViews, setManageJarViews] = useState<ManageJarView[]>([]);
@@ -109,7 +113,7 @@ function App() {
       setWalletViews([]);
       setDashboardJars([]);
       setManageJarViews([]);
-      setTransactions(getTransactions());
+      setTransactions(sortTransactionsDescending(getTransactions()));
       setAppDataStatus('idle');
       setHasHydratedAppData(false);
       resetCatalogs();
@@ -122,13 +126,11 @@ function App() {
       getTransactions(),
     );
 
-    startTransition(() => {
-      setTransactions(mergedTransactions);
-      setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
-      setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
-      setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
-      syncCatalogs(apiWallets, apiJars);
-    });
+    setTransactions(mergedTransactions);
+    setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
+    setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
+    setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
+    syncCatalogs(apiWallets, apiJars);
   };
 
   useEffect(() => {

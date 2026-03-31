@@ -5,7 +5,7 @@ import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, Settings, PieChart, LogOut, ScanBarcode, Inbox, MoreVertical, CloudUpload, FileText, LayoutGrid } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
@@ -27,6 +27,9 @@ interface DashboardProps {
     manageJarsData?: ManageJarView[];
 }
 
+const MOBILE_RECENT_ACTIVITY_LIMIT = 12;
+const DESKTOP_RECENT_ACTIVITY_LIMIT = 3;
+
 export default function Dashboard({
     onNavigate,
     transactions = [],
@@ -45,15 +48,21 @@ export default function Dashboard({
     const isVisible = useScrollDirection();
     const auth = useAuth();
     const userName = auth.user?.name ?? 'JarWise User';
-    const userAvatar = auth.user?.avatarUrl ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D0D0D&color=fff`;
+    const userAvatar = auth.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D0D0D&color=fff`;
 
     // Get drafts
     const drafts = getDrafts(); // Correctly placed
 
-
-    // Group transactions by date
-    // Sort items by date descending first
-    const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const transactionsById = useMemo(
+        () => new Map(transactions.map((transaction) => [transaction.id, transaction])),
+        [transactions],
+    );
+    const visibleRecentTransactions = useMemo(
+        () => transactions.filter((transaction) => !(transaction.type === 'income' && transaction.relatedTransactionId)),
+        [transactions],
+    );
+    const mobileRecentTransactions = visibleRecentTransactions.slice(0, MOBILE_RECENT_ACTIVITY_LIMIT);
+    const desktopRecentTransactions = visibleRecentTransactions.slice(0, DESKTOP_RECENT_ACTIVITY_LIMIT);
 
     interface TransactionGroup {
         date: string;
@@ -62,25 +71,29 @@ export default function Dashboard({
         expense: number;
     }
 
-    const groupedTransactions: TransactionGroup[] = [];
+    const groupedTransactions = useMemo<TransactionGroup[]>(() => {
+        const groups: TransactionGroup[] = [];
 
-    sortedTransactions.forEach((transaction) => {
-        const date = new Date(transaction.date);
-        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        mobileRecentTransactions.forEach((transaction) => {
+            const date = new Date(transaction.date);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-        let lastGroup = groupedTransactions[groupedTransactions.length - 1];
-        if (!lastGroup || lastGroup.date !== dateStr) {
-            lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
-            groupedTransactions.push(lastGroup);
-        }
-        lastGroup.transactions.push(transaction);
+            let lastGroup = groups[groups.length - 1];
+            if (!lastGroup || lastGroup.date !== dateStr) {
+                lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
+                groups.push(lastGroup);
+            }
+            lastGroup.transactions.push(transaction);
 
-        if (transaction.type === 'income') {
-            lastGroup.income += transaction.amount;
-        } else if (transaction.type === 'expense') {
-            lastGroup.expense += transaction.amount;
-        }
-    });
+            if (transaction.type === 'income') {
+                lastGroup.income += transaction.amount;
+            } else if (transaction.type === 'expense') {
+                lastGroup.expense += transaction.amount;
+            }
+        });
+
+        return groups;
+    }, [mobileRecentTransactions]);
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -270,8 +283,8 @@ export default function Dashboard({
                                                 <span className="text-red-400">-{formatAmount(group.expense)}</span>
                                             </div>
                                         </div>
-                                        {group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).map((t) => {
-                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                        {group.transactions.map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
                                             return (
                                                 <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={t.type === 'transfer' || !!t.relatedTransactionId} linkedTransaction={linkedTx} />
                                             );
@@ -472,9 +485,9 @@ export default function Dashboard({
                                     </button>
                                 </div>
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
-                                    {transactions.length > 0 ? (
-                                        transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).slice(0, 3).map((t) => {
-                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                    {desktopRecentTransactions.length > 0 ? (
+                                        desktopRecentTransactions.map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
                                             return (
                                                 <TransactionCard
                                                     key={t.id}

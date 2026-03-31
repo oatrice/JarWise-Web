@@ -62,12 +62,13 @@ describe('TransactionHistory', () => {
             />,
         );
 
-        expect(screen.getByText('Showing 200 of 250 transactions')).toBeInTheDocument();
+        expect(screen.getByText('Showing 100 of 250 transactions')).toBeInTheDocument();
+        expect(screen.getAllByTestId('transaction-card')).toHaveLength(100);
+        expect(screen.queryByText('Transaction 101')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Load 100 more transactions' }));
+
         expect(screen.getAllByTestId('transaction-card')).toHaveLength(200);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Load 50 more transactions' }));
-
-        expect(screen.getAllByTestId('transaction-card')).toHaveLength(250);
-        expect(screen.getByText('Showing 250 of 250 transactions')).toBeInTheDocument();
+        expect(screen.getByText('Showing 200 of 250 transactions')).toBeInTheDocument();
     });
 });

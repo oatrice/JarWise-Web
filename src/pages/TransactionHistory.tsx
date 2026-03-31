@@ -18,8 +18,8 @@ interface TransactionHistoryProps {
 
 import BottomNav from '../components/BottomNav';
 
-const INITIAL_VISIBLE_TRANSACTIONS = 200;
-const TRANSACTION_PAGE_SIZE = 200;
+const INITIAL_VISIBLE_TRANSACTIONS = 100;
+const TRANSACTION_PAGE_SIZE = 100;
 
 export default function TransactionHistory({ onBack, onNavigate, transactions, onTransactionClick }: TransactionHistoryProps) {
     const { formatAmount } = useCurrency();
@@ -45,10 +45,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
         setVisibleCount(INITIAL_VISIBLE_TRANSACTIONS);
     }, [filteredTransactions.length]);
 
-    const sortedTransactions = useMemo(() => (
-        [...filteredTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    ), [filteredTransactions]);
-    const visibleTransactions = sortedTransactions.slice(0, visibleCount);
+    const visibleTransactions = filteredTransactions.slice(0, visibleCount);
     const visibleTransactionCount = Math.min(visibleCount, filteredTransactions.length);
     const remainingTransactions = Math.max(filteredTransactions.length - visibleTransactionCount, 0);
 
