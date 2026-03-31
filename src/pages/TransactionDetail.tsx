@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, ExternalLink, Calendar, Wallet } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
-import { getJarDetails } from '../utils/constants';
+import { getJarDetails, getWalletDetails } from '../utils/constants';
 import type { Transaction } from '../utils/transactionStorage';
 
 interface TransactionDetailProps {
@@ -30,6 +30,7 @@ export default function TransactionDetail({
         : null;
 
     const jar = getJarDetails(transaction.jarId);
+    const wallet = getWalletDetails(transaction.walletId);
 
     return (
         <div className="min-h-screen bg-gray-950 font-sans text-gray-100 pb-24">
@@ -57,22 +58,21 @@ export default function TransactionDetail({
                     </div>
 
                     <div>
-                        <h2 className="text-xl font-bold text-gray-100 mb-1">{transaction.note || jar.name}</h2>
+                        <h2 className="text-xl font-bold text-gray-100 mb-1">{transaction.note || (transaction.type === 'transfer' ? 'Transfer' : jar.name)}</h2>
                         <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleString([], { dateStyle: 'long', timeStyle: 'short' })}</p>
                     </div>
 
-                    <div className={`text-4xl font-bold tracking-tight ${transaction.type === 'expense' ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {transaction.type === 'expense' ? '-' : '+'}{formatAmount(transaction.amount)}
+                    <div className={`text-4xl font-bold tracking-tight ${transaction.type === 'expense' ? 'text-red-400' : transaction.type === 'transfer' ? 'text-blue-400' : 'text-emerald-400'}`}>
+                        {transaction.type === 'expense' ? '-' : transaction.type === 'income' ? '+' : ''}{formatAmount(transaction.amount)}
                     </div>
 
                     <div className="flex gap-2 text-sm text-gray-400 bg-gray-950 px-3 py-1.5 rounded-full border border-gray-800">
                         <Wallet size={14} className="mt-0.5" />
                         {transaction.walletId ? (
-                            <span>Wallet ID: {transaction.walletId}</span>
+                            <span>{wallet.name}</span>
                         ) : (
                             <span>No Wallet</span>
                         )}
-                        {/* In real app, look up Wallet Name */}
                     </div>
                 </motion.div>
 

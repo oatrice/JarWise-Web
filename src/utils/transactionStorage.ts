@@ -7,11 +7,12 @@
 export interface Transaction {
     id: string;
     amount: number;
-    jarId: string;
+    jarId?: string;
     note?: string;
     date: string;
-    type: 'income' | 'expense';
+    type: 'income' | 'expense' | 'transfer';
     walletId?: string;
+    toWalletId?: string;
     status?: 'draft' | 'completed';
     relatedTransactionId?: string;
 }

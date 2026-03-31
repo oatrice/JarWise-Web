@@ -31,7 +31,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
     const filteredTransactions = useMemo(() => {
         if (!hasActiveFilters) return transactions;
         return transactions.filter((tx) => {
-            const jarMatch = selectedJarIds.length === 0 || selectedJarIds.includes(tx.jarId);
+            const jarMatch = selectedJarIds.length === 0 || (!!tx.jarId && selectedJarIds.includes(tx.jarId));
             const walletMatch = selectedWalletIds.length === 0 || (tx.walletId && selectedWalletIds.includes(tx.walletId));
             return jarMatch && walletMatch;
         });
@@ -63,7 +63,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
 
         if (transaction.type === 'income') {
             lastGroup.income += transaction.amount;
-        } else {
+        } else if (transaction.type === 'expense') {
             lastGroup.expense += transaction.amount;
         }
     });
@@ -167,7 +167,7 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                                             transaction={t}
                                             showDate={false}
                                             onClick={() => onTransactionClick?.(t.id)}
-                                            isTransfer={!!t.relatedTransactionId}
+                                            isTransfer={t.type === 'transfer' || !!t.relatedTransactionId}
                                             linkedTransaction={linkedTx}
                                         />
                                     );

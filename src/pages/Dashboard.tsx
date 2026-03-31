@@ -20,12 +20,12 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 interface DashboardProps {
     onNavigate: (page: Page) => void;
     transactions?: Transaction[];
+    totalBalance?: number;
     onTransactionClick?: (id: string) => void;
 }
 
-export default function Dashboard({ onNavigate, transactions = [], onTransactionClick }: DashboardProps) {
+export default function Dashboard({ onNavigate, transactions = [], totalBalance = 0, onTransactionClick }: DashboardProps) {
     const { currency, setCurrency, formatAmount } = useCurrency();
-    const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
     const [showImportSlip, setShowImportSlip] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -67,7 +67,7 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
 
         if (transaction.type === 'income') {
             lastGroup.income += transaction.amount;
-        } else {
+        } else if (transaction.type === 'expense') {
             lastGroup.expense += transaction.amount;
         }
     });
@@ -263,7 +263,7 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                                         {group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).map((t) => {
                                             const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
                                             return (
-                                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={t.type === 'transfer' || !!t.relatedTransactionId} linkedTransaction={linkedTx} />
                                             );
                                         })}
                                     </div>
@@ -454,20 +454,34 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                             <div className="col-span-4 sticky top-32 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
-                                    <button className="text-xs text-gray-500 hover:text-white transition-colors">See all</button>
+                                    <button
+                                        onClick={() => onNavigate('history')}
+                                        className="text-xs text-gray-500 hover:text-white transition-colors"
+                                    >
+                                        See all
+                                    </button>
                                 </div>
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
                                     {transactions.length > 0 ? (
                                         transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).slice(0, 3).map((t) => {
                                             const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
                                             return (
-                                                <TransactionCard key={t.id} transaction={t} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                                <TransactionCard
+                                                    key={t.id}
+                                                    transaction={t}
+                                                    onClick={() => onTransactionClick?.(t.id)}
+                                                    isTransfer={t.type === 'transfer' || !!t.relatedTransactionId}
+                                                    linkedTransaction={linkedTx}
+                                                />
                                             );
                                         })
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>
                                     )}
-                                    <button className="w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700">
+                                    <button
+                                        onClick={() => onNavigate('history')}
+                                        className="w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700"
+                                    >
                                         View Full History
                                     </button>
                                 </div>

@@ -40,7 +40,9 @@ export default function TransactionCard({ transaction, showDate = true, onClick,
 
     if (isTransfer) {
         const fromWallet = transaction.walletId ? getWalletDetails(transaction.walletId) : null;
-        const toWallet = linkedTransaction?.walletId ? getWalletDetails(linkedTransaction.walletId) : null;
+        const toWallet = linkedTransaction?.walletId
+            ? getWalletDetails(linkedTransaction.walletId)
+            : (transaction.toWalletId ? getWalletDetails(transaction.toWalletId) : null);
         if (fromWallet && toWallet) {
             title = `${fromWallet.name} → ${toWallet.name}`;
         } else if (fromWallet) {

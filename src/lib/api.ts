@@ -52,3 +52,45 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
     return response.json() as Promise<T>;
 }
+
+export interface ApiTransaction {
+    id: string;
+    amount: number;
+    description?: string;
+    date: string;
+    type: 'income' | 'expense' | 'transfer';
+    wallet_id: string;
+    jar_id?: string;
+    to_wallet_id?: string;
+    related_transaction_id?: string | null;
+}
+
+export interface ApiWallet {
+    id: string;
+    name: string;
+    currency: string;
+    balance: number;
+    type: string;
+}
+
+export interface ApiJar {
+    id: string;
+    name: string;
+    parent_id?: string;
+    wallet_id?: string;
+    type: string;
+    icon?: string;
+    color?: string;
+}
+
+export function fetchTransactions() {
+    return apiFetch<ApiTransaction[]>('/transactions');
+}
+
+export function fetchWallets() {
+    return apiFetch<ApiWallet[]>('/wallets');
+}
+
+export function fetchJars() {
+    return apiFetch<ApiJar[]>('/jars');
+}
