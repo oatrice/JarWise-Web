@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Wallet as WalletIcon, FolderOpen, Trash2, X } from 'lucide-react';
 
@@ -6,12 +6,17 @@ import { wallets as initialWallets, type Wallet } from '../utils/generatedMockDa
 
 interface ManageWalletsProps {
     onClose: () => void;
+    initialWalletsData?: Wallet[];
 }
 
-export default function ManageWallets({ onClose }: ManageWalletsProps) {
-    const [wallets, setWallets] = useState<Wallet[]>(initialWallets);
+export default function ManageWallets({ onClose, initialWalletsData }: ManageWalletsProps) {
+    const [wallets, setWallets] = useState<Wallet[]>(() => initialWalletsData ?? initialWallets);
     const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+
+    useEffect(() => {
+        setWallets(initialWalletsData ?? initialWallets);
+    }, [initialWalletsData]);
 
     // Group wallets for tree view
     const rootWallets = wallets.filter(w => w.parentId === null);

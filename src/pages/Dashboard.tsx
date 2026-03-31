@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { jars } from '../utils/generatedMockData';
+import { jars as defaultJars, type Jar } from '../utils/generatedMockData';
 import { getDrafts } from '../utils/transactionStorage';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
@@ -16,15 +16,25 @@ import type { Page } from '../types/navigation';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import type { ManageJarView } from '../utils/importedViews';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
     transactions?: Transaction[];
     totalBalance?: number;
     onTransactionClick?: (id: string) => void;
+    jars?: Jar[];
+    manageJarsData?: ManageJarView[];
 }
 
-export default function Dashboard({ onNavigate, transactions = [], totalBalance = 0, onTransactionClick }: DashboardProps) {
+export default function Dashboard({
+    onNavigate,
+    transactions = [],
+    totalBalance = 0,
+    onTransactionClick,
+    jars = defaultJars,
+    manageJarsData,
+}: DashboardProps) {
     const { currency, setCurrency, formatAmount } = useCurrency();
     const [showScanner, setShowScanner] = useState(false);
     const [showImportSlip, setShowImportSlip] = useState(false);
@@ -113,7 +123,7 @@ export default function Dashboard({ onNavigate, transactions = [], totalBalance 
     }
 
     if (showManageJars) {
-        return <ManageJars onClose={() => setShowManageJars(false)} />;
+        return <ManageJars onClose={() => setShowManageJars(false)} initialJarsData={manageJarsData} />;
     }
 
     return (

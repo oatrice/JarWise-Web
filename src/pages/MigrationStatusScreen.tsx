@@ -11,6 +11,11 @@ interface MigrationStatusScreenProps {
 }
 
 const POLLING_PHASES = new Set(['validating', 'importing']);
+const DUPLICATE_PREVIEW_LIMITS: Record<string, number> = {
+    Wallets: 6,
+    Jars: 6,
+    Transactions: 8,
+};
 
 const formatCurrency = (amount: number) =>
     amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -80,11 +85,27 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
             return null;
         }
 
+        const previewLimit = DUPLICATE_PREVIEW_LIMITS[label] ?? 6;
+        const previewItems = items.slice(0, previewLimit);
+        const hiddenCount = items.length - previewItems.length;
+
         return (
-            <div className="space-y-2">
-                <h5 className="text-xs uppercase tracking-wider text-red-300 font-semibold">{label}</h5>
+            <div className="space-y-3 rounded-2xl border border-red-900/40 bg-red-950/20 p-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h5 className="text-xs uppercase tracking-wider text-red-300 font-semibold">{label}</h5>
+                        <p className="text-sm text-red-100 mt-1">
+                            {hiddenCount > 0
+                                ? `Showing ${previewItems.length} of ${items.length} duplicates`
+                                : `${items.length} duplicate${items.length === 1 ? '' : 's'} found`}
+                        </p>
+                    </div>
+                    <span className="rounded-full border border-red-900/40 bg-red-950/40 px-3 py-1 text-xs font-semibold text-red-200">
+                        {items.length}
+                    </span>
+                </div>
                 <div className="space-y-2">
-                    {items.map((item, index) => (
+                    {previewItems.map((item, index) => (
                         <div key={`${label}-${item.sourceId ?? item.fingerprint ?? index}`} className="p-3 rounded-xl bg-red-950/40 border border-red-900/40">
                             <p className="text-sm text-white font-medium">{item.displayName || item.sourceId || 'Duplicate item'}</p>
                             <p className="text-xs text-red-200/70 mt-1">
@@ -94,6 +115,11 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
                         </div>
                     ))}
                 </div>
+                {hiddenCount > 0 && (
+                    <p className="text-xs text-red-200/70">
+                        + {hiddenCount.toLocaleString()} more duplicated {label.toLowerCase()} in this account
+                    </p>
+                )}
             </div>
         );
     };
@@ -237,6 +263,11 @@ const MigrationStatusScreen: React.FC<MigrationStatusScreenProps> = ({ onBack, o
                             </p>
                         </div>
                         {renderCounts()}
+                        <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+                            <p className="text-sm text-yellow-100">
+                                The totals above describe the uploaded files. The duplicate preview below shows which items were already imported into this account.
+                            </p>
+                        </div>
                         <div className="space-y-4">
                             {renderDuplicateList('Wallets', job.duplicateSummary?.wallets ?? [])}
                             {renderDuplicateList('Jars', job.duplicateSummary?.jars ?? [])}

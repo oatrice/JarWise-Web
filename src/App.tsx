@@ -9,6 +9,8 @@ import ManageWallets from './pages/ManageWallets';
 import SettingsOverlay from './pages/SettingsOverlay';
 import { saveTransaction, getTransactions, type Transaction } from './utils/transactionStorage';
 import { fetchJars, fetchTransactions, fetchWallets, type ApiJar, type ApiTransaction, type ApiWallet } from './lib/api';
+import type { Jar, Wallet } from './utils/generatedMockData';
+import { deriveDashboardJars, deriveManageJars, deriveTotalBalance, deriveWalletViews, type ManageJarView } from './utils/importedViews';
 import { resetCatalogs, setJarCatalog, setWalletCatalog } from './utils/constants';
 
 import MigrationUploadScreen from './pages/MigrationUploadScreen';
@@ -70,7 +72,9 @@ function App() {
   const auth = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [transactions, setTransactions] = useState<Transaction[]>(getTransactions);
-  const [wallets, setWallets] = useState<ApiWallet[]>([]);
+  const [walletViews, setWalletViews] = useState<Wallet[]>([]);
+  const [dashboardJars, setDashboardJars] = useState<Jar[]>([]);
+  const [manageJarViews, setManageJarViews] = useState<ManageJarView[]>([]);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [migrationJobId, setMigrationJobId] = useState<string | null>(null);
 
@@ -79,7 +83,9 @@ function App() {
       setCurrentPage('dashboard');
       setSelectedTransactionId(null);
       setMigrationJobId(null);
-      setWallets([]);
+      setWalletViews([]);
+      setDashboardJars([]);
+      setManageJarViews([]);
       setTransactions(getTransactions());
       resetCatalogs();
     }
@@ -111,7 +117,9 @@ function App() {
 
         startTransition(() => {
           setTransactions(mergedTransactions);
-          setWallets(apiWallets);
+          setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
+          setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
+          setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
           syncCatalogs(apiWallets, apiJars);
         });
       } catch (error) {
@@ -156,8 +164,11 @@ function App() {
       ]);
 
       startTransition(() => {
-        setTransactions(mergeTransactions(apiTransactions.map(mapApiTransaction), getTransactions()));
-        setWallets(apiWallets);
+        const mergedTransactions = mergeTransactions(apiTransactions.map(mapApiTransaction), getTransactions());
+        setTransactions(mergedTransactions);
+        setWalletViews(deriveWalletViews(apiWallets, mergedTransactions));
+        setDashboardJars(deriveDashboardJars(apiJars, mergedTransactions, 6));
+        setManageJarViews(deriveManageJars(apiJars, mergedTransactions));
         syncCatalogs(apiWallets, apiJars);
       });
     } catch (error) {
@@ -165,7 +176,7 @@ function App() {
     }
   };
 
-  const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
+  const totalBalance = deriveTotalBalance(walletViews);
 
   if (auth.status === 'loading') {
     return (
@@ -191,6 +202,8 @@ function App() {
           transactions={transactions}
           totalBalance={totalBalance}
           onTransactionClick={handleTransactionClick}
+          jars={dashboardJars}
+          manageJarsData={manageJarViews}
         />
       )}
       {auth.status === 'authenticated' && currentPage === 'history' && (
@@ -235,12 +248,14 @@ function App() {
       {auth.status === 'authenticated' && currentPage === 'wallets' && (
         <ManageWallets
           onClose={() => navigateTo('dashboard')}
+          initialWalletsData={walletViews}
         />
       )}
       {auth.status === 'authenticated' && currentPage === 'profile' && (
         <SettingsOverlay
           onBack={() => navigateTo('dashboard')}
           onNavigate={navigateTo}
+          walletsData={walletViews}
         />
       )}
       {auth.status === 'authenticated' && currentPage === 'reports' && (

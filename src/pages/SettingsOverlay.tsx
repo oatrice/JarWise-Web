@@ -7,6 +7,7 @@ import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import type { SyncStatus } from '../types/auth';
 import BottomNav from '../components/BottomNav';
 import type { Page } from '../types/navigation';
+import type { Wallet as WalletData } from '../utils/generatedMockData';
 
 interface SettingsOverlayProps {
     onBack: () => void;
@@ -20,6 +21,7 @@ interface SettingsOverlayProps {
     lastBackupTime?: Date | null;
     onRefreshSession?: () => void;
     onLogout?: (deleteData: boolean) => void;
+    walletsData?: WalletData[];
 }
 
 import ManageWallets from './ManageWallets';
@@ -35,6 +37,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
     lastBackupTime = null,
     onRefreshSession,
     onLogout,
+    walletsData,
 }) => {
     const { currency, setCurrency } = useCurrency();
     const [showCurrencySelection, setShowCurrencySelection] = useState(false);
@@ -50,7 +53,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({
     ];
 
     if (showManageWallets) {
-        return <ManageWallets onClose={() => setShowManageWallets(false)} />;
+        return <ManageWallets onClose={() => setShowManageWallets(false)} initialWalletsData={walletsData} />;
     }
 
     if (showCurrencySelection) {
