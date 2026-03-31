@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import TransactionHistory from '../pages/TransactionHistory';
 import type { Transaction } from '../utils/transactionStorage';
 
@@ -63,6 +63,11 @@ describe('TransactionHistory', () => {
         observerCallbacks.length = 0;
         vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
         vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-01-15T12:00:00.000Z'));
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('shows only a temporary loading indicator while the next batch is being appended', async () => {
