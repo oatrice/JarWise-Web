@@ -62,9 +62,10 @@ describe('TransactionHistory', () => {
     beforeEach(() => {
         observerCallbacks.length = 0;
         vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+        vi.useFakeTimers();
     });
 
-    it('loads the next batch automatically when the bottom sentinel enters view', () => {
+    it('shows only a temporary loading indicator while the next batch is being appended', async () => {
         const transactions = Array.from({ length: 250 }, (_, index) => ({
             id: `tx-${index + 1}`,
             amount: index + 1,
@@ -84,10 +85,10 @@ describe('TransactionHistory', () => {
             />,
         );
 
-        expect(screen.getByText('Showing 100 of 250 transactions')).toBeInTheDocument();
         expect(screen.getAllByTestId('transaction-card')).toHaveLength(100);
         expect(screen.queryByText('Transaction 101')).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /Load 100 more transactions/i })).not.toBeInTheDocument();
+        expect(screen.queryByText('Showing 100 of 250 transactions')).not.toBeInTheDocument();
+        expect(screen.queryByText(/More transactions will load automatically/i)).not.toBeInTheDocument();
 
         act(() => {
             observerCallbacks[0]?.(
@@ -96,7 +97,14 @@ describe('TransactionHistory', () => {
             );
         });
 
+        expect(screen.getByText('Loading more transactions...')).toBeInTheDocument();
+
+        await act(async () => {
+            vi.runAllTimers();
+            await Promise.resolve();
+        });
+
         expect(screen.getAllByTestId('transaction-card')).toHaveLength(200);
-        expect(screen.getByText('Showing 200 of 250 transactions')).toBeInTheDocument();
+        expect(screen.queryByText('Loading more transactions...')).not.toBeInTheDocument();
     });
 });

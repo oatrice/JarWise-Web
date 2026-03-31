@@ -1,8 +1,8 @@
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import TransactionCard from '../components/TransactionCard';
 import type { Transaction } from '../utils/transactionStorage';
-import { ArrowLeft, Filter, Search, Calendar } from 'lucide-react';
+import { ArrowLeft, Filter, Search, Calendar, Loader2 } from 'lucide-react';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useCurrency } from '../context/CurrencyContext';
 import ReportFiltersSheet from '../components/ReportFiltersSheet';
@@ -28,7 +28,10 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
     const [selectedJarIds, setSelectedJarIds] = useState<string[]>([]);
     const [selectedWalletIds, setSelectedWalletIds] = useState<string[]>([]);
     const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_TRANSACTIONS);
+    const [loadingMore, setLoadingMore] = useState(false);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
+    const loadMoreTimerRef = useRef<number | null>(null);
+    const loadingMoreRef = useRef(false);
 
     const hasActiveFilters = selectedJarIds.length > 0 || selectedWalletIds.length > 0;
     const transactionsById = useMemo(() => new Map(transactions.map((tx) => [tx.id, tx])), [transactions]);
@@ -44,11 +47,12 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
 
     useEffect(() => {
         setVisibleCount(INITIAL_VISIBLE_TRANSACTIONS);
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
     }, [filteredTransactions.length]);
 
     const visibleTransactions = filteredTransactions.slice(0, visibleCount);
-    const visibleTransactionCount = Math.min(visibleCount, filteredTransactions.length);
-    const remainingTransactions = Math.max(filteredTransactions.length - visibleTransactionCount, 0);
+    const remainingTransactions = Math.max(filteredTransactions.length - Math.min(visibleCount, filteredTransactions.length), 0);
 
     useEffect(() => {
         if (remainingTransactions <= 0 || !loadMoreRef.current || typeof IntersectionObserver === 'undefined') {
@@ -57,13 +61,18 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
 
         const observer = new IntersectionObserver((entries) => {
             const entry = entries[0];
-            if (!entry?.isIntersecting) {
+            if (!entry?.isIntersecting || loadMoreTimerRef.current !== null || loadingMoreRef.current) {
                 return;
             }
 
-            startTransition(() => {
+            loadingMoreRef.current = true;
+            setLoadingMore(true);
+            loadMoreTimerRef.current = window.setTimeout(() => {
                 setVisibleCount((current) => Math.min(current + TRANSACTION_PAGE_SIZE, filteredTransactions.length));
-            });
+                setLoadingMore(false);
+                loadingMoreRef.current = false;
+                loadMoreTimerRef.current = null;
+            }, 120);
         }, {
             rootMargin: '240px 0px',
             threshold: 0.1,
@@ -73,6 +82,10 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
 
         return () => {
             observer.disconnect();
+            if (loadMoreTimerRef.current !== null) {
+                window.clearTimeout(loadMoreTimerRef.current);
+                loadMoreTimerRef.current = null;
+            }
         };
     }, [filteredTransactions.length, remainingTransactions]);
 
@@ -174,25 +187,6 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                     </div>
                 </motion.div>
 
-                {filteredTransactions.length > INITIAL_VISIBLE_TRANSACTIONS && (
-                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
-                        <div className="flex items-center justify-between gap-4">
-                            <div>
-                                <p className="text-sm font-semibold text-blue-100">
-                                    Showing {visibleTransactionCount.toLocaleString()} of {filteredTransactions.length.toLocaleString()} transactions
-                                </p>
-                                <p className="text-xs text-blue-200/70 mt-1">
-                                    More transactions will load automatically as you scroll to the bottom.
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs uppercase tracking-wider text-blue-300">Remaining</p>
-                                <p className="text-lg font-bold text-white">{remainingTransactions.toLocaleString()}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Transaction Groups */}
                 {groupedTransactions.map((group) => {
                     // Filter out the income side of transfers (we show the expense side as the "transfer" entry)
@@ -247,11 +241,19 @@ export default function TransactionHistory({ onBack, onNavigate, transactions, o
                 )}
 
                 {remainingTransactions > 0 && (
-                    <div
-                        ref={loadMoreRef}
-                        aria-hidden="true"
-                        className="h-12 w-full"
-                    />
+                    <div className="space-y-3">
+                        {loadingMore && (
+                            <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-400">
+                                <Loader2 size={16} className="animate-spin text-blue-400" />
+                                <span>Loading more transactions...</span>
+                            </div>
+                        )}
+                        <div
+                            ref={loadMoreRef}
+                            aria-hidden="true"
+                            className="h-12 w-full"
+                        />
+                    </div>
                 )}
             </main>
 
