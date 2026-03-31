@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0] - 2026-03-31
+
+### Added
+- **Authentication:** Implemented Google Sign-In, authentication, and session management.
+- **Transaction Loading:** Introduced automatic transaction loading with temporary indicators and improved data hydration.
+- **Data Synchronization:** Integrated API data fetching and synchronization.
+
+### Fixed
+- **Transaction History:** Improved period filtering in transaction history.
+
 ## [0.14.0] - 2026-03-28
 
 ### Added
