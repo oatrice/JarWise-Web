@@ -6,10 +6,26 @@ import { wallets as initialWallets, type Wallet } from '../utils/generatedMockDa
 
 interface ManageWalletsProps {
     onClose: () => void;
+    initialWalletsData?: Wallet[];
 }
 
-export default function ManageWallets({ onClose }: ManageWalletsProps) {
-    const [wallets, setWallets] = useState<Wallet[]>(initialWallets);
+function buildWalletSeed(initialWalletsData?: Wallet[]) {
+    return initialWalletsData ?? initialWallets;
+}
+
+function buildWalletEditorKey(initialWalletsData?: Wallet[]) {
+    if (!initialWalletsData?.length) {
+        return 'default-wallets';
+    }
+
+    return initialWalletsData
+        .map((wallet) => [wallet.id, wallet.name, wallet.balance, wallet.parentId ?? 'root', wallet.level].join(':'))
+        .join('|');
+}
+
+function ManageWalletsEditor({ onClose, initialWalletsData }: ManageWalletsProps) {
+    const baseWallets = buildWalletSeed(initialWalletsData);
+    const [wallets, setWallets] = useState<Wallet[]>(() => baseWallets);
     const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -253,6 +269,10 @@ export default function ManageWallets({ onClose }: ManageWalletsProps) {
             {showAddModal && <AddWalletModal onClose={() => setShowAddModal(false)} onAdd={handleAddWallet} wallets={wallets} />}
         </motion.div>
     );
+}
+
+export default function ManageWallets(props: ManageWalletsProps) {
+    return <ManageWalletsEditor key={buildWalletEditorKey(props.initialWalletsData)} {...props} />;
 }
 
 function AddWalletModal({ onClose, onAdd, wallets }: { onClose: () => void, onAdd: (w: Omit<Wallet, 'id'>) => void, wallets: Wallet[] }) {

@@ -1,31 +1,44 @@
 import { motion } from 'framer-motion';
-import { jars } from '../utils/generatedMockData';
+import { jars as defaultJars, type Jar } from '../utils/generatedMockData';
 import { getDrafts } from '../utils/transactionStorage';
 import type { Transaction } from '../utils/transactionStorage';
 import JarCard from '../components/JarCard';
 import TransactionCard from '../components/TransactionCard';
 import { Flame, Bell, Search, Plus, Settings, PieChart, LogOut, ScanBarcode, Inbox, MoreVertical, CloudUpload, FileText, LayoutGrid } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ScanPage from './ScanPage';
 import ImportSlip from './ImportSlip';
 import SettingsOverlay from './SettingsOverlay';
 import ManageJars from './ManageJars';
 import BottomNav from '../components/BottomNav';
-import { useAuthMock } from '../hooks/useAuthMock'; // Moved import to top
+import { useAuth } from '../context/useAuth';
 import type { Page } from '../types/navigation';
 
 import { useCurrency, type CurrencyCode } from '../context/CurrencyContext';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import type { ManageJarView } from '../utils/importedViews';
 
 interface DashboardProps {
     onNavigate: (page: Page) => void;
     transactions?: Transaction[];
+    totalBalance?: number;
     onTransactionClick?: (id: string) => void;
+    jars?: Jar[];
+    manageJarsData?: ManageJarView[];
 }
 
-export default function Dashboard({ onNavigate, transactions = [], onTransactionClick }: DashboardProps) {
+const MOBILE_RECENT_ACTIVITY_LIMIT = 12;
+const DESKTOP_RECENT_ACTIVITY_LIMIT = 3;
+
+export default function Dashboard({
+    onNavigate,
+    transactions = [],
+    totalBalance = 0,
+    onTransactionClick,
+    jars = defaultJars,
+    manageJarsData,
+}: DashboardProps) {
     const { currency, setCurrency, formatAmount } = useCurrency();
-    const totalBalance = jars.reduce((acc, jar) => acc + jar.current, 0);
     const [showScanner, setShowScanner] = useState(false);
     const [showImportSlip, setShowImportSlip] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -33,15 +46,23 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
     const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const isVisible = useScrollDirection();
-    const auth = useAuthMock(); // Mock auth hook
+    const auth = useAuth();
+    const userName = auth.user?.name ?? 'JarWise User';
+    const userAvatar = auth.user?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0D0D0D&color=fff`;
 
     // Get drafts
     const drafts = getDrafts(); // Correctly placed
 
-
-    // Group transactions by date
-    // Sort items by date descending first
-    const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const transactionsById = useMemo(
+        () => new Map(transactions.map((transaction) => [transaction.id, transaction])),
+        [transactions],
+    );
+    const visibleRecentTransactions = useMemo(
+        () => transactions.filter((transaction) => !(transaction.type === 'income' && transaction.relatedTransactionId)),
+        [transactions],
+    );
+    const mobileRecentTransactions = visibleRecentTransactions.slice(0, MOBILE_RECENT_ACTIVITY_LIMIT);
+    const desktopRecentTransactions = visibleRecentTransactions.slice(0, DESKTOP_RECENT_ACTIVITY_LIMIT);
 
     interface TransactionGroup {
         date: string;
@@ -50,25 +71,29 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
         expense: number;
     }
 
-    const groupedTransactions: TransactionGroup[] = [];
+    const groupedTransactions = useMemo<TransactionGroup[]>(() => {
+        const groups: TransactionGroup[] = [];
 
-    sortedTransactions.forEach((transaction) => {
-        const date = new Date(transaction.date);
-        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        mobileRecentTransactions.forEach((transaction) => {
+            const date = new Date(transaction.date);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-        let lastGroup = groupedTransactions[groupedTransactions.length - 1];
-        if (!lastGroup || lastGroup.date !== dateStr) {
-            lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
-            groupedTransactions.push(lastGroup);
-        }
-        lastGroup.transactions.push(transaction);
+            let lastGroup = groups[groups.length - 1];
+            if (!lastGroup || lastGroup.date !== dateStr) {
+                lastGroup = { date: dateStr, transactions: [], income: 0, expense: 0 };
+                groups.push(lastGroup);
+            }
+            lastGroup.transactions.push(transaction);
 
-        if (transaction.type === 'income') {
-            lastGroup.income += transaction.amount;
-        } else {
-            lastGroup.expense += transaction.amount;
-        }
-    });
+            if (transaction.type === 'income') {
+                lastGroup.income += transaction.amount;
+            } else if (transaction.type === 'expense') {
+                lastGroup.expense += transaction.amount;
+            }
+        });
+
+        return groups;
+    }, [mobileRecentTransactions]);
 
     const handleScan = (data: string) => {
         console.log("Scanned:", data);
@@ -91,22 +116,27 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
             <SettingsOverlay
                 onBack={() => setShowSettings(false)}
                 onNavigate={onNavigate}
-                // Pass auth state and handlers
-                isLoggedIn={true} // Always "logged in" when on Dashboard
+                isLoggedIn={true}
+                userName={userName}
+                userEmail={auth.user?.email}
+                userAvatar={userAvatar}
                 syncStatus={auth.syncStatus}
-                lastBackupTime={auth.lastBackupTime}
-                onBackupNow={auth.triggerBackup}
-                onLogout={(deleteData) => {
-                    console.log(`Logout requested. Delete data: ${deleteData}`);
-                    // In a real app, we would handle data deletion here
-                    onNavigate('login');
+                lastBackupTime={auth.lastSyncTime}
+                onRefreshSession={() => {
+                    void auth.refreshSession();
+                }}
+                onLogout={() => {
+                    void auth.logout().then(() => {
+                        setShowSettings(false);
+                        onNavigate('dashboard');
+                    });
                 }}
             />
         );
     }
 
     if (showManageJars) {
-        return <ManageJars onClose={() => setShowManageJars(false)} />;
+        return <ManageJars onClose={() => setShowManageJars(false)} initialJarsData={manageJarsData} />;
     }
 
     return (
@@ -127,11 +157,11 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px]">
-                                    <img src="https://ui-avatars.com/api/?name=User&background=0D0D0D&color=fff" alt="User" className="h-full w-full rounded-full border-2 border-gray-950" />
+                                    <img src={userAvatar} alt={userName} className="h-full w-full rounded-full border-2 border-gray-950" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400">Welcome back</p>
-                                    <h2 className="text-sm font-semibold text-gray-100">Oatrice</h2>
+                                    <h2 className="text-sm font-semibold text-gray-100">{userName}</h2>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -253,10 +283,10 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                                                 <span className="text-red-400">-{formatAmount(group.expense)}</span>
                                             </div>
                                         </div>
-                                        {group.transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).map((t) => {
-                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                        {group.transactions.map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
                                             return (
-                                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                                <TransactionCard key={t.id} transaction={t} showDate={false} onClick={() => onTransactionClick?.(t.id)} isTransfer={t.type === 'transfer' || !!t.relatedTransactionId} linkedTransaction={linkedTx} />
                                             );
                                         })}
                                     </div>
@@ -316,14 +346,19 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                     <div className="mt-auto pt-6 border-t border-gray-800">
                         <div className="flex items-center gap-3 mb-6 px-2">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-[2px]">
-                                <img src="https://ui-avatars.com/api/?name=User&background=0D0D0D&color=fff" alt="User" className="h-full w-full rounded-full border-2 border-gray-950" />
+                                <img src={userAvatar} alt={userName} className="h-full w-full rounded-full border-2 border-gray-950" />
                             </div>
                             <div className="flex-1 overflow-hidden">
-                                <h2 className="text-sm font-semibold text-gray-100 truncate">Oatrice</h2>
-                                <p className="text-xs text-gray-500 truncate">oatrice@example.com</p>
+                                <h2 className="text-sm font-semibold text-gray-100 truncate">{userName}</h2>
+                                <p className="text-xs text-gray-500 truncate">{auth.user?.email ?? 'Signed in with Google'}</p>
                             </div>
                         </div>
-                        <button className="flex items-center gap-2 w-full px-2 text-sm text-gray-500 hover:text-red-400 transition-colors">
+                        <button
+                            onClick={() => {
+                                void auth.logout();
+                            }}
+                            className="flex items-center gap-2 w-full px-2 text-sm text-gray-500 hover:text-red-400 transition-colors"
+                        >
                             <LogOut size={16} />
                             Sign Out
                         </button>
@@ -442,20 +477,34 @@ export default function Dashboard({ onNavigate, transactions = [], onTransaction
                             <div className="col-span-4 sticky top-32 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-semibold text-gray-100">Recent Activity</h3>
-                                    <button className="text-xs text-gray-500 hover:text-white transition-colors">See all</button>
+                                    <button
+                                        onClick={() => onNavigate('history')}
+                                        className="text-xs text-gray-500 hover:text-white transition-colors"
+                                    >
+                                        See all
+                                    </button>
                                 </div>
                                 <div className="space-y-3 bg-gray-900/20 p-4 rounded-3xl border border-gray-800/50 backdrop-blur-sm">
-                                    {transactions.length > 0 ? (
-                                        transactions.filter(t => !(t.type === 'income' && t.relatedTransactionId)).slice(0, 3).map((t) => {
-                                            const linkedTx = t.relatedTransactionId ? transactions.find(tx => tx.id === t.relatedTransactionId) : undefined;
+                                    {desktopRecentTransactions.length > 0 ? (
+                                        desktopRecentTransactions.map((t) => {
+                                            const linkedTx = t.relatedTransactionId ? transactionsById.get(t.relatedTransactionId) : undefined;
                                             return (
-                                                <TransactionCard key={t.id} transaction={t} onClick={() => onTransactionClick?.(t.id)} isTransfer={!!t.relatedTransactionId} linkedTransaction={linkedTx} />
+                                                <TransactionCard
+                                                    key={t.id}
+                                                    transaction={t}
+                                                    onClick={() => onTransactionClick?.(t.id)}
+                                                    isTransfer={t.type === 'transfer' || !!t.relatedTransactionId}
+                                                    linkedTransaction={linkedTx}
+                                                />
                                             );
                                         })
                                     ) : (
                                         <div className="text-center py-6 text-gray-500 text-sm">No recent activity</div>
                                     )}
-                                    <button className="w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700">
+                                    <button
+                                        onClick={() => onNavigate('history')}
+                                        className="w-full py-3 mt-2 rounded-xl text-sm text-gray-500 hover:bg-gray-800/50 transition-colors border border-dashed border-gray-800 hover:border-gray-700"
+                                    >
                                         View Full History
                                     </button>
                                 </div>

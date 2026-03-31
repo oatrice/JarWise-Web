@@ -4,6 +4,7 @@ import { ArrowLeft, Palette, Type, Percent, RotateCcw, Save, Check, Plus } from 
 import { Home, DollarSign, Gamepad2, GraduationCap, Plane, Heart, Briefcase, PiggyBank, type LucideIcon } from 'lucide-react';
 import { jars as initialJars, type Jar } from '../utils/generatedMockData';
 import ExpenseGraphMock from '../components/ExpenseGraphMock';
+import type { ManageJarView } from '../utils/importedViews';
 
 // Available icons for selection
 const AVAILABLE_ICONS: { id: string; icon: LucideIcon; label: string }[] = [
@@ -46,14 +47,41 @@ interface EditableJar extends Jar {
 
 interface ManageJarsProps {
     onClose: () => void;
+    initialJarsData?: ManageJarView[];
 }
 
-export default function ManageJars({ onClose }: ManageJarsProps) {
-    const [jars, setJars] = useState<EditableJar[]>(
-        initialJars.map((jar, i) => ({
-            ...jar,
-            percentage: DEFAULT_JARS[i]?.percentage || 10,
-        }))
+function buildDefaultEditableJars(): EditableJar[] {
+    return initialJars.map((jar, i) => ({
+        ...jar,
+        percentage: DEFAULT_JARS[i]?.percentage || 10,
+    }));
+}
+
+function cloneEditableJars(jars: EditableJar[]): EditableJar[] {
+    return jars.map((jar) => ({
+        ...jar,
+        children: jar.children ? cloneEditableJars(jar.children) : [],
+    }));
+}
+
+function buildJarSeed(initialJarsData?: ManageJarView[]) {
+    return initialJarsData ?? buildDefaultEditableJars();
+}
+
+function buildJarEditorKey(initialJarsData?: ManageJarView[]) {
+    if (!initialJarsData?.length) {
+        return 'default-jars';
+    }
+
+    return initialJarsData
+        .map((jar) => [jar.id, jar.name, jar.percentage, jar.current, jar.goal, jar.parentId ?? 'root'].join(':'))
+        .join('|');
+}
+
+function ManageJarsEditor({ onClose, initialJarsData }: ManageJarsProps) {
+    const baseJars = buildJarSeed(initialJarsData);
+    const [jars, setJars] = useState<EditableJar[]>(() =>
+        cloneEditableJars(baseJars)
     );
     const [selectedJarId, setSelectedJarId] = useState<string | null>(null);
     const [showConfirmReset, setShowConfirmReset] = useState(false);
@@ -69,13 +97,7 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
     };
 
     const handleReset = () => {
-        setJars(
-            initialJars.map((jar, i) => ({
-                ...jar,
-                percentage: DEFAULT_JARS[i]?.percentage || 10,
-                children: [] // Reset children
-            }))
-        );
+        setJars(cloneEditableJars(baseJars));
         setShowConfirmReset(false);
         setSelectedJarId(null);
     };
@@ -586,4 +608,8 @@ export default function ManageJars({ onClose }: ManageJarsProps) {
             </AnimatePresence>
         </motion.div>
     );
+}
+
+export default function ManageJars(props: ManageJarsProps) {
+    return <ManageJarsEditor key={buildJarEditorKey(props.initialJarsData)} {...props} />;
 }

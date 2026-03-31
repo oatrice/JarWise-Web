@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Transaction } from '../utils/transactionStorage';
 import { ArrowRight, ArrowRightLeft } from 'lucide-react';
 import { getJarDetails, getWalletDetails } from '../utils/constants';
@@ -11,7 +12,14 @@ interface TransactionCardProps {
     linkedTransaction?: Transaction; // The counterpart transaction for transfers
 }
 
-export default function TransactionCard({ transaction, showDate = true, onClick, isTransfer = false, linkedTransaction }: TransactionCardProps) {
+const TRANSACTION_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric'
+});
+
+function TransactionCard({ transaction, showDate = true, onClick, isTransfer = false, linkedTransaction }: TransactionCardProps) {
     const { formatAmount } = useCurrency();
     const jar = getJarDetails(transaction.jarId);
 
@@ -20,12 +28,7 @@ export default function TransactionCard({ transaction, showDate = true, onClick,
     try {
         const dateObj = new Date(transaction.date);
         if (!isNaN(dateObj.getTime())) {
-            dateStr = new Intl.DateTimeFormat('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric'
-            }).format(dateObj);
+            dateStr = TRANSACTION_DATE_FORMATTER.format(dateObj);
         }
     } catch {
         // Fallback to raw string if parsing fails
@@ -40,7 +43,9 @@ export default function TransactionCard({ transaction, showDate = true, onClick,
 
     if (isTransfer) {
         const fromWallet = transaction.walletId ? getWalletDetails(transaction.walletId) : null;
-        const toWallet = linkedTransaction?.walletId ? getWalletDetails(linkedTransaction.walletId) : null;
+        const toWallet = linkedTransaction?.walletId
+            ? getWalletDetails(linkedTransaction.walletId)
+            : (transaction.toWalletId ? getWalletDetails(transaction.toWalletId) : null);
         if (fromWallet && toWallet) {
             title = `${fromWallet.name} → ${toWallet.name}`;
         } else if (fromWallet) {
@@ -83,3 +88,5 @@ export default function TransactionCard({ transaction, showDate = true, onClick,
         </div>
     )
 }
+
+export default memo(TransactionCard);
